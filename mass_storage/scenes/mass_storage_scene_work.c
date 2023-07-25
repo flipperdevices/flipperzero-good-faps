@@ -13,20 +13,20 @@ static bool file_read(
     uint32_t* out_len,
     uint32_t out_cap) {
     MassStorageApp* app = ctx;
-    // FURI_LOG_I(TAG, "file_read lba=%08lx count=%04x out_cap=%04x", lba, count, out_cap);
+    FURI_LOG_T(TAG, "file_read lba=%08lX count=%04X out_cap=%08lX", lba, count, out_cap);
     if(!storage_file_seek(app->file, lba * SCSI_BLOCK_SIZE, true)) {
         FURI_LOG_W(TAG, "seek failed");
         return false;
     }
     uint16_t clamp = MIN(out_cap, count * SCSI_BLOCK_SIZE);
     *out_len = storage_file_read(app->file, out, clamp);
-    // FURI_LOG_I(TAG, "%d/%d", *out_len, count * SCSI_BLOCK_SIZE);
+    FURI_LOG_T(TAG, "%lu/%lu", *out_len, count * SCSI_BLOCK_SIZE);
     return *out_len == clamp;
 }
 
 static bool file_write(void* ctx, uint32_t lba, uint16_t count, uint8_t* buf, uint32_t len) {
     MassStorageApp* app = ctx;
-    // FURI_LOG_I(TAG, "file_write lba=%08lx count=%04x len=%04x", lba, count, len);
+    FURI_LOG_T(TAG, "file_write lba=%08lX count=%04X len=%08lX", lba, count, len);
     if(len != count * SCSI_BLOCK_SIZE) {
         FURI_LOG_W(TAG, "bad write params count=%u len=%lu", count, len);
         return false;
@@ -45,7 +45,7 @@ static uint32_t file_num_blocks(void* ctx) {
 
 static void file_eject(void* ctx) {
     MassStorageApp* app = ctx;
-    FURI_LOG_I(TAG, "EJECT");
+    FURI_LOG_D(TAG, "EJECT");
     furi_check(furi_mutex_acquire(app->usb_mutex, FuriWaitForever) == FuriStatusOk);
     mass_storage_usb_stop(app->usb);
     app->usb = NULL;

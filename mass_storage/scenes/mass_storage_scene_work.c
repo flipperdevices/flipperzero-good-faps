@@ -54,18 +54,37 @@ static void file_eject(void* ctx) {
 
 bool mass_storage_scene_work_on_event(void* context, SceneManagerEvent event) {
     MassStorageApp* app = context;
+    bool consumed = false;
     if(event.type == SceneManagerEventTypeTick) {
         bool ejected;
         furi_check(furi_mutex_acquire(app->usb_mutex, FuriWaitForever) == FuriStatusOk);
         ejected = app->usb == NULL;
         furi_check(furi_mutex_release(app->usb_mutex) == FuriStatusOk);
-        if(ejected) scene_manager_previous_scene(app->scene_manager);
+        if(ejected) {
+            scene_manager_previous_scene(app->scene_manager);
+            consumed = true;
+        }
+    } else if(event.type == SceneManagerEventTypeBack) {
+        consumed = scene_manager_search_and_switch_to_previous_scene(
+            app->scene_manager, MassStorageSceneFileSelect);
+        if(!consumed) {
+            consumed = scene_manager_search_and_switch_to_previous_scene(
+                app->scene_manager, MassStorageSceneStart);
+        }
     }
-    return false;
+    return consumed;
 }
 
 void mass_storage_scene_work_on_enter(void* context) {
     MassStorageApp* app = context;
+
+    if(!storage_file_exists(app->fs_api, furi_string_get_cstr(app->file_path))) {
+        scene_manager_search_and_switch_to_previous_scene(
+            app->scene_manager, MassStorageSceneStart);
+        return;
+    }
+
+    mass_storage_app_show_loading_popup(app, true);
 
     app->usb_mutex = furi_mutex_alloc(FuriMutexTypeNormal);
 
@@ -92,13 +111,18 @@ void mass_storage_scene_work_on_enter(void* context) {
 
     furi_string_free(file_name);
 
+    mass_storage_app_show_loading_popup(app, false);
     view_dispatcher_switch_to_view(app->view_dispatcher, MassStorageAppViewWork);
 }
 
 void mass_storage_scene_work_on_exit(void* context) {
     MassStorageApp* app = context;
+    mass_storage_app_show_loading_popup(app, true);
 
-    furi_mutex_free(app->usb_mutex);
+    if(app->usb_mutex) {
+        furi_mutex_free(app->usb_mutex);
+        app->usb_mutex = NULL;
+    }
     if(app->usb) {
         mass_storage_usb_stop(app->usb);
         app->usb = NULL;
@@ -107,4 +131,5 @@ void mass_storage_scene_work_on_exit(void* context) {
         storage_file_free(app->file);
         app->file = NULL;
     }
+    mass_storage_app_show_loading_popup(app, false);
 }

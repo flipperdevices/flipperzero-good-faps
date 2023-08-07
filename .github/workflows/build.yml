@@ -1,0 +1,28 @@
+name: Build faps
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up ufbt
+        uses: flipperdevices/flipperzero-ufbt-action@v0.1.2
+        with:
+          sdk-channel: rc
+          task: setup
+
+      - name: Build & lint all apps
+        run: |
+          for appdir in $( dirname $( find . -name application.fam ) ); do
+            echo "Building in $appdir"
+            pushd $appdir
+            ufbt lint faps
+            popd
+          done

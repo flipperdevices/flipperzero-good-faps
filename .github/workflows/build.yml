@@ -10,7 +10,7 @@ on:
         description: 'SDK channel to use'
         required: true
         default: 'rc'
-        type: chioce
+        type: choice
         options:
           - 'rc'
           - 'release'
@@ -39,10 +39,13 @@ jobs:
             ufbt lint faps
             popd
           done
+          rm -rf dist || true && mkdir dist
+          for fapfile in $( find . -name "*.fap" ) ; do
+            cp $fapfile dist/
+          done
 
       - name: Upload all .fap files
         uses: actions/upload-artifact@v3
         with:
           name: faps
-          path: |
-            ./**/*.fap
+          path: dist/*.fap

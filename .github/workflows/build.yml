@@ -10,6 +10,11 @@ on:
         description: 'SDK channel to use'
         required: true
         default: 'rc'
+        type: chioce
+        options:
+          - 'rc'
+          - 'release'
+          - 'dev'
 
 jobs:
   build:
@@ -23,7 +28,7 @@ jobs:
       - name: Set up ufbt
         uses: flipperdevices/flipperzero-ufbt-action@v0.1.2
         with:
-          sdk-channel: ${{ github.event.inputs.sdk-branch }}
+          sdk-channel: ${{ github.event.inputs.sdk-branch || 'rc'}}
           task: setup
 
       - name: Build & lint all apps

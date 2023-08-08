@@ -6,7 +6,7 @@ on:
   pull_request:
   workflow_dispatch:
     inputs:
-      sdk-branch:
+      sdk-channel:
         description: 'SDK channel to use'
         required: true
         default: 'rc'
@@ -28,7 +28,7 @@ jobs:
       - name: Set up ufbt
         uses: flipperdevices/flipperzero-ufbt-action@v0.1.2
         with:
-          sdk-channel: ${{ github.event.inputs.sdk-branch || 'rc'}}
+          sdk-channel: ${{ github.event.inputs.sdk-channel || 'rc'}}
           task: setup
 
       - name: Build & lint all apps

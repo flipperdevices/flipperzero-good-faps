@@ -4,7 +4,7 @@ This application allows you to use your Flipper Zero as a HID (Human Interface D
 
 # Pairing
 
-After selecting a mode, open the Bluetooth settings on your computer or smartphone and search for new devices. The Flipper Zero will appear as `Control [NAME]`, where `[NAME]` is the name of your Flipper Zero. Pair with the device and it will be ready to use.
+After selecting a mode, open the Bluetooth settings on your computer or smartphone and search for new devices. The Flipper Zero will appear as "Control [NAME]", where "[NAME]" is the name of your Flipper Zero. Pair with the device and it will be ready to use.
 
 # Modes
 

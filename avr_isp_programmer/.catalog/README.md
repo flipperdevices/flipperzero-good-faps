@@ -39,16 +39,12 @@ This can help you quickly flash multiple devices with the same firmware, or to r
 
 The ISP feature allows you to use your Flipper Zero as an ISP programmer for your desktop computer. After connecting your Flipper Zero to the AVR microcontroller, you can flash it via USB from your desktop computer using avrdude.
 
-Example command:
-
-```bash
-avrdude.exe -p m328p -c stk500v1 -P COMxx -U flash:r:X:\\sketch_sample.hex:i
-```
+Example command: "avrdude.exe -p m328p -c stk500v1 -P COMxx -U flash:r:X:\\sketch_sample.hex:i"
 
 Where:
 
-* `-p m328p` is the brand of your chip,
-* `-P COMxx` is the com port number of the ISP programmer
+* -p m328p is the brand of your chip,
+* -P COMxx is the com port number of the ISP programmer
 
 ## Supported Microcontrollers
 

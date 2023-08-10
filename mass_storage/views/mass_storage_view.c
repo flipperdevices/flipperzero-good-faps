@@ -36,7 +36,8 @@ static void mass_storage_draw_callback(Canvas* canvas, void* _model) {
 
     canvas_set_font(canvas, FontSecondary);
     elements_string_fit_width(canvas, model->file_name, 89 - 2);
-    canvas_draw_str(canvas, 14, 23, furi_string_get_cstr(model->file_name));
+    canvas_draw_str_aligned(
+        canvas, 50, 23, AlignCenter, AlignBottom, furi_string_get_cstr(model->file_name));
 
     furi_string_set_str(model->status_string, "R:");
     append_suffixed_byte_count(model->status_string, model->bytes_read);

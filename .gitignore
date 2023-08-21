@@ -2,6 +2,9 @@
 .clang-format
 .editorconfig
 
+# Compiled source
+dist
+
 # JetBrains IDEs
 .idea
 

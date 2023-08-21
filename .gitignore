@@ -3,7 +3,7 @@
 .editorconfig
 
 # Compiled source
-dist
+/*/dist
 
 # JetBrains IDEs
 .idea

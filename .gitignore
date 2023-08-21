@@ -1,8 +1,6 @@
-
-/*/.clang-format
-
-# Compiled source
-/*/dist
+# Configuration
+.clang-format
+.editorconfig
 
 # JetBrains IDEs
 .idea

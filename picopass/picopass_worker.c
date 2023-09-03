@@ -1054,13 +1054,15 @@ static void picopass_emu_handle_packet(
         uint8_t rmac[4];
         loclass_opt_doBothMAC_2(ctx->cipher_state, nfcv_data->frame + 1, rmac, response, key);
 
+#ifndef PICOPASS_DEBUG_IGNORE_BAD_RMAC
         if(memcmp(nfcv_data->frame + 5, rmac, 4)) {
             // Bad MAC from reader, do not send a response.
             FURI_LOG_I(TAG, "Got bad MAC from reader");
-#ifndef PICOPASS_DEBUG_IGNORE_BAD_RMAC
+            // Reset the cipher state since we don't do it in READCHECK
+            picopass_init_cipher_state(nfcv_data, ctx);
             return;
-#endif
         }
+#endif
 
         // CHIPRESPONSE(4)
         response_length = 4;

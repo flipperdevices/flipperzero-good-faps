@@ -17,8 +17,9 @@ App(
     fap_private_libs=[
         Lib(
             name="loclass",
+            cflags=["-O3"],
         ),
     ],
     fap_icon_assets="icons",
-    fap_file_assets="files"
+    fap_file_assets="files",
 )

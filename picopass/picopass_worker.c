@@ -1222,6 +1222,21 @@ void picopass_worker_emulate(PicopassWorker* picopass_worker, bool loclass_mode)
     PicopassBlock* blocks = dev_data->AA1;
 
     if(loclass_mode) {
+        emu_ctx.loclass_writer = loclass_writer_alloc();
+        if(emu_ctx.loclass_writer == NULL) {
+            picopass_worker->callback(
+                PicopassWorkerEventLoclassFileError, picopass_worker->context);
+
+            while(picopass_worker->state == PicopassWorkerStateEmulate ||
+                  picopass_worker->state == PicopassWorkerStateLoclass) {
+                furi_delay_ms(1);
+            }
+
+            free(nfcv_data);
+
+            return;
+        }
+
         // Setup blocks for loclass attack
         emu_ctx.key_block_num = 0;
         loclass_update_csn(&nfc_data, nfcv_data, &emu_ctx);
@@ -1235,7 +1250,6 @@ void picopass_worker_emulate(PicopassWorker* picopass_worker, bool loclass_mode)
         uint8_t aia[8] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
         picopass_emu_write_blocks(nfcv_data, aia, PICOPASS_SECURE_AIA_BLOCK_INDEX, 1);
 
-        emu_ctx.loclass_writer = loclass_writer_alloc();
         loclass_writer_write_start_stop(emu_ctx.loclass_writer, true);
     } else {
         memcpy(nfc_data.uid, blocks[PICOPASS_CSN_BLOCK_INDEX].data, RFAL_PICOPASS_BLOCK_LEN);
@@ -1265,6 +1279,7 @@ void picopass_worker_emulate(PicopassWorker* picopass_worker, bool loclass_mode)
                 }
             }
         }
+        furi_delay_us(1);
     }
 
     if(emu_ctx.loclass_writer) {

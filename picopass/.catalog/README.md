@@ -1,5 +1,6 @@
 # Picopass
 
+
 This application allows you to read, write, save, and emulate legacy HID iClass cards and fobs (based on the picopass chipset).  Also supports saving the credential to the Flipper Zero LFRFID data format, changing the keys on the card, performing dictionary attack, and performing the 'online' part of the loclass attack.
 
 NOTE: Does not support iClass SE
@@ -12,7 +13,9 @@ The loclass attack emulates specific CSN and collects responses from the reader 
 
 1. Run `loclass` from the picopass main menu
 2. Present the flipper to the reader.
-3. Collect responses until the progress bar is full.  NOTE: If the screen says “Got std key”, the reader is not elite or custom keyed.
+3. Collect responses until the progress bar is full.
+
+NOTE: If the screen says “Got std key” AND stays on 0/18, the reader is not elite or custom keyed.
 
 ### Offline part
 

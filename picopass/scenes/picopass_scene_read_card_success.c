@@ -37,7 +37,8 @@ void picopass_scene_read_card_success_on_enter(void* context) {
         furi_string_cat_printf(csn_str, "%02X", csn[i]);
     }
 
-    bool no_key = picopass_is_memset(pacs->key, 0x00, RFAL_PICOPASS_BLOCK_LEN);
+    bool no_key = picopass_is_memset(
+        AA1[PICOPASS_SECURE_KD_BLOCK_INDEX].data, 0x00, RFAL_PICOPASS_BLOCK_LEN);
     bool empty = picopass_is_memset(
         AA1[PICOPASS_ICLASS_PACS_CFG_BLOCK_INDEX].data, 0xFF, RFAL_PICOPASS_BLOCK_LEN);
 

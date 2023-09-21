@@ -57,11 +57,11 @@ static bool picopass_device_save_file_lfrfid(PicopassDevice* dev, FuriString* fi
     } else if(pacs->bitLength < 44) {
         // https://gist.github.com/blark/e8f125e402f576bdb7e2d7b3428bdba6
         protocol = LFRFIDProtocolHidGeneric;
-        if (pacs->bitLength <= 36) {
-          uint64_t header = 1ULL << 37;
-          target = __builtin_bswap64((target | sentinel | header) << 4) >> (64 - 48);
+        if(pacs->bitLength <= 36) {
+            uint64_t header = 1ULL << 37;
+            target = __builtin_bswap64((target | sentinel | header) << 4) >> (64 - 48);
         } else {
-          target = __builtin_bswap64((target | sentinel) << 4) >> (64 - 48);
+            target = __builtin_bswap64((target | sentinel) << 4) >> (64 - 48);
         }
     } else {
         //8 bytes
@@ -81,7 +81,7 @@ static bool picopass_device_save_file_lfrfid(PicopassDevice* dev, FuriString* fi
     protocol_dict_set_data(dict, protocol, data, data_size);
     free(data);
 
-    FuriString *briefStr;
+    FuriString* briefStr;
     briefStr = furi_string_alloc();
     protocol_dict_render_brief_data(dict, briefStr, protocol);
     FURI_LOG_D(TAG, "LFRFID Brief: %s", furi_string_get_cstr(briefStr));

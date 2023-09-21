@@ -42,6 +42,7 @@ static bool picopass_device_save_file_lfrfid(PicopassDevice* dev, FuriString* fi
 
     bool result = false;
     uint64_t target = 0;
+    uint64_t sentinel = 1ULL << pacs->bitLength;
     memcpy(&target, pacs->credential, RFAL_PICOPASS_BLOCK_LEN);
     target = __builtin_bswap64(target);
     FURI_LOG_D(TAG, "Original (%d): %016llx", pacs->bitLength, target);
@@ -53,16 +54,20 @@ static bool picopass_device_save_file_lfrfid(PicopassDevice* dev, FuriString* fi
         target = (target >> 1) & 0xFFFFFF;
         // Reverse order since it'll get reversed again
         target = __builtin_bswap64(target) >> (64 - 24);
-    } else if(pacs->bitLength <= 43) {
-        //6 bytes
+    } else if(pacs->bitLength < 44) {
+        // https://gist.github.com/blark/e8f125e402f576bdb7e2d7b3428bdba6
         protocol = LFRFIDProtocolHidGeneric;
-        target = __builtin_bswap64(target) >> (64 - 48);
+        if (pacs->bitLength <= 36) {
+          uint64_t header = 1ULL << 37;
+          target = __builtin_bswap64((target | sentinel | header) << 4) >> (64 - 48);
+        } else {
+          target = __builtin_bswap64((target | sentinel) << 4) >> (64 - 48);
+        }
     } else {
         //8 bytes
         protocol = LFRFIDProtocolHidExGeneric;
         target = __builtin_bswap64(target);
     }
-    FURI_LOG_D(TAG, "Convert to LFRFID (%d): %016llx", pacs->bitLength, target);
 
     size_t data_size = protocol_dict_get_data_size(dict, protocol);
     uint8_t* data = malloc(data_size);
@@ -79,7 +84,7 @@ static bool picopass_device_save_file_lfrfid(PicopassDevice* dev, FuriString* fi
     FuriString *briefStr;
     briefStr = furi_string_alloc();
     protocol_dict_render_brief_data(dict, briefStr, protocol);
-    FURI_LOG_D(TAG, "Brief: %s", furi_string_get_cstr(briefStr));
+    FURI_LOG_D(TAG, "LFRFID Brief: %s", furi_string_get_cstr(briefStr));
 
     result = lfrfid_dict_file_save(dict, protocol, furi_string_get_cstr(file_path));
     if(result) {

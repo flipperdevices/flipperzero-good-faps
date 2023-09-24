@@ -522,15 +522,15 @@ int32_t dap_v2_usb_tx(uint8_t* buffer, uint8_t size) {
 int32_t dap_cdc_usb_tx(uint8_t* buffer, uint8_t size) {
     if((dap_state.semaphore_cdc == NULL) || (dap_state.connected == false)) return 0;
 
-    furi_check(furi_semaphore_acquire(dap_state.semaphore_cdc, FuriWaitForever) == FuriStatusOk);
-
-    if(dap_state.connected) {
-        int32_t len = usbd_ep_write(dap_state.usb_dev, HID_EP_IN | DAP_CDC_EP_SEND, buffer, size);
-        furi_console_log_printf("cdc tx %ld", len);
-        return len;
-    } else {
-        return 0;
+    if(furi_semaphore_acquire(dap_state.semaphore_cdc, 100) == FuriStatusOk) {
+        if(dap_state.connected) {
+            int32_t len =
+                usbd_ep_write(dap_state.usb_dev, HID_EP_IN | DAP_CDC_EP_SEND, buffer, size);
+            furi_console_log_printf("cdc tx %ld", len);
+            return len;
+        }
     }
+    return 0;
 }
 
 void dap_v1_usb_set_rx_callback(DapRxCallback callback) {

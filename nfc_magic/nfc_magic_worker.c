@@ -159,7 +159,7 @@ void nfc_magic_worker_write(NfcMagicWorker* nfc_magic_worker) {
                         case MfUltralightTypeNTAGI2CPlus1K:
                         case MfUltralightTypeNTAGI2CPlus2K:
                             gen4_config[27] = MagicGen4UltralightModeNTAG;
-                            block_count = 64*2;
+                            block_count = 64 * 2;
                             break;
                         }
                     }
@@ -191,7 +191,7 @@ void nfc_magic_worker_write(NfcMagicWorker* nfc_magic_worker) {
                     gen4_config[24] = dev_data->nfc_data.atqa[0];
                     gen4_config[25] = dev_data->nfc_data.atqa[1];
                     gen4_config[26] = dev_data->nfc_data.sak;
-                    
+
                     gen4_config[28] = block_count;
                     gen4_config[29] = 0x01;
 

@@ -1,4 +1,6 @@
 #include "rfal_picopass.h"
+#include <string.h>
+#include <furi/furi.h>
 
 #define RFAL_PICOPASS_TXRX_FLAGS                                                    \
     (FURI_HAL_NFC_LL_TXRX_FLAGS_CRC_TX_MANUAL | FURI_HAL_NFC_LL_TXRX_FLAGS_AGC_ON | \
@@ -44,7 +46,7 @@ FuriHalNfcReturn rfalPicoPassPollerInitialize(void) {
     FuriHalNfcReturn ret;
 
     ret = furi_hal_nfc_ll_set_mode(
-        FuriHalNfcModePollPicopass, FuriHalNfcBitrate26p48, FuriHalNfcBitrate26p48);
+        FuriHalNfcModeLegacyPollPicopass, FuriHalNfcBitrate26p48, FuriHalNfcBitrate26p48);
     if(ret != FuriHalNfcReturnOk) {
         return ret;
     };
@@ -210,4 +212,81 @@ FuriHalNfcReturn rfalPicoPassPollerWriteBlock(uint8_t blockNum, uint8_t data[8],
     }
 
     return ret;
+}
+
+FuriHalNfcReturn furi_hal_nfc_ll_set_mode(
+    FuriHalNfcModeLegacy mode,
+    FuriHalNfcBitrate txBR,
+    FuriHalNfcBitrate rxBR) {
+    UNUSED(mode);
+    UNUSED(txBR);
+    UNUSED(rxBR);
+    return FuriHalNfcReturnOk;
+}
+
+void furi_hal_nfc_ll_set_guard_time(uint32_t cycles) {
+    UNUSED(cycles);
+}
+
+void furi_hal_nfc_ll_set_error_handling(FuriHalNfcErrorHandling eHandling) {
+    UNUSED(eHandling);
+}
+
+void furi_hal_nfc_ll_set_fdt_listen(uint32_t cycles) {
+    UNUSED(cycles);
+}
+
+void furi_hal_nfc_ll_set_fdt_poll(uint32_t FDTPoll) {
+    UNUSED(FDTPoll);
+}
+
+void furi_hal_nfc_ll_txrx_on() {
+}
+
+void furi_hal_nfc_ll_txrx_off() {
+}
+
+FuriHalNfcReturn furi_hal_nfc_ll_txrx(
+    uint8_t* txBuf,
+    uint16_t txBufLen,
+    uint8_t* rxBuf,
+    uint16_t rxBufLen,
+    uint16_t* actLen,
+    uint32_t flags,
+    uint32_t fwt) {
+    UNUSED(txBuf);
+    UNUSED(txBufLen);
+    UNUSED(rxBuf);
+    UNUSED(rxBufLen);
+    UNUSED(actLen);
+    UNUSED(flags);
+    UNUSED(fwt);
+    return FuriHalNfcReturnOk;
+}
+
+FuriHalNfcReturn furi_hal_nfc_ll_txrx_bits(
+    uint8_t* txBuf,
+    uint16_t txBufLen,
+    uint8_t* rxBuf,
+    uint16_t rxBufLen,
+    uint16_t* actLen,
+    uint32_t flags,
+    uint32_t fwt) {
+    UNUSED(txBuf);
+    UNUSED(txBufLen);
+    UNUSED(rxBuf);
+    UNUSED(rxBufLen);
+    UNUSED(actLen);
+    UNUSED(flags);
+    UNUSED(fwt);
+    return FuriHalNfcReturnOk;
+}
+
+void furi_hal_nfc_ll_poll() {
+}
+
+void furi_hal_nfc_exit_sleep() {
+}
+
+void furi_hal_nfc_start_sleep() {
 }

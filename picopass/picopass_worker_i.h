@@ -10,9 +10,6 @@
 #include <furi_hal.h>
 
 #include <stdlib.h>
-#include <rfal_rf.h>
-
-#include <platform.h>
 
 struct PicopassWorker {
     FuriThread* thread;

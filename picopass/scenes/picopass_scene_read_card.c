@@ -18,14 +18,10 @@ void picopass_scene_read_card_on_enter(void* context) {
     popup_set_icon(popup, 0, 3, &I_RFIDDolphinReceive_97x61);
 
     // Start worker
-    view_dispatcher_switch_to_view(picopass->view_dispatcher, PicopassViewPopup);
-    picopass_worker_start(
-        picopass->worker,
-        PicopassWorkerStateDetect,
-        &picopass->dev->dev_data,
-        picopass_read_card_worker_callback,
-        picopass);
+    picopass->poller = picopass_poller_alloc(picopass->nfc);
+    picopass_poller_start(picopass->poller);
 
+    view_dispatcher_switch_to_view(picopass->view_dispatcher, PicopassViewPopup);
     picopass_blink_start(picopass);
 }
 
@@ -52,8 +48,9 @@ bool picopass_scene_read_card_on_event(void* context, SceneManagerEvent event) {
 void picopass_scene_read_card_on_exit(void* context) {
     Picopass* picopass = context;
 
-    // Stop worker
-    picopass_worker_stop(picopass->worker);
+    picopass_poller_stop(picopass->poller);
+    picopass_poller_free(picopass->poller);
+
     // Clear view
     popup_reset(picopass->popup);
 

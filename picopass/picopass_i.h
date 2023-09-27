@@ -29,6 +29,9 @@
 #include <lib/toolbox/path.h>
 #include <picopass_icons.h>
 
+#include <nfc/nfc.h>
+#include "protocol/picopass_poller.h"
+
 #define PICOPASS_TEXT_STORE_SIZE 128
 
 enum PicopassCustomEvent {
@@ -54,6 +57,9 @@ struct Picopass {
     NotificationApp* notifications;
     SceneManager* scene_manager;
     PicopassDevice* dev;
+
+    Nfc* nfc;
+    PicopassPoller* poller;
 
     char text_store[PICOPASS_TEXT_STORE_SIZE + 1];
     FuriString* text_box_store;

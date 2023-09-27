@@ -35,6 +35,8 @@ Picopass* picopass_alloc() {
     view_dispatcher_set_tick_event_callback(
         picopass->view_dispatcher, picopass_tick_event_callback, 100);
 
+    picopass->nfc = nfc_alloc();
+
     // Picopass device
     picopass->dev = picopass_device_alloc();
 
@@ -99,6 +101,8 @@ void picopass_free(Picopass* picopass) {
     // Picopass device
     picopass_device_free(picopass->dev);
     picopass->dev = NULL;
+
+    nfc_free(picopass->nfc);
 
     // Submenu
     view_dispatcher_remove_view(picopass->view_dispatcher, PicopassViewMenu);

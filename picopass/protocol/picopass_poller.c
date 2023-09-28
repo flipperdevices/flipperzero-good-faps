@@ -54,10 +54,8 @@ static NfcCommand picopass_poller_callback(NfcEvent event, void* context) {
         bit_buffer_set_size_bytes(instance->tx_buffer, 1);
         NfcError error =
             nfc_poller_trx(instance->nfc, instance->tx_buffer, instance->rx_buffer, 100000);
-        if(error == NfcErrorNone) {
-            FURI_LOG_I(TAG, "Received %d bits", bit_buffer_get_size(instance->rx_buffer));
-        } else {
-            FURI_LOG_E(TAG, "Error trx: %d", error);
+        if(error == NfcErrorIncompleteFrame) {
+            FURI_LOG_I(TAG, "Sof received");
         }
         command = NfcCommandReset;
     }

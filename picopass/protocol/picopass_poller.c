@@ -1,23 +1,8 @@
-#include "picopass_poller.h"
+#include "picopass_poller_i.h"
 
 #include <furi/furi.h>
 
-#define PICOPASS_POLLER_BUFFER_SIZE (255)
 #define TAG "Picopass"
-
-typedef enum {
-    PicopassPollerSessionStateIdle,
-    PicopassPollerSessionStateActive,
-    PicopassPollerSessionStateStopRequest,
-} PicopassPollerSessionState;
-
-struct PicopassPoller {
-    Nfc* nfc;
-    PicopassPollerSessionState session_state;
-
-    BitBuffer* tx_buffer;
-    BitBuffer* rx_buffer;
-};
 
 PicopassPoller* picopass_poller_alloc(Nfc* nfc) {
     furi_assert(nfc);
@@ -67,9 +52,15 @@ static NfcCommand picopass_poller_callback(NfcEvent event, void* context) {
     return command;
 }
 
-void picopass_poller_start(PicopassPoller* instance) {
+void picopass_poller_start(
+    PicopassPoller* instance,
+    PicopassPollerCallback callback,
+    void* context) {
     furi_assert(instance);
     furi_assert(instance->session_state == PicopassPollerSessionStateIdle);
+
+    instance->callback = callback;
+    instance->context = context;
 
     instance->session_state = PicopassPollerSessionStateActive;
     nfc_start(instance->nfc, picopass_poller_callback, instance);

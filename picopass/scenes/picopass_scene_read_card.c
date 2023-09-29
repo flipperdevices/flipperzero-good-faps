@@ -2,10 +2,18 @@
 #include <dolphin/dolphin.h>
 #include "../picopass_keys.h"
 
-void picopass_read_card_worker_callback(PicopassWorkerEvent event, void* context) {
-    UNUSED(event);
+NfcCommand picopass_read_card_worker_callback(PicopassPollerEvent event, void* context) {
+    furi_assert(context);
+    NfcCommand command = NfcCommandContinue;
+
     Picopass* picopass = context;
-    view_dispatcher_send_custom_event(picopass->view_dispatcher, PicopassCustomEventWorkerExit);
+
+    if(event.type == PicopassPollerEventTypeSuccess) {
+        view_dispatcher_send_custom_event(
+            picopass->view_dispatcher, PicopassCustomEventWorkerExit);
+    }
+
+    return command;
 }
 
 void picopass_scene_read_card_on_enter(void* context) {
@@ -19,7 +27,7 @@ void picopass_scene_read_card_on_enter(void* context) {
 
     // Start worker
     picopass->poller = picopass_poller_alloc(picopass->nfc);
-    picopass_poller_start(picopass->poller);
+    picopass_poller_start(picopass->poller, picopass_read_card_worker_callback, picopass);
 
     view_dispatcher_switch_to_view(picopass->view_dispatcher, PicopassViewPopup);
     picopass_blink_start(picopass);

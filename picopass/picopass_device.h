@@ -12,7 +12,7 @@
 #include <optimized_cipher.h>
 #include "helpers/iclass_elite_dict.h"
 
-#include "protocol/picopass_data.h"
+#include "protocol/picopass_protocol.h"
 
 #define LOCLASS_NUM_CSNS 9
 #ifndef LOCLASS_NUM_PER_CSN

@@ -35,13 +35,8 @@ static NfcCommand picopass_poller_callback(NfcEvent event, void* context) {
     NfcCommand command = NfcCommandContinue;
 
     if(event.type == NfcEventTypePollerReady) {
-        bit_buffer_set_byte(instance->tx_buffer, 0, 0x0a);
-        bit_buffer_set_size_bytes(instance->tx_buffer, 1);
-        NfcError error =
-            nfc_poller_trx(instance->nfc, instance->tx_buffer, instance->rx_buffer, 100000);
-        if(error == NfcErrorIncompleteFrame) {
-            FURI_LOG_I(TAG, "Sof received");
-        }
+        PicopassError error = picopass_poller_actall(instance);
+        FURI_LOG_D(TAG, "Error: %d", error);
         command = NfcCommandReset;
     }
 

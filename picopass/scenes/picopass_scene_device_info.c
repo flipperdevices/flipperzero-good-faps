@@ -21,8 +21,8 @@ void picopass_scene_device_info_on_enter(void* context) {
     dolphin_deed(DolphinDeedNfcReadSuccess);
 
     // Setup view
-    PicopassBlock* AA1 = picopass->dev->dev_data.AA1;
-    PicopassPacs* pacs = &picopass->dev->dev_data.pacs;
+    PicopassBlock* AA1 = picopass->dev->dev_data.data.AA1;
+    PicopassPacs* pacs = &picopass->dev->dev_data.data.pacs;
     Widget* widget = picopass->widget;
 
     uint8_t csn[RFAL_PICOPASS_BLOCK_LEN] = {0};

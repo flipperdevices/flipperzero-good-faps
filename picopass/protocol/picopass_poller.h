@@ -2,6 +2,10 @@
 
 #include <nfc/nfc.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum {
     PicopassPollerEventTypeSuccess,
     PicopassPollerEventTypeFail,
@@ -25,3 +29,7 @@ void picopass_poller_start(
     void* context);
 
 void picopass_poller_stop(PicopassPoller* instance);
+
+#ifdef __cplusplus
+}
+#endif

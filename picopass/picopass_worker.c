@@ -208,8 +208,8 @@ static ReturnCode
     bool elite = (dict_type != IclassStandardDictTypeFlipper);
 
     PicopassDeviceData* dev_data = picopass_worker->dev_data;
-    PicopassBlock* AA1 = dev_data->AA1;
-    PicopassPacs* pacs = &dev_data->pacs;
+    PicopassBlock* AA1 = dev_data->data.AA1;
+    PicopassPacs* pacs = &dev_data->data.pacs;
 
     uint8_t* csn = AA1[PICOPASS_CSN_BLOCK_INDEX].data;
     uint8_t* div_key = AA1[PICOPASS_SECURE_KD_BLOCK_INDEX].data;
@@ -494,8 +494,8 @@ void picopass_worker_elite_dict_attack(PicopassWorker* picopass_worker) {
 
     picopass_device_data_clear(picopass_worker->dev_data);
     PicopassDeviceData* dev_data = picopass_worker->dev_data;
-    PicopassBlock* AA1 = dev_data->AA1;
-    PicopassPacs* pacs = &dev_data->pacs;
+    PicopassBlock* AA1 = dev_data->data.AA1;
+    PicopassPacs* pacs = &dev_data->data.pacs;
 
     for(size_t i = 0; i < PICOPASS_MAX_APP_LIMIT; i++) {
         memset(AA1[i].data, 0, sizeof(AA1[i].data));
@@ -661,8 +661,8 @@ void picopass_worker_detect(PicopassWorker* picopass_worker) {
     picopass_device_data_clear(picopass_worker->dev_data);
     PicopassDeviceData* dev_data = picopass_worker->dev_data;
 
-    PicopassBlock* AA1 = dev_data->AA1;
-    PicopassPacs* pacs = &dev_data->pacs;
+    PicopassBlock* AA1 = dev_data->data.AA1;
+    PicopassPacs* pacs = &dev_data->data.pacs;
     ReturnCode err;
 
     // reset device data
@@ -734,7 +734,7 @@ void picopass_worker_detect(PicopassWorker* picopass_worker) {
 
 void picopass_worker_write(PicopassWorker* picopass_worker) {
     PicopassDeviceData* dev_data = picopass_worker->dev_data;
-    PicopassBlock* AA1 = dev_data->AA1;
+    PicopassBlock* AA1 = dev_data->data.AA1;
     ReturnCode err;
     PicopassWorkerEvent nextState = PicopassWorkerEventSuccess;
 
@@ -758,8 +758,8 @@ void picopass_worker_write(PicopassWorker* picopass_worker) {
 
 void picopass_worker_write_key(PicopassWorker* picopass_worker) {
     PicopassDeviceData* dev_data = picopass_worker->dev_data;
-    PicopassBlock* AA1 = dev_data->AA1;
-    PicopassPacs* pacs = &dev_data->pacs;
+    PicopassBlock* AA1 = dev_data->data.AA1;
+    PicopassPacs* pacs = &dev_data->data.pacs;
     ReturnCode err;
     PicopassWorkerEvent nextState = PicopassWorkerEventSuccess;
 
@@ -1329,7 +1329,7 @@ void picopass_worker_emulate(PicopassWorker* picopass_worker, bool loclass_mode)
     // nfcv_data->emu_protocol_handler = &picopass_emu_handle_packet;
 
     // PicopassDeviceData* dev_data = picopass_worker->dev_data;
-    // PicopassBlock* blocks = dev_data->AA1;
+    // PicopassBlock* blocks = dev_data->data.AA1;
 
     // if(loclass_mode) {
     //     emu_ctx.loclass_writer = loclass_writer_alloc();
@@ -1363,7 +1363,7 @@ void picopass_worker_emulate(PicopassWorker* picopass_worker, bool loclass_mode)
     //     loclass_writer_write_start_stop(emu_ctx.loclass_writer, true);
     // } else {
     //     memcpy(nfc_data.uid, blocks[PICOPASS_CSN_BLOCK_INDEX].data, RFAL_PICOPASS_BLOCK_LEN);
-    //     memcpy(nfcv_data->data, blocks, sizeof(dev_data->AA1));
+    //     memcpy(nfcv_data->data, blocks, sizeof(dev_data->data.AA1));
     //     picopass_init_cipher_state(nfcv_data, &emu_ctx);
     // }
 

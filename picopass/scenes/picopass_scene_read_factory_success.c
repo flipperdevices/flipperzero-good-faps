@@ -26,8 +26,8 @@ void picopass_scene_read_factory_success_on_enter(void* context) {
 
     // Setup view
     Widget* widget = picopass->widget;
-    //PicopassPacs* pacs = &picopass->dev->dev_data.pacs;
-    PicopassBlock* AA1 = picopass->dev->dev_data.AA1;
+    //PicopassPacs* pacs = &picopass->dev->dev_data.data.pacs;
+    PicopassBlock* AA1 = picopass->dev->dev_data.data.AA1;
 
     uint8_t* configBlock = AA1[PICOPASS_CONFIG_BLOCK_INDEX].data;
     uint8_t fuses = configBlock[7];
@@ -64,7 +64,10 @@ bool picopass_scene_read_factory_success_on_event(void* context, SceneManagerEve
         if(event.event == GuiButtonTypeLeft) {
             consumed = scene_manager_previous_scene(picopass->scene_manager);
         } else if(event.event == GuiButtonTypeCenter) {
-            memcpy(picopass->dev->dev_data.pacs.key, picopass_iclass_key, RFAL_PICOPASS_BLOCK_LEN);
+            memcpy(
+                picopass->dev->dev_data.data.pacs.key,
+                picopass_iclass_key,
+                RFAL_PICOPASS_BLOCK_LEN);
             scene_manager_next_scene(picopass->scene_manager, PicopassSceneWriteKey);
             consumed = true;
         }

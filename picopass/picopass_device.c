@@ -18,10 +18,10 @@ const uint8_t picopass_iclass_decryptionkey[] =
 
 PicopassDevice* picopass_device_alloc() {
     PicopassDevice* picopass_dev = malloc(sizeof(PicopassDevice));
-    picopass_dev->dev_data.pacs.legacy = false;
-    picopass_dev->dev_data.pacs.se_enabled = false;
-    picopass_dev->dev_data.pacs.elite_kdf = false;
-    picopass_dev->dev_data.pacs.pin_length = 0;
+    picopass_dev->dev_data.data.pacs.legacy = false;
+    picopass_dev->dev_data.data.pacs.se_enabled = false;
+    picopass_dev->dev_data.data.pacs.elite_kdf = false;
+    picopass_dev->dev_data.data.pacs.pin_length = 0;
     picopass_dev->storage = furi_record_open(RECORD_STORAGE);
     picopass_dev->dialogs = furi_record_open(RECORD_DIALOGS);
     picopass_dev->load_path = furi_string_alloc();
@@ -36,7 +36,7 @@ void picopass_device_set_name(PicopassDevice* dev, const char* name) {
 
 static bool picopass_device_save_file_lfrfid(PicopassDevice* dev, FuriString* file_path) {
     furi_assert(dev);
-    PicopassPacs* pacs = &dev->dev_data.pacs;
+    PicopassPacs* pacs = &dev->dev_data.data.pacs;
     ProtocolDict* dict = protocol_dict_alloc(lfrfid_protocols, LFRFIDProtocolMax);
     ProtocolId protocol = LFRFIDProtocolHidGeneric;
 
@@ -109,8 +109,8 @@ static bool picopass_device_save_file(
 
     bool saved = false;
     FlipperFormat* file = flipper_format_file_alloc(dev->storage);
-    PicopassPacs* pacs = &dev->dev_data.pacs;
-    PicopassBlock* AA1 = dev->dev_data.AA1;
+    PicopassPacs* pacs = &dev->dev_data.data.pacs;
+    PicopassBlock* AA1 = dev->dev_data.data.AA1;
     FuriString* temp_str;
     temp_str = furi_string_alloc();
 
@@ -183,8 +183,8 @@ bool picopass_device_save(PicopassDevice* dev, const char* dev_name) {
 static bool picopass_device_load_data(PicopassDevice* dev, FuriString* path, bool show_dialog) {
     bool parsed = false;
     FlipperFormat* file = flipper_format_file_alloc(dev->storage);
-    PicopassBlock* AA1 = dev->dev_data.AA1;
-    PicopassPacs* pacs = &dev->dev_data.pacs;
+    PicopassBlock* AA1 = dev->dev_data.data.AA1;
+    PicopassPacs* pacs = &dev->dev_data.data.pacs;
     FuriString* temp_str;
     temp_str = furi_string_alloc();
     bool deprecated_version = false;
@@ -302,12 +302,12 @@ bool picopass_file_select(PicopassDevice* dev) {
 
 void picopass_device_data_clear(PicopassDeviceData* dev_data) {
     for(size_t i = 0; i < PICOPASS_MAX_APP_LIMIT; i++) {
-        memset(dev_data->AA1[i].data, 0, sizeof(dev_data->AA1[i].data));
+        memset(dev_data->data.AA1[i].data, 0, sizeof(dev_data->data.AA1[i].data));
     }
-    dev_data->pacs.legacy = false;
-    dev_data->pacs.se_enabled = false;
-    dev_data->pacs.elite_kdf = false;
-    dev_data->pacs.pin_length = 0;
+    dev_data->data.pacs.legacy = false;
+    dev_data->data.pacs.se_enabled = false;
+    dev_data->data.pacs.elite_kdf = false;
+    dev_data->data.pacs.pin_length = 0;
 }
 
 bool picopass_device_delete(PicopassDevice* dev, bool use_load_path) {

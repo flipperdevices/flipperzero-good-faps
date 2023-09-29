@@ -12,6 +12,8 @@
 #include <optimized_cipher.h>
 #include "helpers/iclass_elite_dict.h"
 
+#include "protocol/picopass_data.h"
+
 #define LOCLASS_NUM_CSNS 9
 #ifndef LOCLASS_NUM_PER_CSN
 // Collect 2 MACs per CSN to account for keyroll modes by default
@@ -21,7 +23,6 @@
 
 #define PICOPASS_DEV_NAME_MAX_LEN 22
 #define PICOPASS_READER_DATA_MAX_SIZE 64
-#define PICOPASS_MAX_APP_LIMIT 32
 
 #define PICOPASS_CSN_BLOCK_INDEX 0
 #define PICOPASS_CONFIG_BLOCK_INDEX 1
@@ -61,13 +62,6 @@ typedef struct {
 } IclassEliteDictAttackData;
 
 typedef enum {
-    PicopassDeviceEncryptionUnknown = 0,
-    PicopassDeviceEncryptionNone = 0x14,
-    PicopassDeviceEncryptionDES = 0x15,
-    PicopassDeviceEncryption3DES = 0x17,
-} PicopassEncryption;
-
-typedef enum {
     PicopassDeviceSaveFormatHF,
     PicopassDeviceSaveFormatLF,
 } PicopassDeviceSaveFormat;
@@ -81,27 +75,7 @@ typedef enum {
 } PicopassEmulatorState;
 
 typedef struct {
-    bool legacy;
-    bool se_enabled;
-    bool sio;
-    bool biometrics;
-    uint8_t key[8];
-    bool elite_kdf;
-    uint8_t pin_length;
-    PicopassEncryption encryption;
-    uint8_t bitLength;
-    uint8_t credential[8];
-    uint8_t pin0[8];
-    uint8_t pin1[8];
-} PicopassPacs;
-
-typedef struct {
-    uint8_t data[RFAL_PICOPASS_BLOCK_LEN];
-} PicopassBlock;
-
-typedef struct {
-    PicopassBlock AA1[PICOPASS_MAX_APP_LIMIT];
-    PicopassPacs pacs;
+    PicopassData data;
     IclassEliteDictAttackData iclass_elite_dict_attack_data;
 } PicopassDeviceData;
 

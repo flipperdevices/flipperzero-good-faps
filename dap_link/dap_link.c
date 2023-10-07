@@ -279,14 +279,26 @@ typedef struct {
     struct usb_cdc_line_coding line_coding;
 } CDCProcess;
 
-static void
-    cdc_uart_irq_rx_dam_cb(UartIrqEvent ev, FuriHalUartId id_uart, size_t data_len, void* ctx) {
+static void cdc_uart_irq_rx_dam_cb(
+    FuriHalUartDmaRxEvent ev,
+    FuriHalUartId id_uart,
+    size_t data_len,
+    void* ctx) {
     CDCProcess* app = ctx;
 
     UNUSED(ev);
-    uint8_t data[data_len];
-    furi_hal_uart_rx_dma(id_uart, data, data_len);
-    furi_stream_buffer_send(app->rx_stream, data, data_len, 100);
+    uint16_t max_len = 256;
+    uint8_t data[max_len];
+    do {
+        if(max_len >= data_len) {
+            max_len = data_len;
+        } else {
+            data_len -= max_len;
+        }
+        furi_hal_uart_dma_rx(id_uart, data, max_len);
+        furi_stream_buffer_send(app->rx_stream, data, max_len, 0);
+
+    } while(max_len != data_len);
     furi_thread_flags_set(app->thread_id, CDCThreadEventUARTRx);
 }
 
@@ -322,7 +334,7 @@ static FuriHalUartId cdc_init_uart(
     DapUartType type,
     DapUartTXRX swap,
     uint32_t baudrate,
-    void (*cb)(UartIrqEvent ev, FuriHalUartId id_uart, size_t data, void* ctx),
+    void (*cb)(FuriHalUartDmaRxEvent ev, FuriHalUartId id_uart, size_t data, void* ctx),
     void* ctx) {
     FuriHalUartId uart_id = FuriHalUartIdUSART1;
     if(baudrate == 0) baudrate = 115200;
@@ -338,7 +350,7 @@ static FuriHalUartId cdc_init_uart(
             LL_USART_SetTXRXSwap(USART1, LL_USART_TXRX_STANDARD);
         }
         furi_hal_uart_init(uart_id, baudrate);
-        furi_hal_uart_set_dma_callback(uart_id, cb, ctx);
+        furi_hal_uart_dma_start(uart_id, cb, ctx);
         break;
     case DapUartTypeLPUART1:
         uart_id = FuriHalUartIdLPUART1;
@@ -349,7 +361,7 @@ static FuriHalUartId cdc_init_uart(
             LL_LPUART_SetTXRXSwap(LPUART1, LL_LPUART_TXRX_STANDARD);
         }
         furi_hal_uart_init(uart_id, baudrate);
-        furi_hal_uart_set_dma_callback(uart_id, cb, ctx);
+        furi_hal_uart_dma_start(uart_id, cb, ctx);
         break;
     }
 

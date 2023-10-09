@@ -17,8 +17,9 @@ typedef enum {
 typedef enum {
     PicopassPollerStateDetect,
     PicopassPollerStatePreAuth,
-    PicopassPollerStateSuccess,
     PicopassPollerStateCheckSecurity,
+    PicopassPollerStateAuth,
+    PicopassPollerStateSuccess,
     PicopassPollerStateFail,
 
     PicopassPollerStateNum,
@@ -54,3 +55,11 @@ PicopassError picopass_poller_select(
 
 PicopassError
     picopass_poller_read_block(PicopassPoller* instance, uint8_t block_num, PicopassBlock* block);
+
+PicopassError
+    picopass_poller_read_check(PicopassPoller* instance, PicopassReadCheckResp* read_check_resp);
+
+PicopassError picopass_poller_check(
+    PicopassPoller* instance,
+    PicopassMac* mac,
+    PicopassCheckResp* check_resp);

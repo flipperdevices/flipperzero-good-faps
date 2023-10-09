@@ -1,5 +1,7 @@
 #include "picopass_poller_i.h"
 
+#include "../loclass/optimized_cipher.h"
+
 #include <furi/furi.h>
 
 #define TAG "Picopass"
@@ -122,8 +124,44 @@ NfcCommand picopass_poller_check_security(PicopassPoller* instance) {
         FURI_LOG_D(TAG, "SE enabled");
         instance->state = PicopassPollerStateFail;
     } else {
-        instance->state = PicopassPollerStateSuccess;
+        instance->state = PicopassPollerStateAuth;
     }
+
+    return command;
+}
+
+NfcCommand picopass_poller_auth_handler(PicopassPoller* instance) {
+    NfcCommand command = NfcCommandContinue;
+    bool elite = false;
+    uint8_t key[PICOPASS_KEY_LEN] = {0x20, 0x20, 0x66, 0x66, 0x66, 0x66, 0x88, 0x88};
+
+    do {
+        PicopassReadCheckResp read_check_resp = {};
+        uint8_t* csn = instance->data.AA1[PICOPASS_CSN_BLOCK_INDEX].data;
+        uint8_t* div_key = instance->data.AA1[PICOPASS_SECURE_KD_BLOCK_INDEX].data;
+
+        uint8_t ccnr[12] = {};
+        PicopassMac mac = {};
+
+        PicopassError error = picopass_poller_read_check(instance, &read_check_resp);
+        if(error != PicopassErrorNone) {
+            FURI_LOG_E(TAG, "Read check failed: %d", error);
+            break;
+        }
+        memcpy(ccnr, read_check_resp.data, sizeof(PicopassReadCheckResp)); // last 4 bytes left 0
+
+        loclass_iclass_calc_div_key(csn, key, div_key, elite);
+        loclass_opt_doReaderMAC(ccnr, div_key, mac.data);
+
+        PicopassCheckResp check_resp = {};
+        error = picopass_poller_check(instance, &mac, &check_resp);
+        if(error == PicopassErrorNone) {
+            FURI_LOG_I(TAG, "Found key");
+            memcpy(instance->data.pacs.key, key, sizeof(key));
+            instance->state = PicopassPollerStateSuccess;
+        }
+
+    } while(false);
 
     return command;
 }
@@ -152,6 +190,7 @@ static const PicopassPollerStateHandler picopass_poller_state_handler[PicopassPo
     [PicopassPollerStateDetect] = picopass_poller_detect_handler,
     [PicopassPollerStatePreAuth] = picopass_poller_pre_auth_handler,
     [PicopassPollerStateCheckSecurity] = picopass_poller_check_security,
+    [PicopassPollerStateAuth] = picopass_poller_auth_handler,
     [PicopassPollerStateSuccess] = picopass_poller_success_handler,
     [PicopassPollerStateFail] = picopass_poller_fail_handler,
 };

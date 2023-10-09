@@ -10,6 +10,10 @@ extern "C" {
 #define PICOPASS_BLOCK_LEN 8
 #define PICOPASS_MAX_APP_LIMIT 32
 #define PICOPASS_UID_LEN 8
+#define PICOPASS_READ_CHECK_RESP_LEN 8
+#define PICOPASS_CHECK_RESP_LEN 4
+#define PICOPASS_MAC_LEN 4
+#define PICOPASS_KEY_LEN 8
 
 #define PICOPASS_CSN_BLOCK_INDEX 0
 #define PICOPASS_CONFIG_BLOCK_INDEX 1
@@ -62,6 +66,18 @@ typedef struct {
     uint8_t data[PICOPASS_BLOCK_LEN];
 } PicopassBlock;
 
+typedef struct {
+    uint8_t data[PICOPASS_READ_CHECK_RESP_LEN];
+} PicopassReadCheckResp;
+
+typedef struct {
+    uint8_t data[PICOPASS_CHECK_RESP_LEN];
+} PicopassCheckResp;
+
+typedef struct {
+    uint8_t data[PICOPASS_MAC_LEN];
+} PicopassMac;
+
 typedef enum {
     PicopassDeviceEncryptionUnknown = 0,
     PicopassDeviceEncryptionNone = 0x14,
@@ -74,7 +90,7 @@ typedef struct {
     bool se_enabled;
     bool sio;
     bool biometrics;
-    uint8_t key[8];
+    uint8_t key[PICOPASS_KEY_LEN];
     bool elite_kdf;
     uint8_t pin_length;
     PicopassEncryption encryption;

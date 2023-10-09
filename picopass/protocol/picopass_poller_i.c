@@ -131,3 +131,61 @@ PicopassError
 
     return ret;
 }
+
+PicopassError
+    picopass_poller_read_check(PicopassPoller* instance, PicopassReadCheckResp* read_check_resp) {
+    PicopassError ret = PicopassErrorNone;
+
+    do {
+        bit_buffer_reset(instance->tx_buffer);
+        bit_buffer_append_byte(instance->tx_buffer, PICOPASS_CMD_READCHECK_KD);
+        bit_buffer_append_byte(instance->tx_buffer, 0x02);
+
+        NfcError error = nfc_poller_trx(
+            instance->nfc, instance->tx_buffer, instance->rx_buffer, PICOPASS_POLLER_FWT_FC);
+        if(error != NfcErrorNone) {
+            ret = picopass_poller_process_error(error);
+            break;
+        }
+
+        if(bit_buffer_get_size_bytes(instance->rx_buffer) != sizeof(PicopassReadCheckResp)) {
+            ret = PicopassErrorProtocol;
+            break;
+        }
+        bit_buffer_write_bytes(
+            instance->rx_buffer, read_check_resp->data, sizeof(PicopassReadCheckResp));
+    } while(false);
+
+    return ret;
+}
+
+PicopassError picopass_poller_check(
+    PicopassPoller* instance,
+    PicopassMac* mac,
+    PicopassCheckResp* check_resp) {
+    PicopassError ret = PicopassErrorNone;
+
+    do {
+        bit_buffer_reset(instance->tx_buffer);
+        bit_buffer_append_byte(instance->tx_buffer, PICOPASS_CMD_CHECK);
+        uint8_t null_arr[4] = {};
+        bit_buffer_append_bytes(instance->tx_buffer, null_arr, sizeof(null_arr));
+        bit_buffer_append_bytes(instance->tx_buffer, mac->data, sizeof(PicopassMac));
+
+        NfcError error = nfc_poller_trx(
+            instance->nfc, instance->tx_buffer, instance->rx_buffer, PICOPASS_POLLER_FWT_FC);
+        if(error != NfcErrorNone) {
+            ret = picopass_poller_process_error(error);
+            break;
+        }
+
+        if(bit_buffer_get_size_bytes(instance->rx_buffer) != sizeof(PicopassCheckResp)) {
+            ret = PicopassErrorProtocol;
+            break;
+        }
+        bit_buffer_write_bytes(instance->rx_buffer, check_resp->data, sizeof(PicopassCheckResp));
+
+    } while(false);
+
+    return ret;
+}

@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -104,6 +105,14 @@ typedef struct {
     PicopassBlock AA1[PICOPASS_MAX_APP_LIMIT];
     PicopassPacs pacs;
 } PicopassData;
+
+PicopassData* picopass_protocol_alloc();
+
+void picopass_protocol_free(PicopassData* instance);
+
+void picopass_protocol_parse_credential(PicopassData* instance);
+
+void picopass_protocol_parse_wiegand(PicopassData* instance);
 
 #ifdef __cplusplus
 }

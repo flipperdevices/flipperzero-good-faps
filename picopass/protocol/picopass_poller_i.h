@@ -21,6 +21,8 @@ typedef enum {
     PicopassPollerStateAuth,
     PicopassPollerStateReadBlock,
     PicopassPollerStateSuccess,
+    PicopassPollerStateParseCredential,
+    PicopassPollerStateParseWiegand,
     PicopassPollerStateFail,
 
     PicopassPollerStateNum,
@@ -35,7 +37,7 @@ struct PicopassPoller {
     PicopassSerialNum serial_num;
     uint8_t current_block;
     uint8_t app_limit;
-    PicopassData data;
+    PicopassData* data;
 
     BitBuffer* tx_buffer;
     BitBuffer* rx_buffer;

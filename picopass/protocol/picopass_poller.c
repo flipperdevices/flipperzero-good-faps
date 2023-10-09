@@ -8,6 +8,18 @@
 
 typedef NfcCommand (*PicopassPollerStateHandler)(PicopassPoller* instance);
 
+static void picopass_poller_reset(PicopassPoller* instance) {
+    instance->current_block = 0;
+}
+
+static void picopass_poller_prepare_read(PicopassPoller* instance) {
+    instance->app_limit = instance->data.AA1[PICOPASS_CONFIG_BLOCK_INDEX].data[0] <
+                                  PICOPASS_MAX_APP_LIMIT ?
+                              instance->data.AA1[PICOPASS_CONFIG_BLOCK_INDEX].data[0] :
+                              PICOPASS_MAX_APP_LIMIT;
+    instance->current_block = 2;
+}
+
 NfcCommand picopass_poller_detect_handler(PicopassPoller* instance) {
     NfcCommand command = NfcCommandContinue;
     PicopassError error = picopass_poller_actall(instance);
@@ -158,9 +170,52 @@ NfcCommand picopass_poller_auth_handler(PicopassPoller* instance) {
         if(error == PicopassErrorNone) {
             FURI_LOG_I(TAG, "Found key");
             memcpy(instance->data.pacs.key, key, sizeof(key));
-            instance->state = PicopassPollerStateSuccess;
+            picopass_poller_prepare_read(instance);
+            instance->state = PicopassPollerStateReadBlock;
         }
 
+    } while(false);
+
+    return command;
+}
+
+NfcCommand picopass_poller_read_block_handler(PicopassPoller* instance) {
+    NfcCommand command = NfcCommandContinue;
+
+    do {
+        if(instance->current_block == instance->app_limit) {
+            instance->state = PicopassPollerStateSuccess;
+            break;
+        }
+
+        if(instance->current_block == PICOPASS_SECURE_KD_BLOCK_INDEX) {
+            // Skip over Kd block which is populated earlier (READ of Kd returns all FF's)
+            instance->current_block++;
+        }
+
+        PicopassBlock block = {};
+        PicopassError error =
+            picopass_poller_read_block(instance, instance->current_block, &block);
+        if(error != PicopassErrorNone) {
+            FURI_LOG_E(TAG, "Failed to read block %d: %d", instance->current_block, error);
+            instance->state = PicopassPollerStateFail;
+            break;
+        }
+        FURI_LOG_D(
+            TAG,
+            "Block %d: %02x%02x%02x%02x%02x%02x%02x%02x",
+            instance->current_block,
+            block.data[0],
+            block.data[1],
+            block.data[2],
+            block.data[3],
+            block.data[4],
+            block.data[5],
+            block.data[6],
+            block.data[7]);
+        memcpy(
+            instance->data.AA1[instance->current_block].data, block.data, sizeof(PicopassBlock));
+        instance->current_block++;
     } while(false);
 
     return command;
@@ -181,6 +236,7 @@ NfcCommand picopass_poller_fail_handler(PicopassPoller* instance) {
 
     instance->event.type = PicopassPollerEventTypeFail;
     command = instance->callback(instance->event, instance->context);
+    picopass_poller_reset(instance);
     instance->state = PicopassPollerStateDetect;
 
     return command;
@@ -191,6 +247,7 @@ static const PicopassPollerStateHandler picopass_poller_state_handler[PicopassPo
     [PicopassPollerStatePreAuth] = picopass_poller_pre_auth_handler,
     [PicopassPollerStateCheckSecurity] = picopass_poller_check_security,
     [PicopassPollerStateAuth] = picopass_poller_auth_handler,
+    [PicopassPollerStateReadBlock] = picopass_poller_read_block_handler,
     [PicopassPollerStateSuccess] = picopass_poller_success_handler,
     [PicopassPollerStateFail] = picopass_poller_fail_handler,
 };

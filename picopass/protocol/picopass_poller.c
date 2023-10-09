@@ -92,8 +92,38 @@ NfcCommand picopass_poller_pre_auth_handler(PicopassPoller* instance) {
             instance->data.AA1[PICOPASS_SECURE_AIA_BLOCK_INDEX].data[6],
             instance->data.AA1[PICOPASS_SECURE_AIA_BLOCK_INDEX].data[7]);
 
-        instance->state = PicopassPollerStateSuccess;
+        instance->state = PicopassPollerStateCheckSecurity;
     } while(false);
+
+    return command;
+}
+
+NfcCommand picopass_poller_check_security(PicopassPoller* instance) {
+    NfcCommand command = NfcCommandContinue;
+
+    // Thank you proxmark!
+    PicopassBlock temp_block = {};
+    memset(temp_block.data, 0xff, sizeof(PicopassBlock));
+    instance->data.pacs.legacy =
+        (memcmp(
+             instance->data.AA1[PICOPASS_SECURE_AIA_BLOCK_INDEX].data,
+             temp_block.data,
+             sizeof(PicopassBlock)) == 0);
+
+    temp_block.data[3] = 0x00;
+    temp_block.data[4] = 0x06;
+    instance->data.pacs.se_enabled =
+        (memcmp(
+             instance->data.AA1[PICOPASS_SECURE_AIA_BLOCK_INDEX].data,
+             temp_block.data,
+             sizeof(PicopassBlock)) == 0);
+
+    if(instance->data.pacs.se_enabled) {
+        FURI_LOG_D(TAG, "SE enabled");
+        instance->state = PicopassPollerStateFail;
+    } else {
+        instance->state = PicopassPollerStateSuccess;
+    }
 
     return command;
 }
@@ -103,6 +133,7 @@ NfcCommand picopass_poller_success_handler(PicopassPoller* instance) {
 
     instance->event.type = PicopassPollerEventTypeSuccess;
     command = instance->callback(instance->event, instance->context);
+    furi_delay_ms(100);
 
     return command;
 }
@@ -120,6 +151,7 @@ NfcCommand picopass_poller_fail_handler(PicopassPoller* instance) {
 static const PicopassPollerStateHandler picopass_poller_state_handler[PicopassPollerStateNum] = {
     [PicopassPollerStateDetect] = picopass_poller_detect_handler,
     [PicopassPollerStatePreAuth] = picopass_poller_pre_auth_handler,
+    [PicopassPollerStateCheckSecurity] = picopass_poller_check_security,
     [PicopassPollerStateSuccess] = picopass_poller_success_handler,
     [PicopassPollerStateFail] = picopass_poller_fail_handler,
 };

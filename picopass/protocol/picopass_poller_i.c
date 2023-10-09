@@ -22,6 +22,29 @@ static PicopassError picopass_poller_process_error(NfcError error) {
     return ret;
 }
 
+static PicopassError picopass_poller_send_frame(
+    PicopassPoller* instance,
+    BitBuffer* tx_buffer,
+    BitBuffer* rx_buffer,
+    uint32_t fwt_fc) {
+    PicopassError ret = PicopassErrorNone;
+
+    do {
+        NfcError error = nfc_poller_trx(instance->nfc, tx_buffer, rx_buffer, fwt_fc);
+        if(error != NfcErrorNone) {
+            ret = picopass_poller_process_error(error);
+            break;
+        }
+        if(!iso13239_crc_check(Iso13239CrcTypePicopass, rx_buffer)) {
+            ret = PicopassErrorIncorrectCrc;
+            break;
+        }
+        iso13239_crc_trim(instance->rx_buffer);
+    } while(false);
+
+    return ret;
+}
+
 PicopassError picopass_poller_actall(PicopassPoller* instance) {
     PicopassError ret = PicopassErrorNone;
 
@@ -45,21 +68,13 @@ PicopassError picopass_poller_identify(
     do {
         bit_buffer_reset(instance->tx_buffer);
         bit_buffer_append_byte(instance->tx_buffer, PICOPASS_CMD_READ_OR_IDENTIFY);
-        NfcError error = nfc_poller_trx(
-            instance->nfc, instance->tx_buffer, instance->rx_buffer, PICOPASS_POLLER_FWT_FC);
-        if(error != NfcErrorNone) {
-            ret = picopass_poller_process_error(error);
-            break;
-        }
-        if(bit_buffer_get_size_bytes(instance->rx_buffer) != sizeof(PicopassColResSerialNum) + 2) {
+        ret = picopass_poller_send_frame(
+            instance, instance->tx_buffer, instance->rx_buffer, PICOPASS_POLLER_FWT_FC);
+        if(ret != PicopassErrorNone) break;
+        if(bit_buffer_get_size_bytes(instance->rx_buffer) != sizeof(PicopassColResSerialNum)) {
             ret = PicopassErrorProtocol;
             break;
         }
-        if(!iso13239_crc_check(Iso13239CrcTypePicopass, instance->rx_buffer)) {
-            ret = PicopassErrorIncorrectCrc;
-            break;
-        }
-        iso13239_crc_trim(instance->rx_buffer);
         bit_buffer_write_bytes(
             instance->rx_buffer, col_res_serial_num->data, sizeof(PicopassColResSerialNum));
     } while(false);
@@ -78,22 +93,40 @@ PicopassError picopass_poller_select(
         bit_buffer_append_byte(instance->tx_buffer, PICOPASS_CMD_SELECT);
         bit_buffer_append_bytes(
             instance->tx_buffer, col_res_serial_num->data, sizeof(PicopassColResSerialNum));
-        NfcError error = nfc_poller_trx(
-            instance->nfc, instance->tx_buffer, instance->rx_buffer, PICOPASS_POLLER_FWT_FC);
-        if(error != NfcErrorNone) {
-            ret = picopass_poller_process_error(error);
-            break;
-        }
-        if(bit_buffer_get_size_bytes(instance->rx_buffer) != sizeof(PicopassSerialNum) + 2) {
+        ret = picopass_poller_send_frame(
+            instance, instance->tx_buffer, instance->rx_buffer, PICOPASS_POLLER_FWT_FC);
+        if(ret != PicopassErrorNone) break;
+        if(bit_buffer_get_size_bytes(instance->rx_buffer) != sizeof(PicopassSerialNum)) {
             ret = PicopassErrorProtocol;
             break;
         }
-        if(!iso13239_crc_check(Iso13239CrcTypePicopass, instance->rx_buffer)) {
-            ret = PicopassErrorIncorrectCrc;
+        bit_buffer_write_bytes(instance->rx_buffer, serial_num->data, sizeof(PicopassSerialNum));
+    } while(false);
+
+    return ret;
+}
+
+PicopassError
+    picopass_poller_read_block(PicopassPoller* instance, uint8_t block_num, PicopassBlock* block) {
+    PicopassError ret = PicopassErrorNone;
+
+    do {
+        bit_buffer_reset(instance->tmp_buffer);
+        bit_buffer_append_byte(instance->tmp_buffer, block_num);
+        iso13239_crc_append(Iso13239CrcTypePicopass, instance->tmp_buffer);
+        bit_buffer_reset(instance->tx_buffer);
+        bit_buffer_append_byte(instance->tx_buffer, PICOPASS_CMD_READ_OR_IDENTIFY);
+        bit_buffer_append(instance->tx_buffer, instance->tmp_buffer);
+
+        ret = picopass_poller_send_frame(
+            instance, instance->tx_buffer, instance->rx_buffer, PICOPASS_POLLER_FWT_FC);
+        if(ret != PicopassErrorNone) break;
+
+        if(bit_buffer_get_size_bytes(instance->rx_buffer) != sizeof(PicopassBlock)) {
+            ret = PicopassErrorProtocol;
             break;
         }
-        iso13239_crc_trim(instance->rx_buffer);
-        bit_buffer_write_bytes(instance->rx_buffer, serial_num->data, sizeof(PicopassSerialNum));
+        bit_buffer_write_bytes(instance->rx_buffer, block->data, sizeof(PicopassBlock));
     } while(false);
 
     return ret;

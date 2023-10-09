@@ -6,6 +6,7 @@
 #include <nfc/helpers/iso13239_crc.h>
 
 #define PICOPASS_POLLER_BUFFER_SIZE (255)
+#define PICOPASS_CRC_SIZE (2)
 
 typedef enum {
     PicopassPollerSessionStateIdle,
@@ -15,7 +16,7 @@ typedef enum {
 
 typedef enum {
     PicopassPollerStateDetect,
-    PicopassPollerStateSelect,
+    PicopassPollerStatePreAuth,
     PicopassPollerStateSuccess,
     PicopassPollerStateFail,
 
@@ -33,6 +34,7 @@ struct PicopassPoller {
 
     BitBuffer* tx_buffer;
     BitBuffer* rx_buffer;
+    BitBuffer* tmp_buffer;
 
     PicopassPollerEvent event;
     PicopassPollerCallback callback;
@@ -48,3 +50,6 @@ PicopassError picopass_poller_select(
     PicopassPoller* instance,
     PicopassColResSerialNum* col_res_serial_num,
     PicopassSerialNum* serial_num);
+
+PicopassError
+    picopass_poller_read_block(PicopassPoller* instance, uint8_t block_num, PicopassBlock* block);

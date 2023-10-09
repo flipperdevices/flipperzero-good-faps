@@ -11,6 +11,14 @@ extern "C" {
 #define PICOPASS_MAX_APP_LIMIT 32
 #define PICOPASS_UID_LEN 8
 
+#define PICOPASS_CSN_BLOCK_INDEX 0
+#define PICOPASS_CONFIG_BLOCK_INDEX 1
+// These definitions for blocks above 2 only hold for secure cards.
+#define PICOPASS_SECURE_EPURSE_BLOCK_INDEX 2
+#define PICOPASS_SECURE_KD_BLOCK_INDEX 3
+#define PICOPASS_SECURE_KC_BLOCK_INDEX 4
+#define PICOPASS_SECURE_AIA_BLOCK_INDEX 5
+
 #define PICOPASS_CMD_READ_OR_IDENTIFY (0x0C)
 // ADDRESS(1) CRC16(2) -> DATA(32) CRC16(2)
 #define PICOPASS_CMD_READ4 (0x06)
@@ -50,6 +58,10 @@ typedef struct {
     uint8_t data[PICOPASS_UID_LEN];
 } PicopassSerialNum;
 
+typedef struct {
+    uint8_t data[PICOPASS_BLOCK_LEN];
+} PicopassBlock;
+
 typedef enum {
     PicopassDeviceEncryptionUnknown = 0,
     PicopassDeviceEncryptionNone = 0x14,
@@ -71,10 +83,6 @@ typedef struct {
     uint8_t pin0[8];
     uint8_t pin1[8];
 } PicopassPacs;
-
-typedef struct {
-    uint8_t data[PICOPASS_BLOCK_LEN];
-} PicopassBlock;
 
 typedef struct {
     PicopassBlock AA1[PICOPASS_MAX_APP_LIMIT];

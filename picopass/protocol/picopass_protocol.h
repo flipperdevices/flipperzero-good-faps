@@ -7,6 +7,10 @@
 extern "C" {
 #endif
 
+#define PICOPASS_BLOCK_LEN 8
+#define PICOPASS_MAX_APP_LIMIT 32
+#define PICOPASS_UID_LEN 8
+
 #define PICOPASS_CMD_READ_OR_IDENTIFY (0x0C)
 // ADDRESS(1) CRC16(2) -> DATA(32) CRC16(2)
 #define PICOPASS_CMD_READ4 (0x06)
@@ -31,13 +35,20 @@ extern "C" {
 // PAGE(1) CRC16(2) -> BLOCK1(8) CRC16(2)
 #define PICOPASS_CMD_PAGESEL (0x84)
 
-#define PICOPASS_BLOCK_LEN 8
-#define PICOPASS_MAX_APP_LIMIT 32
-
 typedef enum {
     PicopassErrorNone,
     PicopassErrorTimeout,
+    PicopassErrorIncorrectCrc,
+    PicopassErrorProtocol,
 } PicopassError;
+
+typedef struct {
+    uint8_t data[PICOPASS_UID_LEN];
+} PicopassColResSerialNum;
+
+typedef struct {
+    uint8_t data[PICOPASS_UID_LEN];
+} PicopassSerialNum;
 
 typedef enum {
     PicopassDeviceEncryptionUnknown = 0,

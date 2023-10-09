@@ -1,6 +1,7 @@
 #pragma once
 
 #include <nfc/nfc.h>
+#include "picopass_protocol.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -29,6 +30,8 @@ void picopass_poller_start(
     void* context);
 
 void picopass_poller_stop(PicopassPoller* instance);
+
+const PicopassData* picopass_poller_get_data(PicopassPoller* instance);
 
 #ifdef __cplusplus
 }

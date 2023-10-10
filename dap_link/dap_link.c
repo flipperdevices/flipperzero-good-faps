@@ -257,20 +257,20 @@ static int32_t dap_process(void* p) {
 /***************************************************************************/
 
 typedef enum {
-    CDCThreadEventStop = DapThreadEventStop,
-    CDCThreadEventUARTRx = (1 << 1),
-    CDCThreadEventCDCRx = (1 << 2),
-    CDCThreadEventCDCConfig = (1 << 3),
-    CDCThreadEventApplyConfig = (1 << 4),
-    CDCThreadEventCDCConnect = (1 << 5),
-    CDCThreadEventCDCDisconnect = (1 << 6),
-    CDCThreadEventCDCTxComplete = (1 << 7),
+    CdcThreadEventStop = DapThreadEventStop,
+    CdcThreadEventUartRx = (1 << 1),
+    CdcThreadEventCdcRx = (1 << 2),
+    CdcThreadEventCdcConfig = (1 << 3),
+    CdcThreadEventApplyConfig = (1 << 4),
+    CdcThreadEventCdcDtrHigh = (1 << 5),
+    CdcThreadEventCdcDtrLow = (1 << 6),
+    CdcThreadEventCdcTxComplete = (1 << 7),
 
-    CDCThreadEventAll = CDCThreadEventStop | CDCThreadEventUARTRx | CDCThreadEventCDCRx |
-                        CDCThreadEventCDCConfig | CDCThreadEventApplyConfig |
-                        CDCThreadEventCDCConnect | CDCThreadEventCDCDisconnect |
-                        CDCThreadEventCDCTxComplete,
-} CDCThreadEvent;
+    CdcThreadEventAll = CdcThreadEventStop | CdcThreadEventUartRx | CdcThreadEventCdcRx |
+                        CdcThreadEventCdcConfig | CdcThreadEventApplyConfig |
+                        CdcThreadEventCdcDtrHigh | CdcThreadEventCdcDtrLow |
+                        CdcThreadEventCdcTxComplete,
+} CdcThreadEvent;
 
 typedef struct {
     FuriStreamBuffer* rx_stream;
@@ -284,18 +284,18 @@ static void cdc_uart_irq_cb(UartIrqEvent ev, uint8_t data, void* ctx) {
 
     if(ev == UartIrqEventRXNE) {
         furi_stream_buffer_send(app->rx_stream, &data, 1, 0);
-        furi_thread_flags_set(app->thread_id, CDCThreadEventUARTRx);
+        furi_thread_flags_set(app->thread_id, CdcThreadEventUartRx);
     }
 }
 
 static void cdc_usb_rx_callback(void* context) {
     CDCProcess* app = context;
-    furi_thread_flags_set(app->thread_id, CDCThreadEventCDCRx);
+    furi_thread_flags_set(app->thread_id, CdcThreadEventCdcRx);
 }
 
 static void cdc_usb_tx_complete_callback(void* context) {
     CDCProcess* app = context;
-    furi_thread_flags_set(app->thread_id, CDCThreadEventCDCTxComplete);
+    furi_thread_flags_set(app->thread_id, CdcThreadEventCdcTxComplete);
 }
 
 static void cdc_usb_control_line_callback(uint8_t state, void* context) {
@@ -304,16 +304,16 @@ static void cdc_usb_control_line_callback(uint8_t state, void* context) {
     bool dtr = state & (1 << 0);
 
     if(dtr == true) {
-        furi_thread_flags_set(app->thread_id, CDCThreadEventCDCConnect);
+        furi_thread_flags_set(app->thread_id, CdcThreadEventCdcDtrHigh);
     } else {
-        furi_thread_flags_set(app->thread_id, CDCThreadEventCDCDisconnect);
+        furi_thread_flags_set(app->thread_id, CdcThreadEventCdcDtrLow);
     }
 }
 
 static void cdc_usb_config_callback(struct usb_cdc_line_coding* config, void* context) {
     CDCProcess* app = context;
     app->line_coding = *config;
-    furi_thread_flags_set(app->thread_id, CDCThreadEventCDCConfig);
+    furi_thread_flags_set(app->thread_id, CdcThreadEventCdcConfig);
 }
 
 static FuriHalUartId cdc_init_uart(
@@ -368,7 +368,7 @@ static void cdc_deinit_uart(DapUartType type) {
     }
 }
 
-static int32_t cdc_process(void* p) {
+static int32_t dap_cdc_process(void* p) {
     DapApp* dap_app = p;
     DapState* dap_state = &(dap_app->state);
 
@@ -398,10 +398,10 @@ static int32_t cdc_process(void* p) {
 
     uint32_t events;
     while(1) {
-        events = furi_thread_flags_wait(CDCThreadEventAll, FuriFlagWaitAny, FuriWaitForever);
+        events = furi_thread_flags_wait(CdcThreadEventAll, FuriFlagWaitAny, FuriWaitForever);
 
         if(!(events & FuriFlagError)) {
-            if(events & CDCThreadEventCDCConfig) {
+            if(events & CdcThreadEventCdcConfig) {
                 if(dap_state->cdc_baudrate != app->line_coding.dwDTERate) {
                     dap_state->cdc_baudrate = app->line_coding.dwDTERate;
                     if(dap_state->cdc_baudrate > 0) {
@@ -410,7 +410,7 @@ static int32_t cdc_process(void* p) {
                 }
             }
 
-            if(events & (CDCThreadEventUARTRx | CDCThreadEventCDCTxComplete)) {
+            if(events & (CdcThreadEventUartRx | CdcThreadEventCdcTxComplete)) {
                 size_t len =
                     furi_stream_buffer_receive(app->rx_stream, rx_buffer, rx_buffer_size, 0);
                 if(cdc_connect) {
@@ -421,7 +421,7 @@ static int32_t cdc_process(void* p) {
                 }
             }
 
-            if(events & CDCThreadEventCDCRx) {
+            if(events & CdcThreadEventCdcRx) {
                 size_t len = dap_cdc_usb_rx(rx_buffer, rx_buffer_size);
                 if(len > 0) {
                     furi_hal_uart_tx(app->uart_id, rx_buffer, len);
@@ -429,7 +429,7 @@ static int32_t cdc_process(void* p) {
                 dap_state->cdc_tx_counter += len;
             }
 
-            if(events & CDCThreadEventApplyConfig) {
+            if(events & CdcThreadEventApplyConfig) {
                 if(uart_pins_prev != dap_app->config.uart_pins ||
                    uart_swap_prev != dap_app->config.uart_swap) {
                     cdc_deinit_uart(uart_pins_prev);
@@ -444,13 +444,13 @@ static int32_t cdc_process(void* p) {
                 }
             }
 
-            if(events & CDCThreadEventStop) {
+            if(events & CdcThreadEventStop) {
                 break;
             }
-            if(events & CDCThreadEventCDCConnect) {
+            if(events & CdcThreadEventCdcDtrHigh) {
                 cdc_connect = true;
             }
-            if(events & CDCThreadEventCDCDisconnect) {
+            if(events & CdcThreadEventCdcDtrLow) {
                 cdc_connect = false;
             }
         }
@@ -470,9 +470,9 @@ static int32_t cdc_process(void* p) {
 
 static DapApp* dap_app_alloc() {
     DapApp* dap_app = malloc(sizeof(DapApp));
-    dap_app->dap_thread = furi_thread_alloc_ex("DAP Process", 1024, dap_process, dap_app);
-    dap_app->cdc_thread = furi_thread_alloc_ex("DAP CDC", 1024, cdc_process, dap_app);
-    dap_app->gui_thread = furi_thread_alloc_ex("DAP GUI", 1024, dap_gui_thread, dap_app);
+    dap_app->dap_thread = furi_thread_alloc_ex("DapProcess", 1024, dap_process, dap_app);
+    dap_app->cdc_thread = furi_thread_alloc_ex("DapCdcProcess", 1024, dap_cdc_process, dap_app);
+    dap_app->gui_thread = furi_thread_alloc_ex("DapGui", 1024, dap_gui_thread, dap_app);
     return dap_app;
 }
 
@@ -501,7 +501,7 @@ void dap_app_connect_jtag() {
 void dap_app_set_config(DapApp* app, DapConfig* config) {
     app->config = *config;
     furi_thread_flags_set(furi_thread_get_id(app->dap_thread), DAPThreadEventApplyConfig);
-    furi_thread_flags_set(furi_thread_get_id(app->cdc_thread), CDCThreadEventApplyConfig);
+    furi_thread_flags_set(furi_thread_get_id(app->cdc_thread), CdcThreadEventApplyConfig);
 }
 
 DapConfig* dap_app_get_config(DapApp* app) {

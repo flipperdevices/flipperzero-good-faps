@@ -36,11 +36,11 @@ void dap_app_get_state(DapApp* app, DapState* state) {
 #define DAP_PROCESS_THREAD_TICK 500
 
 typedef enum {
-    DapThreadEventStop = (1 << 0),
-} DapThreadEvent;
+    DapEventStop = (1 << 0),
+} DapEvent;
 
 void dap_thread_send_stop(FuriThread* thread) {
-    furi_thread_flags_set(furi_thread_get_id(thread), DapThreadEventStop);
+    furi_thread_flags_set(furi_thread_get_id(thread), DapEventStop);
 }
 
 GpioPin flipper_dap_swclk_pin;
@@ -59,14 +59,14 @@ typedef struct {
 } DapPacket;
 
 typedef enum {
-    DapThreadEventStop = DapThreadEventStop,
+    DapThreadEventStop = DapEventStop,
     DapThreadEventRxV1 = (1 << 1),
     DapThreadEventRxV2 = (1 << 2),
-    DapThreadEventUSBConnect = (1 << 3),
-    DapThreadEventUSBDisconnect = (1 << 4),
+    DapThreadEventUsbConnect = (1 << 3),
+    DapThreadEventUsbDisconnect = (1 << 4),
     DapThreadEventApplyConfig = (1 << 5),
     DapThreadEventAll = DapThreadEventStop | DapThreadEventRxV1 | DapThreadEventRxV2 |
-                        DapThreadEventUSBConnect | DapThreadEventUSBDisconnect |
+                        DapThreadEventUsbConnect | DapThreadEventUsbDisconnect |
                         DapThreadEventApplyConfig,
 } DapThreadEvent;
 
@@ -94,9 +94,9 @@ static void dap_app_usb_state_callback(bool state, void* context) {
     furi_assert(context);
     FuriThreadId thread_id = (FuriThreadId)context;
     if(state) {
-        furi_thread_flags_set(thread_id, DapThreadEventUSBConnect);
+        furi_thread_flags_set(thread_id, DapThreadEventUsbConnect);
     } else {
-        furi_thread_flags_set(thread_id, DapThreadEventUSBDisconnect);
+        furi_thread_flags_set(thread_id, DapThreadEventUsbDisconnect);
     }
 }
 
@@ -222,11 +222,11 @@ static int32_t dap_process(void* p) {
                 dap_state->dap_version = DapVersionV2;
             }
 
-            if(events & DapThreadEventUSBConnect) {
+            if(events & DapThreadEventUsbConnect) {
                 dap_state->usb_connected = true;
             }
 
-            if(events & DapThreadEventUSBDisconnect) {
+            if(events & DapThreadEventUsbDisconnect) {
                 dap_state->usb_connected = false;
                 dap_state->dap_version = DapVersionUnknown;
             }
@@ -257,7 +257,7 @@ static int32_t dap_process(void* p) {
 /***************************************************************************/
 
 typedef enum {
-    CdcThreadEventStop = DapThreadEventStop,
+    CdcThreadEventStop = DapEventStop,
     CdcThreadEventUartRx = (1 << 1),
     CdcThreadEventCdcRx = (1 << 2),
     CdcThreadEventCdcConfig = (1 << 3),

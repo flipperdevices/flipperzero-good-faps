@@ -12,6 +12,13 @@
 #include <optimized_cipher.h>
 #include "helpers/iclass_elite_dict.h"
 
+#define LOCLASS_NUM_CSNS 9
+#ifndef LOCLASS_NUM_PER_CSN
+// Collect 2 MACs per CSN to account for keyroll modes by default
+#define LOCLASS_NUM_PER_CSN 2
+#endif
+#define LOCLASS_MACS_TO_COLLECT (LOCLASS_NUM_CSNS * LOCLASS_NUM_PER_CSN)
+
 #define PICOPASS_DEV_NAME_MAX_LEN 22
 #define PICOPASS_READER_DATA_MAX_SIZE 64
 #define PICOPASS_MAX_APP_LIMIT 32
@@ -70,14 +77,8 @@ typedef enum {
     PicopassEmulatorStateIdle,
     PicopassEmulatorStateActive,
     PicopassEmulatorStateSelected,
+    PicopassEmulatorStateStopEmulation,
 } PicopassEmulatorState;
-
-typedef struct {
-    bool valid;
-    uint8_t bitLength;
-    uint8_t FacilityCode;
-    uint16_t CardNumber;
-} PicopassWiegandRecord;
 
 typedef struct {
     bool legacy;
@@ -88,10 +89,10 @@ typedef struct {
     bool elite_kdf;
     uint8_t pin_length;
     PicopassEncryption encryption;
+    uint8_t bitLength;
     uint8_t credential[8];
     uint8_t pin0[8];
     uint8_t pin1[8];
-    PicopassWiegandRecord record;
 } PicopassPacs;
 
 typedef struct {
@@ -110,6 +111,7 @@ typedef struct {
     uint8_t key_block_num; // in loclass mode used to store csn#
     bool loclass_mode;
     bool loclass_got_std_key;
+    uint8_t loclass_mac_buffer[8 * LOCLASS_NUM_PER_CSN];
     LoclassWriter* loclass_writer;
 } PicopassEmulatorCtx;
 
@@ -146,4 +148,4 @@ void picopass_device_set_loading_callback(
     void* context);
 
 ReturnCode picopass_device_parse_credential(PicopassBlock* AA1, PicopassPacs* pacs);
-ReturnCode picopass_device_parse_wiegand(uint8_t* data, PicopassWiegandRecord* record);
+ReturnCode picopass_device_parse_wiegand(uint8_t* credential, PicopassPacs* pacs);

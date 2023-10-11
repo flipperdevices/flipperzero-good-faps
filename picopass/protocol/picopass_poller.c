@@ -144,10 +144,18 @@ NfcCommand picopass_poller_check_security(PicopassPoller* instance) {
 
 NfcCommand picopass_poller_auth_handler(PicopassPoller* instance) {
     NfcCommand command = NfcCommandContinue;
-    bool elite = false;
-    uint8_t key[PICOPASS_KEY_LEN] = {0x20, 0x20, 0x66, 0x66, 0x66, 0x66, 0x88, 0x88};
 
     do {
+        // Request key
+        instance->event.type = PicopassPollerEventTypeRequestKey;
+        command = instance->callback(instance->event, instance->context);
+        if(command != NfcCommandContinue) break;
+
+        if(!instance->event_data.req_key.is_key_provided) {
+            instance->state = PicopassPollerStateFail;
+            break;
+        }
+
         PicopassReadCheckResp read_check_resp = {};
         uint8_t* csn = instance->data->AA1[PICOPASS_CSN_BLOCK_INDEX].data;
         uint8_t* div_key = instance->data->AA1[PICOPASS_SECURE_KD_BLOCK_INDEX].data;
@@ -162,14 +170,18 @@ NfcCommand picopass_poller_auth_handler(PicopassPoller* instance) {
         }
         memcpy(ccnr, read_check_resp.data, sizeof(PicopassReadCheckResp)); // last 4 bytes left 0
 
-        loclass_iclass_calc_div_key(csn, key, div_key, elite);
+        loclass_iclass_calc_div_key(
+            csn,
+            instance->event_data.req_key.key,
+            div_key,
+            instance->event_data.req_key.is_elite_key);
         loclass_opt_doReaderMAC(ccnr, div_key, mac.data);
 
         PicopassCheckResp check_resp = {};
         error = picopass_poller_check(instance, &mac, &check_resp);
         if(error == PicopassErrorNone) {
             FURI_LOG_I(TAG, "Found key");
-            memcpy(instance->data->pacs.key, key, sizeof(key));
+            memcpy(instance->data->pacs.key, instance->event_data.req_key.key, PICOPASS_KEY_LEN);
             picopass_poller_prepare_read(instance);
             instance->state = PicopassPollerStateReadBlock;
         }
@@ -319,6 +331,7 @@ PicopassPoller* picopass_poller_alloc(Nfc* nfc) {
     nfc_set_fdt_poll_fc(instance->nfc, 5000);
     nfc_set_fdt_poll_poll_us(instance->nfc, 1000);
 
+    instance->event.data = &instance->event_data;
     instance->data = picopass_protocol_alloc();
 
     instance->tx_buffer = bit_buffer_alloc(PICOPASS_POLLER_BUFFER_SIZE);

@@ -110,6 +110,8 @@ PicopassData* picopass_protocol_alloc();
 
 void picopass_protocol_free(PicopassData* instance);
 
+void picopass_protocol_copy(PicopassData* data, const PicopassData* other);
+
 void picopass_protocol_parse_credential(PicopassData* instance);
 
 void picopass_protocol_parse_wiegand(PicopassData* instance);

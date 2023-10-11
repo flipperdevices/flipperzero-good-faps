@@ -37,6 +37,7 @@ struct PicopassPoller {
     PicopassSerialNum serial_num;
     uint8_t current_block;
     uint8_t app_limit;
+
     PicopassData* data;
 
     BitBuffer* tx_buffer;
@@ -44,6 +45,7 @@ struct PicopassPoller {
     BitBuffer* tmp_buffer;
 
     PicopassPollerEvent event;
+    PicopassPollerEventData event_data;
     PicopassPollerCallback callback;
     void* context;
 };

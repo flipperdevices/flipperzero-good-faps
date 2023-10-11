@@ -43,6 +43,9 @@ enum PicopassCustomEvent {
     PicopassCustomEventByteInputDone,
     PicopassCustomEventTextInputDone,
     PicopassCustomEventDictAttackSkip,
+
+    PicopassCustomEventPollerSuccess,
+    PicopassCustomEventPollerFail,
 };
 
 typedef enum {
@@ -74,6 +77,8 @@ struct Picopass {
     Widget* widget;
     DictAttack* dict_attack;
     Loclass* loclass;
+
+    PicopassData* data;
 };
 
 typedef enum {

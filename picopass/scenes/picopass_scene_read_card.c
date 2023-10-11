@@ -8,9 +8,16 @@ NfcCommand picopass_read_card_worker_callback(PicopassPollerEvent event, void* c
 
     Picopass* picopass = context;
 
-    if(event.type == PicopassPollerEventTypeSuccess) {
+    if(event.type == PicopassPollerEventTypeRequestKey) {
+        uint8_t key[PICOPASS_KEY_LEN] = {0x20, 0x20, 0x66, 0x66, 0x66, 0x66, 0x88, 0x88};
+        memcpy(event.data->req_key.key, key, PICOPASS_KEY_LEN);
+        event.data->req_key.is_elite_key = false;
+        event.data->req_key.is_key_provided = true;
+    } else if(event.type == PicopassPollerEventTypeSuccess) {
+        const PicopassData* data = picopass_poller_get_data(picopass->poller);
+        picopass_protocol_copy(picopass->data, data);
         view_dispatcher_send_custom_event(
-            picopass->view_dispatcher, PicopassCustomEventWorkerExit);
+            picopass->view_dispatcher, PicopassCustomEventPollerSuccess);
     }
 
     return command;
@@ -38,11 +45,9 @@ bool picopass_scene_read_card_on_event(void* context, SceneManagerEvent event) {
     bool consumed = false;
 
     if(event.type == SceneManagerEventTypeCustom) {
-        if(event.event == PicopassCustomEventWorkerExit) {
-            if(memcmp(
-                   picopass->dev->dev_data.data.pacs.key,
-                   picopass_factory_debit_key,
-                   RFAL_PICOPASS_BLOCK_LEN) == 0) {
+        if(event.event == PicopassCustomEventPollerSuccess) {
+            if(memcmp(picopass->data->pacs.key, picopass_factory_debit_key, PICOPASS_BLOCK_LEN) ==
+               0) {
                 scene_manager_next_scene(picopass->scene_manager, PicopassSceneReadFactorySuccess);
             } else {
                 scene_manager_next_scene(picopass->scene_manager, PicopassSceneReadCardSuccess);

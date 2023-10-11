@@ -34,6 +34,10 @@ void picopass_protocol_free(PicopassData* instance) {
     free(instance);
 }
 
+void picopass_protocol_copy(PicopassData* data, const PicopassData* other) {
+    *data = *other;
+}
+
 void picopass_protocol_parse_credential(PicopassData* instance) {
     furi_assert(instance);
 

@@ -8,12 +8,24 @@ extern "C" {
 #endif
 
 typedef enum {
+    PicopassPollerEventTypeRequestKey,
     PicopassPollerEventTypeSuccess,
     PicopassPollerEventTypeFail,
 } PicopassPollerEventType;
 
 typedef struct {
+    uint8_t key[PICOPASS_KEY_LEN];
+    bool is_key_provided;
+    bool is_elite_key;
+} PicopassPollerEventDataRequestKey;
+
+typedef union {
+    PicopassPollerEventDataRequestKey req_key;
+} PicopassPollerEventData;
+
+typedef struct {
     PicopassPollerEventType type;
+    PicopassPollerEventData* data;
 } PicopassPollerEvent;
 
 typedef NfcCommand (*PicopassPollerCallback)(PicopassPollerEvent event, void* context);

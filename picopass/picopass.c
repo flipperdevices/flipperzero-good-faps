@@ -40,6 +40,8 @@ Picopass* picopass_alloc() {
     // Picopass device
     picopass->dev = picopass_device_alloc();
 
+    picopass->data = picopass_protocol_alloc();
+
     // Open GUI record
     picopass->gui = furi_record_open(RECORD_GUI);
     view_dispatcher_attach_to_gui(
@@ -101,6 +103,8 @@ void picopass_free(Picopass* picopass) {
     // Picopass device
     picopass_device_free(picopass->dev);
     picopass->dev = NULL;
+
+    picopass_protocol_free(picopass->data);
 
     nfc_free(picopass->nfc);
 

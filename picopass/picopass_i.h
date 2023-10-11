@@ -30,9 +30,14 @@
 #include <picopass_icons.h>
 
 #include <nfc/nfc.h>
+#include <nfc/helpers/nfc_dict.h>
 #include "protocol/picopass_poller.h"
 
 #define PICOPASS_TEXT_STORE_SIZE 128
+
+#define PICOPASS_ICLASS_ELITE_DICT_FLIPPER_NAME APP_ASSETS_PATH("iclass_elite_dict.txt")
+#define PICOPASS_ICLASS_STANDARD_DICT_FLIPPER_NAME APP_ASSETS_PATH("iclass_standard_dict.txt")
+#define PICOPASS_ICLASS_ELITE_DICT_USER_NAME APP_DATA_PATH("assets/iclass_elite_dict_user.txt")
 
 enum PicopassCustomEvent {
     // Reserve first 100 events for button types and indexes, starting from 0
@@ -63,6 +68,7 @@ struct Picopass {
 
     Nfc* nfc;
     PicopassPoller* poller;
+    NfcDict* dict;
 
     char text_store[PICOPASS_TEXT_STORE_SIZE + 1];
     FuriString* text_box_store;

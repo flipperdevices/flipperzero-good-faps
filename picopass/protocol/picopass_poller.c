@@ -156,6 +156,19 @@ NfcCommand picopass_poller_auth_handler(PicopassPoller* instance) {
             break;
         }
 
+        FURI_LOG_D(
+            TAG,
+            "Try to %s auth with key %02x%02x%02x%02x%02x%02x%02x%02x",
+            instance->event_data.req_key.is_elite_key ? "elite" : "standard",
+            instance->event_data.req_key.key[0],
+            instance->event_data.req_key.key[1],
+            instance->event_data.req_key.key[2],
+            instance->event_data.req_key.key[3],
+            instance->event_data.req_key.key[4],
+            instance->event_data.req_key.key[5],
+            instance->event_data.req_key.key[6],
+            instance->event_data.req_key.key[7]);
+
         PicopassReadCheckResp read_check_resp = {};
         uint8_t* csn = instance->data->AA1[PICOPASS_CSN_BLOCK_INDEX].data;
         uint8_t* div_key = instance->data->AA1[PICOPASS_SECURE_KD_BLOCK_INDEX].data;

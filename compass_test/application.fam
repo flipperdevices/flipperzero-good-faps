@@ -1,0 +1,8 @@
+App(
+    appid="compass_test",
+    name="Compass Test",
+    apptype=FlipperAppType.EXTERNAL,
+    entry_point="compass_test_app",
+    stack_size=4 * 1024,
+    fap_category="GPIO",
+)

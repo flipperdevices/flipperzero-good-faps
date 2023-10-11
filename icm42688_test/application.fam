@@ -1,0 +1,8 @@
+App(
+    appid="sensor_module_test",
+    name="Sensor Module Test",
+    apptype=FlipperAppType.EXTERNAL,
+    entry_point="sensor_module_app",
+    stack_size=4 * 1024,
+    fap_category="GPIO",
+)

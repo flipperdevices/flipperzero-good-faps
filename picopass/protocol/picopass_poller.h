@@ -8,6 +8,8 @@ extern "C" {
 #endif
 
 typedef enum {
+    PicopassPollerEventTypeCardDetected,
+    PicopassPollerEventTypeCardLost,
     PicopassPollerEventTypeRequestKey,
     PicopassPollerEventTypeSuccess,
     PicopassPollerEventTypeFail,

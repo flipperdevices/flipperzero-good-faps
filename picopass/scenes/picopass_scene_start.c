@@ -54,7 +54,7 @@ bool picopass_scene_start_on_event(void* context, SceneManagerEvent event) {
         } else if(event.event == SubmenuIndexEliteDictAttack) {
             scene_manager_set_scene_state(
                 picopass->scene_manager, PicopassSceneStart, SubmenuIndexEliteDictAttack);
-            scene_manager_next_scene(picopass->scene_manager, PicopassSceneEliteDictAttack);
+            scene_manager_next_scene(picopass->scene_manager, PicopassSceneDictAttack);
             consumed = true;
         } else if(event.event == SubmenuIndexLoclass) {
             scene_manager_set_scene_state(

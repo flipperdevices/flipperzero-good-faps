@@ -48,6 +48,7 @@ enum PicopassCustomEvent {
     PicopassCustomEventByteInputDone,
     PicopassCustomEventTextInputDone,
     PicopassCustomEventDictAttackSkip,
+    PicopassCustomEventDictAttackUpdateView,
 
     PicopassCustomEventPollerSuccess,
     PicopassCustomEventPollerFail,
@@ -57,6 +58,13 @@ typedef enum {
     EventTypeTick,
     EventTypeKey,
 } EventType;
+
+typedef struct {
+    const char* name;
+    uint16_t total_keys;
+    uint16_t current_key;
+    bool card_detected;
+} PicopassDictAttackContext;
 
 struct Picopass {
     PicopassWorker* worker;
@@ -85,6 +93,7 @@ struct Picopass {
     Loclass* loclass;
 
     PicopassData* data;
+    PicopassDictAttackContext dict_attack_ctx;
 };
 
 typedef enum {

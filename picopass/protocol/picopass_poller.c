@@ -26,6 +26,10 @@ NfcCommand picopass_poller_detect_handler(PicopassPoller* instance) {
 
     if(error == PicopassErrorNone) {
         instance->state = PicopassPollerStatePreAuth;
+        instance->event.type = PicopassPollerEventTypeCardDetected;
+        command = instance->callback(instance->event, instance->context);
+    } else {
+        furi_delay_ms(100);
     }
 
     return command;
@@ -177,7 +181,12 @@ NfcCommand picopass_poller_auth_handler(PicopassPoller* instance) {
         PicopassMac mac = {};
 
         PicopassError error = picopass_poller_read_check(instance, &read_check_resp);
-        if(error != PicopassErrorNone) {
+        if(error == PicopassErrorTimeout) {
+            instance->event.type = PicopassPollerEventTypeCardLost;
+            command = instance->callback(instance->event, instance->context);
+            instance->state = PicopassPollerStateDetect;
+            break;
+        } else if(error != PicopassErrorNone) {
             FURI_LOG_E(TAG, "Read check failed: %d", error);
             break;
         }

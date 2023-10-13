@@ -11,10 +11,18 @@ void picopass_scene_delete_on_enter(void* context) {
     Picopass* picopass = context;
 
     // Setup Custom Widget view
-    char temp_str[64];
-    snprintf(temp_str, sizeof(temp_str), "\e#Delete %s?\e#", picopass->dev->dev_name);
+    FuriString* temp_str =
+        furi_string_alloc_printf("\e#Delete %s?\e#", furi_string_get_cstr(picopass->file_name));
     widget_add_text_box_element(
-        picopass->widget, 0, 0, 128, 23, AlignCenter, AlignCenter, temp_str, false);
+        picopass->widget,
+        0,
+        0,
+        128,
+        23,
+        AlignCenter,
+        AlignCenter,
+        furi_string_get_cstr(temp_str),
+        false);
     widget_add_button_element(
         picopass->widget,
         GuiButtonTypeLeft,
@@ -27,6 +35,7 @@ void picopass_scene_delete_on_enter(void* context) {
         "Delete",
         picopass_scene_delete_widget_callback,
         picopass);
+    furi_string_free(temp_str);
 
     view_dispatcher_switch_to_view(picopass->view_dispatcher, PicopassViewWidget);
 }
@@ -39,7 +48,7 @@ bool picopass_scene_delete_on_event(void* context, SceneManagerEvent event) {
         if(event.event == GuiButtonTypeLeft) {
             return scene_manager_previous_scene(picopass->scene_manager);
         } else if(event.event == GuiButtonTypeRight) {
-            if(picopass_device_delete(picopass->dev, true)) {
+            if(picopass_delete(picopass)) {
                 scene_manager_next_scene(picopass->scene_manager, PicopassSceneDeleteSuccess);
             } else {
                 scene_manager_search_and_switch_to_previous_scene(

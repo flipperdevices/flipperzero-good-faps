@@ -21,8 +21,9 @@ void picopass_scene_device_info_on_enter(void* context) {
     dolphin_deed(DolphinDeedNfcReadSuccess);
 
     // Setup view
-    PicopassBlock* AA1 = picopass->dev->dev_data.data.AA1;
-    PicopassPacs* pacs = &picopass->dev->dev_data.data.pacs;
+    const PicopassData* data = picopass_dev_get_data(picopass->device);
+    const PicopassBlock* AA1 = data->AA1;
+    const PicopassPacs* pacs = &data->pacs;
     Widget* widget = picopass->widget;
 
     uint8_t csn[RFAL_PICOPASS_BLOCK_LEN] = {0};
@@ -85,13 +86,7 @@ bool picopass_scene_device_info_on_event(void* context, SceneManagerEvent event)
     if(event.type == SceneManagerEventTypeCustom) {
         if(event.event == GuiButtonTypeLeft) {
             consumed = scene_manager_previous_scene(picopass->scene_manager);
-        } else if(event.event == PicopassCustomEventViewExit) {
-            view_dispatcher_switch_to_view(picopass->view_dispatcher, PicopassViewWidget);
-            consumed = true;
         }
-    } else if(event.type == SceneManagerEventTypeBack) {
-        view_dispatcher_switch_to_view(picopass->view_dispatcher, PicopassViewWidget);
-        consumed = true;
     }
     return consumed;
 }

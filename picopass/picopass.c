@@ -20,6 +20,20 @@ void picopass_tick_event_callback(void* context) {
     scene_manager_handle_tick_event(picopass->scene_manager);
 }
 
+static void picopass_show_loading_popup(void* context, bool show) {
+    Picopass* picopass = context;
+    TaskHandle_t timer_task = xTaskGetHandle(configTIMER_SERVICE_TASK_NAME);
+
+    if(show) {
+        // Raise timer priority so that animations can play
+        vTaskPrioritySet(timer_task, configMAX_PRIORITIES - 1);
+        view_dispatcher_switch_to_view(picopass->view_dispatcher, PicopassViewLoading);
+    } else {
+        // Restore default timer priority
+        vTaskPrioritySet(timer_task, configTIMER_TASK_PRIORITY);
+    }
+}
+
 Picopass* picopass_alloc() {
     Picopass* picopass = malloc(sizeof(Picopass));
 
@@ -40,15 +54,22 @@ Picopass* picopass_alloc() {
     // Picopass device
     picopass->dev = picopass_device_alloc();
 
-    picopass->data = picopass_protocol_alloc();
+    picopass->device = picopass_dev_alloc();
+    picopass_dev_set_loading_callback(picopass->device, picopass_show_loading_popup, picopass);
 
     // Open GUI record
     picopass->gui = furi_record_open(RECORD_GUI);
     view_dispatcher_attach_to_gui(
         picopass->view_dispatcher, picopass->gui, ViewDispatcherTypeFullscreen);
 
+    // Open Storage record
+    picopass->storage = furi_record_open(RECORD_STORAGE);
+
     // Open Notification record
     picopass->notifications = furi_record_open(RECORD_NOTIFICATION);
+
+    // Open Dialogs record
+    picopass->dialogs = furi_record_open(RECORD_DIALOGS);
 
     // Submenu
     picopass->submenu = submenu_alloc();
@@ -94,6 +115,9 @@ Picopass* picopass_alloc() {
     view_dispatcher_add_view(
         picopass->view_dispatcher, PicopassViewLoclass, loclass_get_view(picopass->loclass));
 
+    picopass->file_path = furi_string_alloc_set_str(STORAGE_APP_DATA_PATH_PREFIX);
+    picopass->file_name = furi_string_alloc();
+
     return picopass;
 }
 
@@ -104,7 +128,9 @@ void picopass_free(Picopass* picopass) {
     picopass_device_free(picopass->dev);
     picopass->dev = NULL;
 
-    picopass_protocol_free(picopass->data);
+    picopass_dev_free(picopass->device);
+    furi_string_free(picopass->file_path);
+    furi_string_free(picopass->file_name);
 
     nfc_free(picopass->nfc);
 
@@ -148,13 +174,17 @@ void picopass_free(Picopass* picopass) {
     // Scene Manager
     scene_manager_free(picopass->scene_manager);
 
+    // Storage
+    furi_record_close(RECORD_STORAGE);
+
     // GUI
     furi_record_close(RECORD_GUI);
-    picopass->gui = NULL;
 
     // Notifications
     furi_record_close(RECORD_NOTIFICATION);
-    picopass->notifications = NULL;
+
+    // Dialogs
+    furi_record_close(RECORD_DIALOGS);
 
     free(picopass);
 }
@@ -203,20 +233,6 @@ void picopass_blink_stop(Picopass* picopass) {
     notification_message(picopass->notifications, &picopass_sequence_blink_stop);
 }
 
-void picopass_show_loading_popup(void* context, bool show) {
-    Picopass* picopass = context;
-    TaskHandle_t timer_task = xTaskGetHandle(configTIMER_SERVICE_TASK_NAME);
-
-    if(show) {
-        // Raise timer priority so that animations can play
-        vTaskPrioritySet(timer_task, configMAX_PRIORITIES - 1);
-        view_dispatcher_switch_to_view(picopass->view_dispatcher, PicopassViewLoading);
-    } else {
-        // Restore default timer priority
-        vTaskPrioritySet(timer_task, configTIMER_TASK_PRIORITY);
-    }
-}
-
 static void picopass_migrate_from_old_folder() {
     Storage* storage = furi_record_open(RECORD_STORAGE);
     storage_common_migrate(storage, "/ext/picopass", STORAGE_APP_DATA_PATH_PREFIX);
@@ -231,6 +247,88 @@ bool picopass_is_memset(const uint8_t* data, const uint8_t pattern, size_t size)
         size--;
     }
     return result;
+}
+
+bool picopass_save(Picopass* instance) {
+    furi_assert(instance);
+    bool result = false;
+
+    picopass_make_app_folder(instance);
+
+    if(furi_string_end_with(instance->file_path, PICOPASS_APP_EXTENSION)) {
+        size_t filename_start = furi_string_search_rchar(instance->file_path, '/');
+        furi_string_left(instance->file_path, filename_start);
+    }
+
+    furi_string_cat_printf(
+        instance->file_path,
+        "/%s%s",
+        furi_string_get_cstr(instance->file_name),
+        PICOPASS_APP_EXTENSION);
+
+    result = picopass_dev_save(instance->device, furi_string_get_cstr(instance->file_path));
+
+    if(!result) {
+        dialog_message_show_storage_error(instance->dialogs, "Cannot save\nkey file");
+    }
+
+    return result;
+}
+
+bool picopass_delete(Picopass* instance) {
+    furi_assert(instance);
+
+    return storage_simply_remove(instance->storage, furi_string_get_cstr(instance->file_path));
+}
+
+bool picopass_load_from_file_select(Picopass* instance) {
+    furi_assert(instance);
+
+    DialogsFileBrowserOptions browser_options;
+    dialog_file_browser_set_basic_options(&browser_options, PICOPASS_APP_EXTENSION, &I_Nfc_10px);
+    browser_options.base_path = STORAGE_APP_DATA_PATH_PREFIX;
+    browser_options.hide_dot_files = true;
+
+    // Input events and views are managed by file_browser
+    bool result = dialog_file_browser_show(
+        instance->dialogs, instance->file_path, instance->file_path, &browser_options);
+
+    if(result) {
+        result = picopass_load_file(instance, instance->file_path, true);
+    }
+
+    return result;
+}
+
+bool picopass_load_file(Picopass* instance, FuriString* path, bool show_dialog) {
+    furi_assert(instance);
+
+    bool result = false;
+
+    FuriString* load_path = furi_string_alloc();
+    furi_string_set(load_path, path);
+
+    result = picopass_dev_load(instance->device, furi_string_get_cstr(load_path));
+
+    if(result) {
+        path_extract_filename(load_path, instance->file_name, true);
+    }
+
+    if((!result) && (show_dialog)) {
+        dialog_message_show_storage_error(instance->dialogs, "Cannot load\nkey file");
+    }
+
+    furi_string_free(load_path);
+
+    return result;
+}
+
+void picopass_make_app_folder(Picopass* instance) {
+    furi_assert(instance);
+
+    if(!storage_simply_mkdir(instance->storage, STORAGE_APP_DATA_PATH_PREFIX)) {
+        dialog_message_show_storage_error(instance->dialogs, "Cannot create\napp folder");
+    }
 }
 
 int32_t picopass_app(void* p) {

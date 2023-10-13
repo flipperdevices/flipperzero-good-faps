@@ -27,8 +27,9 @@ void picopass_scene_read_card_success_on_enter(void* context) {
     notification_message(picopass->notifications, &sequence_success);
 
     // Setup view
-    PicopassBlock* AA1 = picopass->data->AA1;
-    PicopassPacs* pacs = &picopass->data->pacs;
+    const PicopassData* data = picopass_dev_get_data(picopass->device);
+    const PicopassBlock* AA1 = data->AA1;
+    const PicopassPacs* pacs = &data->pacs;
     Widget* widget = picopass->widget;
 
     uint8_t csn[RFAL_PICOPASS_BLOCK_LEN] = {0};
@@ -162,7 +163,6 @@ bool picopass_scene_read_card_success_on_event(void* context, SceneManagerEvent 
             consumed = scene_manager_previous_scene(picopass->scene_manager);
         } else if(event.event == GuiButtonTypeRight) {
             // Clear device name
-            picopass_device_set_name(picopass->dev, "");
             scene_manager_next_scene(picopass->scene_manager, PicopassSceneCardMenu);
             consumed = true;
         } else if(event.event == GuiButtonTypeCenter) {

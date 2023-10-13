@@ -26,11 +26,11 @@ void picopass_scene_read_factory_success_on_enter(void* context) {
 
     // Setup view
     Widget* widget = picopass->widget;
-    //PicopassPacs* pacs = &picopass->dev->dev_data.data.pacs;
-    PicopassBlock* AA1 = picopass->data->AA1;
+    const PicopassData* data = picopass_dev_get_data(picopass->device);
+    const PicopassBlock* AA1 = data->AA1;
 
-    uint8_t* configBlock = AA1[PICOPASS_CONFIG_BLOCK_INDEX].data;
-    uint8_t fuses = configBlock[7];
+    const uint8_t* configBlock = AA1[PICOPASS_CONFIG_BLOCK_INDEX].data;
+    const uint8_t fuses = configBlock[7];
 
     if((fuses & 0x80) == 0x80) {
         furi_string_cat_printf(subtitle, "Personalization mode");

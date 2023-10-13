@@ -35,7 +35,99 @@ void picopass_protocol_free(PicopassData* instance) {
 }
 
 void picopass_protocol_copy(PicopassData* data, const PicopassData* other) {
+    furi_assert(data);
+    furi_assert(other);
+
     *data = *other;
+}
+
+void picopass_protocol_reset(PicopassData* instance) {
+    furi_assert(instance);
+
+    memset(instance, 0, sizeof(PicopassData));
+}
+
+bool picopass_protocol_save(const PicopassData* instance, FlipperFormat* ff) {
+    furi_assert(instance);
+    furi_assert(ff);
+
+    bool success = false;
+    const PicopassPacs* pacs = &instance->pacs;
+    const PicopassBlock* AA1 = instance->AA1;
+    FuriString* temp_str = furi_string_alloc();
+
+    do {
+        if(!flipper_format_write_hex(ff, "Credential", pacs->credential, PICOPASS_BLOCK_LEN))
+            break;
+
+        // TODO: Add elite
+        if(!flipper_format_write_comment_cstr(ff, "Picopass blocks")) break;
+
+        size_t app_limit = AA1[PICOPASS_CONFIG_BLOCK_INDEX].data[0] < PICOPASS_MAX_APP_LIMIT ?
+                               AA1[PICOPASS_CONFIG_BLOCK_INDEX].data[0] :
+                               PICOPASS_MAX_APP_LIMIT;
+        bool block_saved = true;
+        for(size_t i = 0; i < app_limit; i++) {
+            furi_string_printf(temp_str, "Block %d", i);
+            if(!flipper_format_write_hex(
+                   ff, furi_string_get_cstr(temp_str), AA1[i].data, PICOPASS_BLOCK_LEN)) {
+                block_saved = false;
+                break;
+            }
+        }
+        if(!block_saved) break;
+
+        success = true;
+    } while(false);
+
+    furi_string_free(temp_str);
+
+    return success;
+}
+
+bool picopass_protocol_load(PicopassData* instance, FlipperFormat* ff, uint32_t version) {
+    furi_assert(instance);
+    furi_assert(ff);
+    UNUSED(version);
+
+    bool success = false;
+    PicopassBlock* AA1 = instance->AA1;
+    FuriString* temp_str = furi_string_alloc();
+
+    do {
+        // Parse header blocks
+        bool block_read = true;
+        for(size_t i = 0; i < 6; i++) {
+            furi_string_printf(temp_str, "Block %d", i);
+            if(!flipper_format_read_hex(
+                   ff, furi_string_get_cstr(temp_str), AA1[i].data, PICOPASS_BLOCK_LEN)) {
+                block_read = false;
+                break;
+            }
+        }
+
+        size_t app_limit = AA1[PICOPASS_CONFIG_BLOCK_INDEX].data[0];
+        // Fix for unpersonalized cards that have app_limit set to 0xFF
+        if(app_limit > PICOPASS_MAX_APP_LIMIT) app_limit = PICOPASS_MAX_APP_LIMIT;
+        for(size_t i = 6; i < app_limit; i++) {
+            furi_string_printf(temp_str, "Block %d", i);
+            if(!flipper_format_read_hex(
+                   ff, furi_string_get_cstr(temp_str), AA1[i].data, PICOPASS_BLOCK_LEN)) {
+                block_read = false;
+                break;
+            }
+        }
+        if(!block_read) break;
+
+        picopass_protocol_parse_credential(instance);
+        picopass_protocol_parse_wiegand(instance);
+
+        success = true;
+    } while(false);
+
+    furi_string_free(temp_str);
+
+    return success;
 }
 
 void picopass_protocol_parse_credential(PicopassData* instance) {

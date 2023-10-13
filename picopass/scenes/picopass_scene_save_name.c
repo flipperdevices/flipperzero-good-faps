@@ -11,16 +11,21 @@ void picopass_scene_save_name_text_input_callback(void* context) {
 
 void picopass_scene_save_name_on_enter(void* context) {
     Picopass* picopass = context;
+    FuriString* folder_path = furi_string_alloc();
 
     // Setup view
     TextInput* text_input = picopass->text_input;
-    bool dev_name_empty = false;
-    if(!strcmp(picopass->dev->dev_name, "")) {
+    bool dev_name_empty = furi_string_empty(picopass->file_name);
+
+    if(dev_name_empty) {
+        furi_string_set(picopass->file_path, STORAGE_APP_DATA_PATH_PREFIX);
         name_generator_make_auto(
             picopass->text_store, sizeof(picopass->text_store), PICOPASS_APP_FILE_PREFIX);
+        furi_string_set(folder_path, STORAGE_APP_DATA_PATH_PREFIX);
         dev_name_empty = true;
     } else {
-        picopass_text_store_set(picopass, picopass->dev->dev_name);
+        picopass_text_store_set(picopass, "%s", furi_string_get_cstr(picopass->file_name));
+        path_extract_dirname(furi_string_get_cstr(picopass->file_path), folder_path);
     }
     text_input_set_header_text(text_input, "Name the card");
     text_input_set_result_callback(
@@ -31,20 +36,12 @@ void picopass_scene_save_name_on_enter(void* context) {
         PICOPASS_DEV_NAME_MAX_LEN,
         dev_name_empty);
 
-    FuriString* folder_path;
-    folder_path = furi_string_alloc_set(STORAGE_APP_DATA_PATH_PREFIX);
-
-    if(furi_string_end_with(picopass->dev->load_path, PICOPASS_APP_EXTENSION)) {
-        path_extract_dirname(furi_string_get_cstr(picopass->dev->load_path), folder_path);
-    }
-
     ValidatorIsFile* validator_is_file = validator_is_file_alloc_init(
         furi_string_get_cstr(folder_path), PICOPASS_APP_EXTENSION, picopass->dev->dev_name);
     text_input_set_validator(text_input, validator_is_file_callback, validator_is_file);
 
-    view_dispatcher_switch_to_view(picopass->view_dispatcher, PicopassViewTextInput);
-
     furi_string_free(folder_path);
+    view_dispatcher_switch_to_view(picopass->view_dispatcher, PicopassViewTextInput);
 }
 
 bool picopass_scene_save_name_on_event(void* context, SceneManagerEvent event) {
@@ -53,13 +50,12 @@ bool picopass_scene_save_name_on_event(void* context, SceneManagerEvent event) {
 
     if(event.type == SceneManagerEventTypeCustom) {
         if(event.event == PicopassCustomEventTextInputDone) {
-            // Delete old file if renaming
-            if(strcmp(picopass->dev->dev_name, "") != 0) {
-                picopass_device_delete(picopass->dev, true);
+            if(!furi_string_empty(picopass->file_name)) {
+                picopass_delete(picopass);
             }
-            strlcpy(
-                picopass->dev->dev_name, picopass->text_store, strlen(picopass->text_store) + 1);
-            if(picopass_device_save(picopass->dev, picopass->text_store)) {
+            furi_string_set(picopass->file_name, picopass->text_store);
+
+            if(picopass_save(picopass)) {
                 scene_manager_next_scene(picopass->scene_manager, PicopassSceneSaveSuccess);
                 consumed = true;
             } else {

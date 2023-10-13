@@ -1,8 +1,6 @@
 #pragma once
 
-#include <stdint.h>
-#include <stddef.h>
-#include <stdbool.h>
+#include <flipper_format/flipper_format.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -111,6 +109,12 @@ PicopassData* picopass_protocol_alloc();
 void picopass_protocol_free(PicopassData* instance);
 
 void picopass_protocol_copy(PicopassData* data, const PicopassData* other);
+
+void picopass_protocol_reset(PicopassData* instance);
+
+bool picopass_protocol_save(const PicopassData* instance, FlipperFormat* ff);
+
+bool picopass_protocol_load(PicopassData* instance, FlipperFormat* ff, uint32_t version);
 
 void picopass_protocol_parse_credential(PicopassData* instance);
 

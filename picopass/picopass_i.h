@@ -26,14 +26,19 @@
 #include "views/loclass.h"
 
 #include <storage/storage.h>
+#include <dialogs/dialogs.h>
 #include <lib/toolbox/path.h>
 #include <picopass_icons.h>
 
 #include <nfc/nfc.h>
 #include <nfc/helpers/nfc_dict.h>
 #include "protocol/picopass_poller.h"
+#include "picopass_dev.h"
 
 #define PICOPASS_TEXT_STORE_SIZE 128
+
+#define PICOPASS_APP_EXTENSION ".picopass"
+#define PICOPASS_APP_FILE_PREFIX "Picopass"
 
 #define PICOPASS_ICLASS_ELITE_DICT_FLIPPER_NAME APP_ASSETS_PATH("iclass_elite_dict.txt")
 #define PICOPASS_ICLASS_STANDARD_DICT_FLIPPER_NAME APP_ASSETS_PATH("iclass_standard_dict.txt")
@@ -70,7 +75,9 @@ struct Picopass {
     PicopassWorker* worker;
     ViewDispatcher* view_dispatcher;
     Gui* gui;
+    Storage* storage;
     NotificationApp* notifications;
+    DialogsApp* dialogs;
     SceneManager* scene_manager;
     PicopassDevice* dev;
 
@@ -92,8 +99,10 @@ struct Picopass {
     DictAttack* dict_attack;
     Loclass* loclass;
 
-    PicopassData* data;
     PicopassDictAttackContext dict_attack_ctx;
+    PicopassDev* device;
+    FuriString* file_path;
+    FuriString* file_name;
 };
 
 typedef enum {
@@ -119,8 +128,6 @@ void picopass_blink_emulate_start(Picopass* picopass);
 
 void picopass_blink_stop(Picopass* picopass);
 
-void picopass_show_loading_popup(void* context, bool show);
-
 /** Check if memory is set to pattern
  *
  * @warning    zero size will return false
@@ -132,3 +139,13 @@ void picopass_show_loading_popup(void* context, bool show);
  * @return     True if memory is set to pattern, false otherwise
  */
 bool picopass_is_memset(const uint8_t* data, const uint8_t pattern, size_t size);
+
+bool picopass_save(Picopass* instance);
+
+bool picopass_delete(Picopass* instance);
+
+bool picopass_load_from_file_select(Picopass* instance);
+
+bool picopass_load_file(Picopass* instance, FuriString* path, bool show_dialog);
+
+void picopass_make_app_folder(Picopass* instance);

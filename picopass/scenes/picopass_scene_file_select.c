@@ -2,16 +2,13 @@
 #include "../picopass_device.h"
 
 void picopass_scene_file_select_on_enter(void* context) {
-    Picopass* picopass = context;
-    // Process file_select return
-    picopass_device_set_loading_callback(picopass->dev, picopass_show_loading_popup, picopass);
-    if(picopass_file_select(picopass->dev)) {
-        scene_manager_next_scene(picopass->scene_manager, PicopassSceneSavedMenu);
+    Picopass* instance = context;
+
+    if(picopass_load_from_file_select(instance)) {
+        scene_manager_next_scene(instance->scene_manager, PicopassSceneSavedMenu);
     } else {
-        scene_manager_search_and_switch_to_previous_scene(
-            picopass->scene_manager, PicopassSceneStart);
+        scene_manager_previous_scene(instance->scene_manager);
     }
-    picopass_device_set_loading_callback(picopass->dev, NULL, picopass);
 }
 
 bool picopass_scene_file_select_on_event(void* context, SceneManagerEvent event) {

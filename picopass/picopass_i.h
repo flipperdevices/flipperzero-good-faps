@@ -71,6 +71,11 @@ typedef struct {
     bool card_detected;
 } PicopassDictAttackContext;
 
+typedef struct {
+    uint8_t key_to_write[PICOPASS_BLOCK_LEN];
+    bool is_elite;
+} PicopassWriteKeyContext;
+
 struct Picopass {
     PicopassWorker* worker;
     ViewDispatcher* view_dispatcher;
@@ -87,7 +92,7 @@ struct Picopass {
 
     char text_store[PICOPASS_TEXT_STORE_SIZE + 1];
     FuriString* text_box_store;
-    uint8_t byte_input_store[RFAL_PICOPASS_BLOCK_LEN];
+    uint8_t byte_input_store[PICOPASS_BLOCK_LEN];
 
     // Common Views
     Submenu* submenu;
@@ -100,6 +105,7 @@ struct Picopass {
     Loclass* loclass;
 
     PicopassDictAttackContext dict_attack_ctx;
+    PicopassWriteKeyContext write_key_context;
     PicopassDev* device;
     FuriString* file_path;
     FuriString* file_name;

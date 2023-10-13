@@ -243,8 +243,10 @@ NfcCommand picopass_poller_auth_handler(PicopassPoller* instance) {
                     instance->data->pacs.key, instance->event_data.req_key.key, PICOPASS_KEY_LEN);
                 picopass_poller_prepare_read(instance);
                 instance->state = PicopassPollerStateReadBlock;
-            } else {
+            } else if(instance->mode == PicopassPollerModeWrite) {
                 instance->state = PicopassPollerStateWriteBlock;
+            } else {
+                instance->state = PicopassPollerStateWriteKey;
             }
         }
 
@@ -360,6 +362,72 @@ NfcCommand picopass_poller_write_block_handler(PicopassPoller* instance) {
     return command;
 }
 
+NfcCommand picopass_poller_write_key_handler(PicopassPoller* instance) {
+    NfcCommand command = NfcCommandContinue;
+    PicopassError error = PicopassErrorNone;
+
+    do {
+        instance->event.type = PicopassPollerEventTypeRequestWriteKey;
+        command = instance->callback(instance->event, instance->context);
+        if(command != NfcCommandContinue) break;
+
+        const PicopassData* picopass_data = instance->event_data.req_write_key.data;
+        const uint8_t* new_key = instance->event_data.req_write_key.key;
+        bool is_elite_key = instance->event_data.req_write_key.is_elite_key;
+
+        const uint8_t* csn = picopass_data->AA1[PICOPASS_CSN_BLOCK_INDEX].data;
+        const uint8_t* config_block = picopass_data->AA1[PICOPASS_CONFIG_BLOCK_INDEX].data;
+        uint8_t fuses = config_block[7];
+        const uint8_t* old_key = picopass_data->AA1[PICOPASS_SECURE_KD_BLOCK_INDEX].data;
+
+        PicopassBlock new_block = {};
+        loclass_iclass_calc_div_key(csn, new_key, new_block.data, is_elite_key);
+
+        if((fuses & 0x80) == 0x80) {
+            FURI_LOG_D(TAG, "Plain write for personalized mode key change");
+        } else {
+            FURI_LOG_D(TAG, "XOR write for application mode key change");
+            // XOR when in application mode
+            for(size_t i = 0; i < PICOPASS_BLOCK_LEN; i++) {
+                new_block.data[i] ^= old_key[i];
+            }
+        }
+
+        FURI_LOG_D(TAG, "Writing %d block", PICOPASS_SECURE_KD_BLOCK_INDEX);
+        uint8_t data[9] = {};
+        data[0] = PICOPASS_SECURE_KD_BLOCK_INDEX;
+        memcpy(&data[1], new_block.data, PICOPASS_BLOCK_LEN);
+        loclass_doMAC_N(data, sizeof(data), instance->div_key, instance->mac.data);
+        FURI_LOG_D(
+            TAG,
+            "loclass_doMAC_N %d %02x%02x%02x%02x%02x%02x%02x%02x %02x%02x%02x%02x",
+            PICOPASS_SECURE_KD_BLOCK_INDEX,
+            data[1],
+            data[2],
+            data[3],
+            data[4],
+            data[5],
+            data[6],
+            data[7],
+            data[8],
+            instance->mac.data[0],
+            instance->mac.data[1],
+            instance->mac.data[2],
+            instance->mac.data[3]);
+        error = picopass_poller_write_block(
+            instance, PICOPASS_SECURE_KD_BLOCK_INDEX, &new_block, &instance->mac);
+        if(error != PicopassErrorNone) {
+            FURI_LOG_E(
+                TAG, "Failed to write block %d. Error %d", PICOPASS_SECURE_KD_BLOCK_INDEX, error);
+            instance->state = PicopassPollerStateFail;
+            break;
+        }
+
+    } while(false);
+
+    return command;
+}
+
 NfcCommand picopass_poller_success_handler(PicopassPoller* instance) {
     NfcCommand command = NfcCommandContinue;
 
@@ -390,6 +458,7 @@ static const PicopassPollerStateHandler picopass_poller_state_handler[PicopassPo
     [PicopassPollerStateAuth] = picopass_poller_auth_handler,
     [PicopassPollerStateReadBlock] = picopass_poller_read_block_handler,
     [PicopassPollerStateWriteBlock] = picopass_poller_write_block_handler,
+    [PicopassPollerStateWriteKey] = picopass_poller_write_key_handler,
     [PicopassPollerStateParseCredential] = picopass_poller_parse_credential_handler,
     [PicopassPollerStateParseWiegand] = picopass_poller_parse_wiegand_handler,
     [PicopassPollerStateSuccess] = picopass_poller_success_handler,

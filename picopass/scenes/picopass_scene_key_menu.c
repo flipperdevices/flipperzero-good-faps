@@ -9,6 +9,39 @@ enum SubmenuIndex {
     SubmenuIndexWriteCustom,
 };
 
+typedef struct {
+    const char* name;
+    const uint8_t* key;
+    bool is_elite;
+} PicopassSceneKeyData;
+
+const PicopassSceneKeyData picopass_scene_key_data[SubmenuIndexWriteCustom] = {
+    [SubmenuIndexWriteStandard] =
+        {
+            .name = "Write Standard",
+            .key = picopass_iclass_key,
+            .is_elite = false,
+        },
+    [SubmenuIndexWriteiCE] =
+        {
+            .name = "Write iCE",
+            .key = picopass_xice_key,
+            .is_elite = true,
+        },
+    [SubmenuIndexWriteiCL] =
+        {
+            .name = "Write iCL",
+            .key = picopass_xicl_key,
+            .is_elite = false,
+        },
+    [SubmenuIndexWriteiCS] =
+        {
+            .name = "Write iCS",
+            .key = picopass_xics_key,
+            .is_elite = false,
+        },
+};
+
 void picopass_scene_key_menu_submenu_callback(void* context, uint32_t index) {
     Picopass* picopass = context;
 
@@ -18,31 +51,16 @@ void picopass_scene_key_menu_submenu_callback(void* context, uint32_t index) {
 void picopass_scene_key_menu_on_enter(void* context) {
     Picopass* picopass = context;
     Submenu* submenu = picopass->submenu;
+    memset(&picopass->write_key_context, 0, sizeof(PicopassWriteKeyContext));
 
-    submenu_add_item(
-        submenu,
-        "Write Standard",
-        SubmenuIndexWriteStandard,
-        picopass_scene_key_menu_submenu_callback,
-        picopass);
-    submenu_add_item(
-        submenu,
-        "Write iCE",
-        SubmenuIndexWriteiCE,
-        picopass_scene_key_menu_submenu_callback,
-        picopass);
-    submenu_add_item(
-        submenu,
-        "Write iCL",
-        SubmenuIndexWriteiCL,
-        picopass_scene_key_menu_submenu_callback,
-        picopass);
-    submenu_add_item(
-        submenu,
-        "Write iCS",
-        SubmenuIndexWriteiCS,
-        picopass_scene_key_menu_submenu_callback,
-        picopass);
+    for(size_t i = 0; i < SubmenuIndexWriteCustom; i++) {
+        submenu_add_item(
+            submenu,
+            picopass_scene_key_data[i].name,
+            i,
+            picopass_scene_key_menu_submenu_callback,
+            picopass);
+    }
     submenu_add_item(
         submenu,
         "Write Elite",
@@ -62,54 +80,30 @@ bool picopass_scene_key_menu_on_event(void* context, SceneManagerEvent event) {
     bool consumed = false;
 
     if(event.type == SceneManagerEventTypeCustom) {
-        if(event.event == SubmenuIndexWriteStandard) {
-            scene_manager_set_scene_state(
-                picopass->scene_manager, PicopassSceneKeyMenu, SubmenuIndexWriteStandard);
+        if(event.event < SubmenuIndexWriteCustom) {
             memcpy(
-                picopass->dev->dev_data.data.pacs.key,
-                picopass_iclass_key,
-                RFAL_PICOPASS_BLOCK_LEN);
-            picopass->dev->dev_data.data.pacs.elite_kdf = false;
-            scene_manager_next_scene(picopass->scene_manager, PicopassSceneWriteKey);
-            consumed = true;
-        } else if(event.event == SubmenuIndexWriteiCE) {
-            scene_manager_set_scene_state(
-                picopass->scene_manager, PicopassSceneKeyMenu, SubmenuIndexWriteiCE);
-            memcpy(
-                picopass->dev->dev_data.data.pacs.key, picopass_xice_key, RFAL_PICOPASS_BLOCK_LEN);
-            picopass->dev->dev_data.data.pacs.elite_kdf = true;
-            scene_manager_next_scene(picopass->scene_manager, PicopassSceneWriteKey);
-            consumed = true;
-        } else if(event.event == SubmenuIndexWriteiCL) {
-            scene_manager_set_scene_state(
-                picopass->scene_manager, PicopassSceneKeyMenu, SubmenuIndexWriteiCL);
-            memcpy(
-                picopass->dev->dev_data.data.pacs.key, picopass_xicl_key, RFAL_PICOPASS_BLOCK_LEN);
-            picopass->dev->dev_data.data.pacs.elite_kdf = false;
-            scene_manager_next_scene(picopass->scene_manager, PicopassSceneWriteKey);
-            consumed = true;
-        } else if(event.event == SubmenuIndexWriteiCS) {
-            scene_manager_set_scene_state(
-                picopass->scene_manager, PicopassSceneKeyMenu, SubmenuIndexWriteiCS);
-            memcpy(
-                picopass->dev->dev_data.data.pacs.key, picopass_xics_key, RFAL_PICOPASS_BLOCK_LEN);
-            picopass->dev->dev_data.data.pacs.elite_kdf = false;
+                picopass->write_key_context.key_to_write,
+                picopass_scene_key_data[event.event].key,
+                PICOPASS_KEY_LEN);
+            picopass->write_key_context.is_elite = picopass_scene_key_data[event.event].is_elite;
             scene_manager_next_scene(picopass->scene_manager, PicopassSceneWriteKey);
             consumed = true;
         } else if(event.event == SubmenuIndexWriteCustom) {
             // If user dictionary, prepopulate with the first key
-            if(iclass_elite_dict_check_presence(IclassEliteDictTypeUser)) {
-                IclassEliteDict* dict = iclass_elite_dict_alloc(IclassEliteDictTypeUser);
-                iclass_elite_dict_get_next_key(dict, picopass->byte_input_store);
-                iclass_elite_dict_free(dict);
+            if(nfc_dict_check_presence(PICOPASS_ICLASS_ELITE_DICT_USER_NAME)) {
+                picopass->dict = nfc_dict_alloc(
+                    PICOPASS_ICLASS_ELITE_DICT_USER_NAME,
+                    NfcDictModeOpenExisting,
+                    PICOPASS_KEY_LEN);
+                nfc_dict_get_next_key(
+                    picopass->dict, picopass->byte_input_store, PICOPASS_KEY_LEN);
+                nfc_dict_free(picopass->dict);
             }
-
-            scene_manager_set_scene_state(
-                picopass->scene_manager, PicopassSceneKeyMenu, SubmenuIndexWriteCustom);
             // Key and elite_kdf = true are both set in key_input scene after the value is input
             scene_manager_next_scene(picopass->scene_manager, PicopassSceneKeyInput);
             consumed = true;
         }
+        scene_manager_set_scene_state(picopass->scene_manager, PicopassSceneKeyMenu, event.event);
     } else if(event.type == SceneManagerEventTypeBack) {
         consumed = scene_manager_search_and_switch_to_previous_scene(
             picopass->scene_manager, PicopassSceneStart);

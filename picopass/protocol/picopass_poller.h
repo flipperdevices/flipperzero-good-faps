@@ -13,6 +13,7 @@ typedef enum {
     PicopassPollerEventTypeCardLost,
     PicopassPollerEventTypeRequestKey,
     PicopassPollerEventTypeRequestWriteBlock,
+    PicopassPollerEventTypeRequestWriteKey,
     PicopassPollerEventTypeSuccess,
     PicopassPollerEventTypeFail,
 } PicopassPollerEventType;
@@ -20,6 +21,7 @@ typedef enum {
 typedef enum {
     PicopassPollerModeRead,
     PicopassPollerModeWrite,
+    PicopassPollerModeWriteKey,
 } PicopassPollerMode;
 
 typedef struct {
@@ -38,10 +40,17 @@ typedef struct {
     const PicopassBlock* block;
 } PicopassPollerEventDataRequestWriteBlock;
 
+typedef struct {
+    const PicopassData* data;
+    uint8_t key[PICOPASS_KEY_LEN];
+    bool is_elite_key;
+} PicopassPollerEventDataRequestWriteKey;
+
 typedef union {
     PicopassPollerEventDataRequestMode req_mode;
     PicopassPollerEventDataRequestKey req_key;
     PicopassPollerEventDataRequestWriteBlock req_write;
+    PicopassPollerEventDataRequestWriteKey req_write_key;
 } PicopassPollerEventData;
 
 typedef struct {

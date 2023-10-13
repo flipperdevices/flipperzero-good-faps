@@ -33,12 +33,15 @@ typedef struct {
 } PicopassPollerEventDataRequestKey;
 
 typedef struct {
+    bool perform_write;
     uint8_t block_num;
+    const PicopassBlock* block;
 } PicopassPollerEventDataRequestWriteBlock;
 
 typedef union {
     PicopassPollerEventDataRequestMode req_mode;
     PicopassPollerEventDataRequestKey req_key;
+    PicopassPollerEventDataRequestWriteBlock req_write;
 } PicopassPollerEventData;
 
 typedef struct {

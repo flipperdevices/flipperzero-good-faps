@@ -17,6 +17,7 @@ typedef enum {
 typedef enum {
     PicopassPollerStateRequestMode,
     PicopassPollerStateDetect,
+    PicopassPollerStateSelect,
     PicopassPollerStatePreAuth,
     PicopassPollerStateCheckSecurity,
     PicopassPollerStateAuth,
@@ -38,6 +39,8 @@ struct PicopassPoller {
 
     PicopassColResSerialNum col_res_serial_num;
     PicopassSerialNum serial_num;
+    PicopassMac mac;
+    uint8_t div_key[8];
     uint8_t current_block;
     uint8_t app_limit;
 

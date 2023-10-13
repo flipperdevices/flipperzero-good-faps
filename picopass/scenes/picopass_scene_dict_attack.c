@@ -58,7 +58,9 @@ NfcCommand picopass_dict_attack_worker_callback(PicopassPollerEvent event, void*
 
     Picopass* picopass = context;
 
-    if(event.type == PicopassPollerEventTypeRequestKey) {
+    if(event.type == PicopassPollerEventTypeRequestMode) {
+        event.data->req_mode.mode = PicopassPollerModeRead;
+    } else if(event.type == PicopassPollerEventTypeRequestKey) {
         uint8_t key[PICOPASS_KEY_LEN] = {};
         bool is_key_provided = true;
         if(!nfc_dict_get_next_key(picopass->dict, key, PICOPASS_KEY_LEN)) {

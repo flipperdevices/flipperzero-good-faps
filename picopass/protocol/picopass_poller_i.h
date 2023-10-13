@@ -15,14 +15,16 @@ typedef enum {
 } PicopassPollerSessionState;
 
 typedef enum {
+    PicopassPollerStateRequestMode,
     PicopassPollerStateDetect,
     PicopassPollerStatePreAuth,
     PicopassPollerStateCheckSecurity,
     PicopassPollerStateAuth,
     PicopassPollerStateReadBlock,
-    PicopassPollerStateSuccess,
+    PicopassPollerStateWriteBlock,
     PicopassPollerStateParseCredential,
     PicopassPollerStateParseWiegand,
+    PicopassPollerStateSuccess,
     PicopassPollerStateFail,
 
     PicopassPollerStateNum,
@@ -32,6 +34,7 @@ struct PicopassPoller {
     Nfc* nfc;
     PicopassPollerSessionState session_state;
     PicopassPollerState state;
+    PicopassPollerMode mode;
 
     PicopassColResSerialNum col_res_serial_num;
     PicopassSerialNum serial_num;
@@ -70,3 +73,9 @@ PicopassError picopass_poller_check(
     PicopassPoller* instance,
     PicopassMac* mac,
     PicopassCheckResp* check_resp);
+
+PicopassError picopass_poller_write_block(
+    PicopassPoller* instance,
+    uint8_t block_num,
+    const PicopassBlock* block,
+    const PicopassMac* mac);

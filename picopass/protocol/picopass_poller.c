@@ -20,12 +20,27 @@ static void picopass_poller_prepare_read(PicopassPoller* instance) {
     instance->current_block = 2;
 }
 
+NfcCommand picopass_poller_request_mode_handler(PicopassPoller* instance) {
+    NfcCommand command = NfcCommandContinue;
+
+    instance->event.type = PicopassPollerEventTypeRequestMode;
+    command = instance->callback(instance->event, instance->context);
+    instance->mode = instance->event_data.req_mode.mode;
+    instance->state = PicopassPollerStateDetect;
+
+    return command;
+}
+
 NfcCommand picopass_poller_detect_handler(PicopassPoller* instance) {
     NfcCommand command = NfcCommandContinue;
     PicopassError error = picopass_poller_actall(instance);
 
     if(error == PicopassErrorNone) {
-        instance->state = PicopassPollerStatePreAuth;
+        if(instance->mode == PicopassPollerModeRead) {
+            instance->state = PicopassPollerStatePreAuth;
+        } else {
+            instance->state = PicopassPollerStateWriteBlock;
+        }
         instance->event.type = PicopassPollerEventTypeCardDetected;
         command = instance->callback(instance->event, instance->context);
     } else {
@@ -271,6 +286,16 @@ NfcCommand picopass_poller_parse_wiegand_handler(PicopassPoller* instance) {
     return command;
 }
 
+NfcCommand picopass_poller_write_block_handler(PicopassPoller* instance) {
+    NfcCommand command = NfcCommandContinue;
+    UNUSED(instance);
+
+    do {
+    } while(false);
+
+    return command;
+}
+
 NfcCommand picopass_poller_success_handler(PicopassPoller* instance) {
     NfcCommand command = NfcCommandContinue;
 
@@ -293,11 +318,13 @@ NfcCommand picopass_poller_fail_handler(PicopassPoller* instance) {
 }
 
 static const PicopassPollerStateHandler picopass_poller_state_handler[PicopassPollerStateNum] = {
+    [PicopassPollerStateRequestMode] = picopass_poller_request_mode_handler,
     [PicopassPollerStateDetect] = picopass_poller_detect_handler,
     [PicopassPollerStatePreAuth] = picopass_poller_pre_auth_handler,
     [PicopassPollerStateCheckSecurity] = picopass_poller_check_security,
     [PicopassPollerStateAuth] = picopass_poller_auth_handler,
     [PicopassPollerStateReadBlock] = picopass_poller_read_block_handler,
+    [PicopassPollerStateWriteBlock] = picopass_poller_write_block_handler,
     [PicopassPollerStateParseCredential] = picopass_poller_parse_credential_handler,
     [PicopassPollerStateParseWiegand] = picopass_poller_parse_wiegand_handler,
     [PicopassPollerStateSuccess] = picopass_poller_success_handler,

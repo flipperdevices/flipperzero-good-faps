@@ -189,3 +189,29 @@ PicopassError picopass_poller_check(
 
     return ret;
 }
+
+PicopassError picopass_poller_write_block(
+    PicopassPoller* instance,
+    uint8_t block_num,
+    const PicopassBlock* block,
+    const PicopassMac* mac) {
+    PicopassError ret = PicopassErrorNone;
+
+    do {
+        bit_buffer_reset(instance->tx_buffer);
+        bit_buffer_append_byte(instance->tx_buffer, PICOPASS_CMD_UPDATE);
+        bit_buffer_append_byte(instance->tx_buffer, block_num);
+        bit_buffer_append_bytes(instance->tx_buffer, block->data, sizeof(PicopassBlock));
+        bit_buffer_append_bytes(instance->tx_buffer, mac->data, sizeof(PicopassMac));
+
+        NfcError error = nfc_poller_trx(
+            instance->nfc, instance->tx_buffer, instance->rx_buffer, PICOPASS_POLLER_FWT_FC);
+        if(error != NfcErrorNone) {
+            ret = picopass_poller_process_error(error);
+            break;
+        }
+
+    } while(false);
+
+    return ret;
+}

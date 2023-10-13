@@ -8,12 +8,23 @@ extern "C" {
 #endif
 
 typedef enum {
+    PicopassPollerEventTypeRequestMode,
     PicopassPollerEventTypeCardDetected,
     PicopassPollerEventTypeCardLost,
     PicopassPollerEventTypeRequestKey,
+    PicopassPollerEventTypeRequestWriteBlock,
     PicopassPollerEventTypeSuccess,
     PicopassPollerEventTypeFail,
 } PicopassPollerEventType;
+
+typedef enum {
+    PicopassPollerModeRead,
+    PicopassPollerModeWrite,
+} PicopassPollerMode;
+
+typedef struct {
+    PicopassPollerMode mode;
+} PicopassPollerEventDataRequestMode;
 
 typedef struct {
     uint8_t key[PICOPASS_KEY_LEN];
@@ -21,7 +32,12 @@ typedef struct {
     bool is_elite_key;
 } PicopassPollerEventDataRequestKey;
 
+typedef struct {
+    uint8_t block_num;
+} PicopassPollerEventDataRequestWriteBlock;
+
 typedef union {
+    PicopassPollerEventDataRequestMode req_mode;
     PicopassPollerEventDataRequestKey req_key;
 } PicopassPollerEventData;
 

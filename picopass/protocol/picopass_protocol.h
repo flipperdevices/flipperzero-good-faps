@@ -6,6 +6,8 @@
 extern "C" {
 #endif
 
+#define PICOPASS_FDT_LISTEN_FC (1000)
+
 #define PICOPASS_BLOCK_LEN 8
 #define PICOPASS_MAX_APP_LIMIT 32
 #define PICOPASS_UID_LEN 8

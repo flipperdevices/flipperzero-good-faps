@@ -33,6 +33,7 @@
 #include <nfc/nfc.h>
 #include <nfc/helpers/nfc_dict.h>
 #include "protocol/picopass_poller.h"
+#include "protocol/picopass_listener.h"
 #include "picopass_dev.h"
 
 #define PICOPASS_TEXT_STORE_SIZE 128
@@ -88,6 +89,7 @@ struct Picopass {
 
     Nfc* nfc;
     PicopassPoller* poller;
+    PicopassListener* listener;
     NfcDict* dict;
 
     char text_store[PICOPASS_TEXT_STORE_SIZE + 1];

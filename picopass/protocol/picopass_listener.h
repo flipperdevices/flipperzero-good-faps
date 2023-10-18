@@ -8,11 +8,25 @@ extern "C" {
 #endif
 
 typedef enum {
-    PicopassListenerEventTypeActivated,
+    PicopassListenerModeEmulation,
+    PicopassListenerModeLoclass,
+} PicopassListenerMode;
+
+typedef enum {
+    PicopassListenerEventTypeRequestMode,
 } PicopassListenerEventType;
 
 typedef struct {
+    PicopassListenerMode mode;
+} PicopassListenerEventDataRequestMode;
+
+typedef struct {
+    PicopassListenerEventDataRequestMode req_mode;
+} PicopassListenerEventData;
+
+typedef struct {
     PicopassListenerEventType type;
+    PicopassListenerEventData* data;
 } PicopassListenerEvent;
 
 typedef NfcCommand (*PicopassListenerCallback)(PicopassListenerEvent event, void* context);
@@ -22,6 +36,8 @@ typedef struct PicopassListener PicopassListener;
 PicopassListener* picopass_listener_alloc(Nfc* nfc, const PicopassData* data);
 
 void picopass_listener_free(PicopassListener* instance);
+
+void picopass_listener_set_loclass_mode(PicopassListener* instance);
 
 void picopass_listener_start(
     PicopassListener* instance,

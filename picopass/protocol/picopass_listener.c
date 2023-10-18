@@ -17,6 +17,10 @@ typedef struct {
     PicopassListenerCommandHandler handler;
 } PicopassListenerCmd;
 
+static void picopass_listener_reset(PicopassListener* instance) {
+    instance->state = PicopassListenerStateIdle;
+}
+
 PicopassListenerCommand
     picopass_listener_actall_handler(PicopassListener* instance, BitBuffer* buf) {
     UNUSED(buf);
@@ -24,6 +28,7 @@ PicopassListenerCommand
     if(instance->state != PicopassListenerStateHalt) {
         instance->state = PicopassListenerStateActive;
     }
+    // nfc_set_fdt_listen_fc(instance->nfc, 1000);
 
     return PicopassListenerCommandSendSoF;
 }
@@ -138,7 +143,7 @@ PicopassListenerCommand
         }
         PicopassError error = picopass_listener_send_frame(instance, instance->tx_buffer);
         if(error != PicopassErrorNone) {
-            FURI_LOG_D(TAG, "Failed to tx read block response");
+            FURI_LOG_D(TAG, "Failed to tx read block response: %d", error);
             break;
         }
 
@@ -146,6 +151,48 @@ PicopassListenerCommand
     } while(false);
 
     return command;
+}
+
+static PicopassListenerCommand
+    picopass_listener_readcheck(PicopassListener* instance, BitBuffer* buf, uint8_t key_block_num) {
+    PicopassListenerCommand command = PicopassListenerCommandSilent;
+
+    do {
+        if(instance->state != PicopassListenerStateSelected) break;
+        uint8_t block_num = bit_buffer_get_byte(buf, 1);
+        if(block_num != PICOPASS_SECURE_EPURSE_BLOCK_INDEX) break;
+
+        // loclass mode doesn't do any card side crypto, just logs the readers crypto, so no-op in this mode
+        // we can also no-op if the key block is the same, CHECK re-inits if it failed already
+        if((instance->key_block_num != key_block_num) &&
+           (instance->mode != PicopassListenerModeLoclass)) {
+            instance->key_block_num = key_block_num;
+            picopass_listener_init_cipher_state(instance);
+        }
+
+        // DATA(8)
+        bit_buffer_copy_bytes(
+            instance->tx_buffer, instance->data->AA1[block_num].data, sizeof(PicopassBlock));
+        NfcError error = nfc_listener_tx(instance->nfc, instance->tx_buffer);
+        if(error != NfcErrorNone) {
+            FURI_LOG_D(TAG, "Failed to tx read check response: %d", error);
+            break;
+        }
+
+        command = PicopassListenerCommandProcessed;
+    } while(false);
+
+    return command;
+}
+
+PicopassListenerCommand
+    picopass_listener_readcheck_kd_handler(PicopassListener* instance, BitBuffer* buf) {
+    return picopass_listener_readcheck(instance, buf, PICOPASS_SECURE_KD_BLOCK_INDEX);
+}
+
+PicopassListenerCommand
+    picopass_listener_readcheck_kc_handler(PicopassListener* instance, BitBuffer* buf) {
+    return picopass_listener_readcheck(instance, buf, PICOPASS_SECURE_KC_BLOCK_INDEX);
 }
 
 static const PicopassListenerCmd picopass_listener_cmd_handlers[] = {
@@ -178,8 +225,17 @@ static const PicopassListenerCmd picopass_listener_cmd_handlers[] = {
         .start_byte_cmd = PICOPASS_CMD_READ_OR_IDENTIFY,
         .cmd_len_bits = 8 * 4,
         .handler = picopass_listener_read_handler,
-    }
-
+    },
+    {
+        .start_byte_cmd = PICOPASS_CMD_READCHECK_KD,
+        .cmd_len_bits = 8 * 2,
+        .handler = picopass_listener_readcheck_kd_handler,
+    },
+    {
+        .start_byte_cmd = PICOPASS_CMD_READCHECK_KC,
+        .cmd_len_bits = 8 * 2,
+        .handler = picopass_listener_readcheck_kc_handler,
+    },
 };
 
 PicopassListener* picopass_listener_alloc(Nfc* nfc, const PicopassData* data) {
@@ -194,6 +250,8 @@ PicopassListener* picopass_listener_alloc(Nfc* nfc, const PicopassData* data) {
     instance->tx_buffer = bit_buffer_alloc(PICOPASS_LISTENER_BUFFER_SIZE_MAX);
     instance->tmp_buffer = bit_buffer_alloc(PICOPASS_LISTENER_BUFFER_SIZE_MAX);
 
+    instance->event.data = &instance->event_data;
+
     nfc_set_fdt_listen_fc(instance->nfc, PICOPASS_FDT_LISTEN_FC);
     nfc_config(instance->nfc, NfcModeListener, NfcTechIso15693);
 
@@ -207,6 +265,12 @@ void picopass_listener_free(PicopassListener* instance) {
     bit_buffer_free(instance->tmp_buffer);
     picopass_protocol_free(instance->data);
     free(instance);
+}
+
+void picopass_listener_set_loclass_mode(PicopassListener* instance) {
+    furi_assert(instance);
+
+    instance->mode = PicopassListenerModeLoclass;
 }
 
 NfcCommand picopass_listener_start_callback(NfcEvent event, void* context) {
@@ -247,6 +311,7 @@ void picopass_listener_start(
     instance->callback = callback;
     instance->context = context;
 
+    picopass_listener_reset(instance);
     nfc_start(instance->nfc, picopass_listener_start_callback, instance);
 }
 

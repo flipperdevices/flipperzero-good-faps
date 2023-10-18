@@ -18,6 +18,21 @@ static PicopassError picopass_listener_process_error(NfcError error) {
     return ret;
 }
 
+void picopass_listener_init_cipher_state_key(PicopassListener* instance, const uint8_t* key) {
+    uint8_t cc[PICOPASS_BLOCK_LEN] = {};
+    memcpy(
+        cc, instance->data->AA1[PICOPASS_SECURE_EPURSE_BLOCK_INDEX].data, sizeof(PicopassBlock));
+
+    instance->cipher_state = loclass_opt_doTagMAC_1(cc, key);
+}
+
+void picopass_listener_init_cipher_state(PicopassListener* instance) {
+    uint8_t key[PICOPASS_BLOCK_LEN] = {};
+    memcpy(key, instance->data->AA1[instance->key_block_num].data, sizeof(PicopassBlock));
+
+    picopass_listener_init_cipher_state_key(instance, key);
+}
+
 PicopassError picopass_listener_send_frame(PicopassListener* instance, BitBuffer* tx_buffer) {
     iso13239_crc_append(Iso13239CrcTypePicopass, tx_buffer);
     NfcError error = nfc_listener_tx(instance->nfc, tx_buffer);

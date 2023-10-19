@@ -200,8 +200,69 @@ PicopassListenerCommand
 PicopassListenerCommand
     picopass_listener_check_handler_loclass(PicopassListener* instance, BitBuffer* buf) {
     PicopassListenerCommand command = PicopassListenerCommandSilent;
-    UNUSED(instance);
-    UNUSED(buf);
+    // LOCLASS Reader attack mode
+
+    do {
+        // Copy EPURSE
+        PicopassBlock cc = instance->data->AA1[PICOPASS_SECURE_EPURSE_BLOCK_INDEX];
+
+#ifndef PICOPASS_DEBUG_IGNORE_LOCLASS_STD_KEY
+        uint8_t key[RFAL_PICOPASS_BLOCK_LEN];
+        // loclass mode stores the derived standard debit key in Kd to check
+        picopass_emu_read_blocks(nfcv_data, key, PICOPASS_SECURE_KD_BLOCK_INDEX, 1);
+
+        uint8_t rmac[4];
+        loclass_opt_doReaderMAC_2(ctx->cipher_state, nfcv_data->frame + 1, rmac, key);
+
+        if(!memcmp(nfcv_data->frame + 5, rmac, 4)) {
+            // MAC from reader matches Standard Key, keyroll mode or non-elite keyed reader.
+            // Either way no point logging it.
+
+            FURI_LOG_W(TAG, "loclass: standard key detected during collection");
+            ctx->loclass_got_std_key = true;
+
+            // Don't reset the state as the reader may try a different key next without going through anticoll
+            // The reader is always free to redo the anticoll if it wants to anyway
+
+            return;
+        }
+#endif
+
+        // Save to buffer to defer flushing when we rotate CSN
+        memcpy(
+            ctx->loclass_mac_buffer + ((ctx->key_block_num % LOCLASS_NUM_PER_CSN) * 8),
+            nfcv_data->frame + 1,
+            8);
+
+        // Rotate to the next CSN/attempt
+        ctx->key_block_num++;
+
+        // CSN changed
+        if(ctx->key_block_num % LOCLASS_NUM_PER_CSN == 0) {
+            // Flush NR-MACs for this CSN to SD card
+            uint8_t cc[RFAL_PICOPASS_BLOCK_LEN];
+            picopass_emu_read_blocks(nfcv_data, cc, PICOPASS_SECURE_EPURSE_BLOCK_INDEX, 1);
+
+            for(int i = 0; i < LOCLASS_NUM_PER_CSN; i++) {
+                loclass_writer_write_params(
+                    ctx->loclass_writer,
+                    ctx->key_block_num + i - LOCLASS_NUM_PER_CSN,
+                    nfc_data->uid,
+                    cc,
+                    ctx->loclass_mac_buffer + (i * 8),
+                    ctx->loclass_mac_buffer + (i * 8) + 4);
+            }
+
+            if(ctx->key_block_num < LOCLASS_NUM_CSNS * LOCLASS_NUM_PER_CSN) {
+                loclass_update_csn(nfc_data, nfcv_data, ctx);
+                // Only reset the state when we change to a new CSN for the same reason as when we get a standard key
+                ctx->state = PicopassEmulatorStateIdle;
+            } else {
+                ctx->state = PicopassEmulatorStateStopEmulation;
+            }
+        }
+
+    } while(false);
 
     return command;
 }

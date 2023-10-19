@@ -198,6 +198,66 @@ PicopassListenerCommand
 }
 
 PicopassListenerCommand
+    picopass_listener_check_handler_loclass(PicopassListener* instance, BitBuffer* buf) {
+    PicopassListenerCommand command = PicopassListenerCommandSilent;
+    UNUSED(instance);
+    UNUSED(buf);
+
+    return command;
+}
+
+PicopassListenerCommand
+    picopass_listener_check_handler_emulation(PicopassListener* instance, BitBuffer* buf) {
+    PicopassListenerCommand command = PicopassListenerCommandSilent;
+
+    do {
+        uint8_t rmac[4] = {};
+        uint8_t tmac[4] = {};
+        const uint8_t* key = instance->data->AA1[instance->key_block_num].data;
+        // Since nr isn't const in loclass_opt_doBothMAC_2() copy buffer
+        uint8_t rx_data[9] = {};
+        bit_buffer_write_bytes(buf, rx_data, sizeof(rx_data));
+        loclass_opt_doBothMAC_2(instance->cipher_state, &rx_data[1], rmac, tmac, key);
+
+#ifndef PICOPASS_DEBUG_IGNORE_BAD_RMAC
+        if(memcmp(&rx_data[5], rmac, 4)) {
+            // Bad MAC from reader, do not send a response.
+            FURI_LOG_I(TAG, "Got bad MAC from reader");
+            // Reset the cipher state since we don't do it in READCHECK
+            picopass_listener_init_cipher_state(instance);
+            break;
+        }
+#endif
+
+        bit_buffer_copy_bytes(instance->tx_buffer, tmac, sizeof(tmac));
+        NfcError error = nfc_listener_tx(instance->nfc, instance->tx_buffer);
+        if(error != NfcErrorNone) {
+            FURI_LOG_D(TAG, "Failed tx update response: %d", error);
+            break;
+        }
+
+        command = PicopassListenerCommandProcessed;
+    } while(false);
+
+    return command;
+}
+PicopassListenerCommand
+    picopass_listener_check_handler(PicopassListener* instance, BitBuffer* buf) {
+    PicopassListenerCommand command = PicopassListenerCommandSilent;
+
+    do {
+        if(instance->state != PicopassListenerStateSelected) break;
+        if(instance->mode == PicopassListenerModeLoclass) {
+            command = picopass_listener_check_handler_loclass(instance, buf);
+        } else {
+            command = picopass_listener_check_handler_emulation(instance, buf);
+        }
+    } while(false);
+
+    return command;
+}
+
+PicopassListenerCommand
     picopass_listener_update_handler(PicopassListener* instance, BitBuffer* buf) {
     PicopassListenerCommand command = PicopassListenerCommandSilent;
 
@@ -352,6 +412,11 @@ static const PicopassListenerCmd picopass_listener_cmd_handlers[] = {
         .start_byte_cmd = PICOPASS_CMD_READCHECK_KC,
         .cmd_len_bits = 8 * 2,
         .handler = picopass_listener_readcheck_kc_handler,
+    },
+    {
+        .start_byte_cmd = PICOPASS_CMD_CHECK,
+        .cmd_len_bits = 8 * 9,
+        .handler = picopass_listener_check_handler,
     },
     {
         .start_byte_cmd = PICOPASS_CMD_UPDATE,

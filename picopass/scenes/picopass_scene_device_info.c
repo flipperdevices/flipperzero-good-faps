@@ -21,7 +21,7 @@ void picopass_scene_device_info_on_enter(void* context) {
     dolphin_deed(DolphinDeedNfcReadSuccess);
 
     // Setup view
-    const PicopassData* data = picopass_dev_get_data(picopass->device);
+    const PicopassData* data = picopass_device_get_data(picopass->device);
     const PicopassBlock* AA1 = data->AA1;
     const PicopassPacs* pacs = &data->pacs;
     Widget* widget = picopass->widget;

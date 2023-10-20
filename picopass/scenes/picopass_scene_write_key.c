@@ -4,7 +4,7 @@
 NfcCommand picopass_scene_write_key_poller_callback(PicopassPollerEvent event, void* context) {
     NfcCommand command = NfcCommandContinue;
     Picopass* picopass = context;
-    const PicopassData* data = picopass_dev_get_data(picopass->device);
+    const PicopassData* data = picopass_device_get_data(picopass->device);
 
     if(event.type == PicopassPollerEventTypeRequestMode) {
         event.data->req_mode.mode = PicopassPollerModeWriteKey;

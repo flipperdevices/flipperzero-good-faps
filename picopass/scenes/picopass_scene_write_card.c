@@ -21,7 +21,7 @@ NfcCommand picopass_scene_write_poller_callback(PicopassPollerEvent event, void*
         if(block_num == PICOPASS_SCENE_WRITE_BLOCK_STOP) {
             event.data->req_write.perform_write = false;
         } else {
-            const PicopassData* data = picopass_dev_get_data(picopass->device);
+            const PicopassData* data = picopass_device_get_data(picopass->device);
             event.data->req_write.block_num = block_num;
             event.data->req_write.block = &data->AA1[block_num];
             event.data->req_write.perform_write = true;

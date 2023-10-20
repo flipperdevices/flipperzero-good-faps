@@ -30,7 +30,7 @@ void picopass_scene_start_on_enter(void* context) {
 
     submenu_set_selected_item(
         submenu, scene_manager_get_scene_state(picopass->scene_manager, PicopassSceneStart));
-    picopass_dev_reset(picopass->device);
+    picopass_device_reset(picopass->device);
     view_dispatcher_switch_to_view(picopass->view_dispatcher, PicopassViewMenu);
 }
 

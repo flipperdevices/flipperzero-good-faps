@@ -26,7 +26,7 @@ void picopass_scene_read_factory_success_on_enter(void* context) {
 
     // Setup view
     Widget* widget = picopass->widget;
-    const PicopassData* data = picopass_dev_get_data(picopass->device);
+    const PicopassData* data = picopass_device_get_data(picopass->device);
     const PicopassBlock* AA1 = data->AA1;
 
     const uint8_t* configBlock = AA1[PICOPASS_CONFIG_BLOCK_INDEX].data;

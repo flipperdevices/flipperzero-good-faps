@@ -22,7 +22,7 @@ void picopass_scene_emulate_on_enter(void* context) {
     picopass_blink_emulate_start(picopass);
 
     picopass->listener =
-        picopass_listener_alloc(picopass->nfc, picopass_dev_get_data(picopass->device));
+        picopass_listener_alloc(picopass->nfc, picopass_device_get_data(picopass->device));
     picopass_listener_start(picopass->listener, picopass_scene_listener_callback, picopass);
 }
 

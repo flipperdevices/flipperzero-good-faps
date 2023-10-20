@@ -51,8 +51,8 @@ Picopass* picopass_alloc() {
     picopass->nfc = nfc_alloc();
 
     // Picopass device
-    picopass->device = picopass_dev_alloc();
-    picopass_dev_set_loading_callback(picopass->device, picopass_show_loading_popup, picopass);
+    picopass->device = picopass_device_alloc();
+    picopass_device_set_loading_callback(picopass->device, picopass_show_loading_popup, picopass);
 
     // Open GUI record
     picopass->gui = furi_record_open(RECORD_GUI);
@@ -122,7 +122,7 @@ void picopass_free(Picopass* picopass) {
     furi_assert(picopass);
 
     // Picopass device
-    picopass_dev_free(picopass->device);
+    picopass_device_free(picopass->device);
     furi_string_free(picopass->file_path);
     furi_string_free(picopass->file_name);
 
@@ -256,7 +256,7 @@ bool picopass_save(Picopass* instance) {
         furi_string_get_cstr(instance->file_name),
         PICOPASS_APP_EXTENSION);
 
-    result = picopass_dev_save(instance->device, furi_string_get_cstr(instance->file_path));
+    result = picopass_device_save(instance->device, furi_string_get_cstr(instance->file_path));
 
     if(!result) {
         dialog_message_show_storage_error(instance->dialogs, "Cannot save\nkey file");
@@ -274,7 +274,8 @@ bool picopass_save_as_lfrfid(Picopass* instance) {
     furi_string_cat_printf(
         lfrfid_file_path, "/%s%s", furi_string_get_cstr(instance->file_name), LFRFID_APP_EXTENSION);
 
-    result = picopass_dev_save_as_lfrfid(instance->device, furi_string_get_cstr(lfrfid_file_path));
+    result =
+        picopass_device_save_as_lfrfid(instance->device, furi_string_get_cstr(lfrfid_file_path));
 
     if(!result) {
         dialog_message_show_storage_error(instance->dialogs, "Cannot save\nkey file");
@@ -318,7 +319,7 @@ bool picopass_load_file(Picopass* instance, FuriString* path, bool show_dialog) 
     FuriString* load_path = furi_string_alloc();
     furi_string_set(load_path, path);
 
-    result = picopass_dev_load(instance->device, furi_string_get_cstr(load_path));
+    result = picopass_device_load(instance->device, furi_string_get_cstr(load_path));
 
     if(result) {
         path_extract_filename(load_path, instance->file_name, true);

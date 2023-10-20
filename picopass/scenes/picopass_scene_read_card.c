@@ -53,12 +53,12 @@ NfcCommand picopass_read_card_worker_callback(PicopassPollerEvent event, void* c
         event.data->req_key.is_key_provided = is_key_provided;
     } else if(event.type == PicopassPollerEventTypeSuccess) {
         const PicopassData* data = picopass_poller_get_data(picopass->poller);
-        picopass_dev_set_data(picopass->device, data);
+        picopass_device_set_data(picopass->device, data);
         view_dispatcher_send_custom_event(
             picopass->view_dispatcher, PicopassCustomEventPollerSuccess);
     } else if(event.type == PicopassPollerEventTypeFail) {
         const PicopassData* data = picopass_poller_get_data(picopass->poller);
-        picopass_dev_set_data(picopass->device, data);
+        picopass_device_set_data(picopass->device, data);
         view_dispatcher_send_custom_event(
             picopass->view_dispatcher, PicopassCustomEventPollerSuccess);
     }
@@ -93,7 +93,7 @@ bool picopass_scene_read_card_on_event(void* context, SceneManagerEvent event) {
 
     if(event.type == SceneManagerEventTypeCustom) {
         if(event.event == PicopassCustomEventPollerSuccess) {
-            const PicopassData* data = picopass_dev_get_data(picopass->device);
+            const PicopassData* data = picopass_device_get_data(picopass->device);
             if(memcmp(data->pacs.key, picopass_factory_debit_key, PICOPASS_BLOCK_LEN) == 0) {
                 scene_manager_next_scene(picopass->scene_manager, PicopassSceneReadFactorySuccess);
             } else {

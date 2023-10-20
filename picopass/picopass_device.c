@@ -1,4 +1,4 @@
-#include "picopass_dev.h"
+#include "picopass_device.h"
 
 #include <furi/furi.h>
 
@@ -11,26 +11,26 @@ struct PicopassDev {
 static const char* picopass_file_header = "Flipper Picopass device";
 static const uint32_t picopass_file_version = 1;
 
-PicopassDev* picopass_dev_alloc() {
+PicopassDev* picopass_device_alloc() {
     PicopassDev* instance = malloc(sizeof(PicopassDev));
     instance->data = picopass_protocol_alloc();
 
     return instance;
 }
 
-void picopass_dev_free(PicopassDev* instance) {
+void picopass_device_free(PicopassDev* instance) {
     furi_assert(instance);
 
     picopass_protocol_free(instance->data);
 }
 
-void picopass_dev_reset(PicopassDev* instance) {
+void picopass_device_reset(PicopassDev* instance) {
     furi_assert(instance);
 
     picopass_protocol_reset(instance->data);
 }
 
-void picopass_dev_set_loading_callback(
+void picopass_device_set_loading_callback(
     PicopassDev* instance,
     PicopassDevLoadingCallback callback,
     void* context) {
@@ -41,19 +41,19 @@ void picopass_dev_set_loading_callback(
     instance->context = context;
 }
 
-void picopass_dev_set_data(PicopassDev* instance, const PicopassData* data) {
+void picopass_device_set_data(PicopassDev* instance, const PicopassData* data) {
     furi_assert(instance);
 
     picopass_protocol_copy(instance->data, data);
 }
 
-const PicopassData* picopass_dev_get_data(PicopassDev* instance) {
+const PicopassData* picopass_device_get_data(PicopassDev* instance) {
     furi_assert(instance);
 
     return instance->data;
 }
 
-bool picopass_dev_save(PicopassDev* instance, const char* path) {
+bool picopass_device_save(PicopassDev* instance, const char* path) {
     furi_assert(instance);
     furi_assert(path);
 
@@ -89,7 +89,7 @@ bool picopass_dev_save(PicopassDev* instance, const char* path) {
     return success;
 }
 
-bool picopass_dev_save_as_lfrfid(PicopassDev* instance, const char* path) {
+bool picopass_device_save_as_lfrfid(PicopassDev* instance, const char* path) {
     furi_assert(instance);
     furi_assert(path);
 
@@ -108,7 +108,7 @@ bool picopass_dev_save_as_lfrfid(PicopassDev* instance, const char* path) {
     return success;
 }
 
-bool picopass_dev_load(PicopassDev* instance, const char* path) {
+bool picopass_device_load(PicopassDev* instance, const char* path) {
     furi_assert(instance);
     furi_assert(path);
 

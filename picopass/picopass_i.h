@@ -30,7 +30,7 @@
 #include <nfc/helpers/nfc_dict.h>
 #include "protocol/picopass_poller.h"
 #include "protocol/picopass_listener.h"
-#include "picopass_dev.h"
+#include "picopass_device.h"
 
 #define PICOPASS_TEXT_STORE_SIZE 128
 

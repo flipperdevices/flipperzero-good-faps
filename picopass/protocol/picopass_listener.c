@@ -461,6 +461,43 @@ PicopassListenerCommand
     return command;
 }
 
+PicopassListenerCommand
+    picopass_listener_read4_handler(PicopassListener* instance, BitBuffer* buf) {
+    PicopassListenerCommand command = PicopassListenerCommandSilent;
+
+    do {
+        if(instance->state != PicopassListenerStateSelected) break;
+
+        uint8_t block_start = bit_buffer_get_byte(buf);
+        if(block_start + 4 >= PICOPASS_MAX_APP_LIMIT) break;
+
+        // TODO: Check CRC?
+        // TODO: Check auth?
+
+        bit_buffer_reset(instance->tx_buffer);
+        for(size_t i = block_start; i < block_start + 4; i++) {
+            if((i == PICOPASS_SECURE_KD_BLOCK_INDEX) || (i == PICOPASS_SECURE_KC_BLOCK_INDEX)) {
+                for(size_t j = 0; j < sizeof(PicopassBlock); j++) {
+                    bit_buffer_append_byte(instance->tx_buffer, 0xff);
+                }
+            } else {
+                bit_buffer_append_bytes(
+                    instance->tx_buffer, instance->data->AA1[i].data, sizeof(PicopassBlock));
+            }
+        }
+
+        PicopassError error = picopass_listener_send_frame(instance, instance->tx_buffer);
+        if(error != PicopassErrorNone) {
+            FURI_LOG_D(TAG, "Failed to tx read4 response: %d", error);
+            break;
+        }
+
+        command = PicopassListenerCommandProcessed;
+    } while(false);
+
+    return command;
+}
+
 static const PicopassListenerCmd picopass_listener_cmd_handlers[] = {
     {
         .start_byte_cmd = PICOPASS_CMD_ACTALL,
@@ -511,6 +548,11 @@ static const PicopassListenerCmd picopass_listener_cmd_handlers[] = {
         .start_byte_cmd = PICOPASS_CMD_UPDATE,
         .cmd_len_bits = 8 * 14,
         .handler = picopass_listener_update_handler,
+    },
+    {
+        .start_byte_cmd = PICOPASS_CMD_READ4,
+        .cmd_len_bits = 8 * 4,
+        .handler = picopass_listener_read4_handler,
     },
 };
 

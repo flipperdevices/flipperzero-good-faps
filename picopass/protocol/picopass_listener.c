@@ -279,7 +279,8 @@ PicopassListenerCommand
                     instance->loclass_mac_buffer + (i * 8) + 4);
             }
 
-            if(instance->key_block_num < LOCLASS_NUM_CSNS * PICOPASS_LOCLASS_NUM_PER_CSN) {
+            if(instance->key_block_num <
+               PICOPASS_LOCLASS_NUM_CSNS * PICOPASS_LOCLASS_NUM_PER_CSN) {
                 picopass_listener_loclass_update_csn(instance);
                 // Only reset the state when we change to a new CSN for the same reason as when we get a standard key
                 instance->state = PicopassListenerStateIdle;
@@ -468,14 +469,14 @@ PicopassListenerCommand
     do {
         if(instance->state != PicopassListenerStateSelected) break;
 
-        uint8_t block_start = bit_buffer_get_byte(buf);
+        uint8_t block_start = bit_buffer_get_byte(buf, 1);
         if(block_start + 4 >= PICOPASS_MAX_APP_LIMIT) break;
 
         // TODO: Check CRC?
         // TODO: Check auth?
 
         bit_buffer_reset(instance->tx_buffer);
-        for(size_t i = block_start; i < block_start + 4; i++) {
+        for(uint8_t i = block_start; i < block_start + 4; i++) {
             if((i == PICOPASS_SECURE_KD_BLOCK_INDEX) || (i == PICOPASS_SECURE_KC_BLOCK_INDEX)) {
                 for(size_t j = 0; j < sizeof(PicopassBlock); j++) {
                     bit_buffer_append_byte(instance->tx_buffer, 0xff);

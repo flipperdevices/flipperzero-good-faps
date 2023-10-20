@@ -37,7 +37,6 @@ static void picopass_show_loading_popup(void* context, bool show) {
 Picopass* picopass_alloc() {
     Picopass* picopass = malloc(sizeof(Picopass));
 
-    picopass->worker = picopass_worker_alloc();
     picopass->view_dispatcher = view_dispatcher_alloc();
     picopass->scene_manager = scene_manager_alloc(&picopass_scene_handlers, picopass);
     view_dispatcher_enable_queue(picopass->view_dispatcher);
@@ -52,8 +51,6 @@ Picopass* picopass_alloc() {
     picopass->nfc = nfc_alloc();
 
     // Picopass device
-    picopass->dev = picopass_device_alloc();
-
     picopass->device = picopass_dev_alloc();
     picopass_dev_set_loading_callback(picopass->device, picopass_show_loading_popup, picopass);
 
@@ -125,9 +122,6 @@ void picopass_free(Picopass* picopass) {
     furi_assert(picopass);
 
     // Picopass device
-    picopass_device_free(picopass->dev);
-    picopass->dev = NULL;
-
     picopass_dev_free(picopass->device);
     furi_string_free(picopass->file_path);
     furi_string_free(picopass->file_name);
@@ -163,10 +157,6 @@ void picopass_free(Picopass* picopass) {
 
     view_dispatcher_remove_view(picopass->view_dispatcher, PicopassViewLoclass);
     loclass_free(picopass->loclass);
-
-    // Worker
-    picopass_worker_stop(picopass->worker);
-    picopass_worker_free(picopass->worker);
 
     // View Dispatcher
     view_dispatcher_free(picopass->view_dispatcher);

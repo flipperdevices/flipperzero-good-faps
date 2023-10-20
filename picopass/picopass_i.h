@@ -1,10 +1,6 @@
 #pragma once
 
 #include "picopass.h"
-#include "picopass_worker.h"
-#include "picopass_device.h"
-
-#include "rfal_picopass.h"
 
 #include <furi.h>
 #include <gui/gui.h>
@@ -43,6 +39,8 @@
 
 #define LFRFID_APP_FOLDER ANY_PATH("lfrfid")
 #define LFRFID_APP_EXTENSION ".rfid"
+
+#define PICOPASS_NAME_MAX_LEN 22
 
 #define PICOPASS_ICLASS_ELITE_DICT_FLIPPER_NAME APP_ASSETS_PATH("iclass_elite_dict.txt")
 #define PICOPASS_ICLASS_STANDARD_DICT_FLIPPER_NAME APP_ASSETS_PATH("iclass_standard_dict.txt")
@@ -92,14 +90,12 @@ typedef struct {
 } PicopassLoclassContext;
 
 struct Picopass {
-    PicopassWorker* worker;
     ViewDispatcher* view_dispatcher;
     Gui* gui;
     Storage* storage;
     NotificationApp* notifications;
     DialogsApp* dialogs;
     SceneManager* scene_manager;
-    PicopassDevice* dev;
     PicopassSaveFormat save_format;
 
     Nfc* nfc;

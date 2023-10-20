@@ -65,9 +65,8 @@ bool picopass_scene_read_factory_success_on_event(void* context, SceneManagerEve
             consumed = scene_manager_previous_scene(picopass->scene_manager);
         } else if(event.event == GuiButtonTypeCenter) {
             memcpy(
-                picopass->dev->dev_data.data.pacs.key,
-                picopass_iclass_key,
-                RFAL_PICOPASS_BLOCK_LEN);
+                picopass->write_key_context.key_to_write, picopass_iclass_key, PICOPASS_BLOCK_LEN);
+            picopass->write_key_context.is_elite = false;
             scene_manager_next_scene(picopass->scene_manager, PicopassSceneWriteKey);
             consumed = true;
         }

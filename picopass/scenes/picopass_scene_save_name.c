@@ -33,11 +33,13 @@ void picopass_scene_save_name_on_enter(void* context) {
         picopass_scene_save_name_text_input_callback,
         picopass,
         picopass->text_store,
-        PICOPASS_DEV_NAME_MAX_LEN,
+        PICOPASS_NAME_MAX_LEN,
         dev_name_empty);
 
     ValidatorIsFile* validator_is_file = validator_is_file_alloc_init(
-        furi_string_get_cstr(folder_path), PICOPASS_APP_EXTENSION, picopass->dev->dev_name);
+        furi_string_get_cstr(folder_path),
+        PICOPASS_APP_EXTENSION,
+        furi_string_get_cstr(picopass->file_name));
     text_input_set_validator(text_input, validator_is_file_callback, validator_is_file);
 
     furi_string_free(folder_path);

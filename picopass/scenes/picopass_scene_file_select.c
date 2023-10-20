@@ -1,5 +1,4 @@
 #include "../picopass_i.h"
-#include "../picopass_device.h"
 
 void picopass_scene_file_select_on_enter(void* context) {
     Picopass* instance = context;

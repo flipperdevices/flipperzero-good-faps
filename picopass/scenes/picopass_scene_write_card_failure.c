@@ -48,8 +48,6 @@ bool picopass_scene_write_card_failure_on_event(void* context, SceneManagerEvent
         if(event.event == GuiButtonTypeLeft) {
             consumed = scene_manager_previous_scene(picopass->scene_manager);
         } else if(event.event == GuiButtonTypeRight) {
-            // Clear device name
-            picopass_device_set_name(picopass->dev, "");
             consumed = scene_manager_search_and_switch_to_previous_scene(
                 picopass->scene_manager, PicopassSceneStart);
         }

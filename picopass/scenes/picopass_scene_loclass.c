@@ -71,7 +71,7 @@ bool picopass_scene_loclass_on_event(void* context, SceneManagerEvent event) {
         if(event.event == PicopassCustomEventLoclassGotMac) {
             notification_message(picopass->notifications, &sequence_single_vibro);
             loclass_set_num_macs(picopass->loclass, picopass->loclass_context.macs_collected);
-            if(picopass->loclass_context.macs_collected >= LOCLASS_MACS_TO_COLLECT) {
+            if(picopass->loclass_context.macs_collected >= PICOPASS_LOCLASS_MACS_TO_COLLECT) {
                 notification_message(picopass->notifications, &sequence_double_vibro);
                 scene_manager_previous_scene(picopass->scene_manager);
             }

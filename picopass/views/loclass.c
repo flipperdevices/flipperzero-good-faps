@@ -1,5 +1,5 @@
 #include "loclass.h"
-#include "../picopass_worker_i.h"
+#include "../protocol/picopass_protocol.h"
 
 #include <gui/elements.h>
 
@@ -25,14 +25,14 @@ static void loclass_draw_callback(Canvas* canvas, void* model) {
         return;
     }
 
-    float progress = m->num_macs == 0 ? 0 :
-                                        (float)(m->num_macs) / (float)(LOCLASS_MACS_TO_COLLECT);
+    float progress =
+        m->num_macs == 0 ? 0 : (float)(m->num_macs) / (float)(PICOPASS_LOCLASS_MACS_TO_COLLECT);
 
     if(progress > 1.0) {
         progress = 1.0;
     }
 
-    snprintf(draw_str, sizeof(draw_str), "%d/%d", m->num_macs, LOCLASS_MACS_TO_COLLECT);
+    snprintf(draw_str, sizeof(draw_str), "%d/%d", m->num_macs, PICOPASS_LOCLASS_MACS_TO_COLLECT);
 
     elements_progress_bar_with_text(canvas, 0, 20, 128, progress, draw_str);
 

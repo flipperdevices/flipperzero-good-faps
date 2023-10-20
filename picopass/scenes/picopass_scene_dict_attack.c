@@ -75,7 +75,7 @@ NfcCommand picopass_dict_attack_worker_callback(PicopassPollerEvent event, void*
         uint32_t scene_state =
             scene_manager_get_scene_state(picopass->scene_manager, PicopassSceneDictAttack);
         memcpy(event.data->req_key.key, key, PICOPASS_KEY_LEN);
-        event.data->req_key.is_elite_key = (scene_state == PicopassSceneDictAttackDictElite);
+        event.data->req_key.is_elite_key = (scene_state != PicopassSceneDictAttackDictStandart);
         event.data->req_key.is_key_provided = is_key_provided;
         if(is_key_provided) {
             picopass->dict_attack_ctx.current_key++;
@@ -139,7 +139,7 @@ void picopass_scene_dict_attack_on_enter(void* context) {
     bool use_user_dict = nfc_dict_check_presence(PICOPASS_ICLASS_ELITE_DICT_USER_NAME);
     if(use_user_dict) {
         picopass->dict = nfc_dict_alloc(
-            PICOPASS_ICLASS_STANDARD_DICT_FLIPPER_NAME, NfcDictModeOpenExisting, PICOPASS_KEY_LEN);
+            PICOPASS_ICLASS_ELITE_DICT_USER_NAME, NfcDictModeOpenExisting, PICOPASS_KEY_LEN);
         if(nfc_dict_get_total_keys(picopass->dict) == 0) {
             nfc_dict_free(picopass->dict);
             use_user_dict = false;

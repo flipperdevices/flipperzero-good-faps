@@ -241,6 +241,7 @@ NfcCommand picopass_poller_auth_handler(PicopassPoller* instance) {
             if(instance->mode == PicopassPollerModeRead) {
                 memcpy(
                     instance->data->pacs.key, instance->event_data.req_key.key, PICOPASS_KEY_LEN);
+                instance->data->pacs.elite_kdf = instance->event_data.req_key.is_elite_key;
                 picopass_poller_prepare_read(instance);
                 instance->state = PicopassPollerStateReadBlock;
             } else if(instance->mode == PicopassPollerModeWrite) {
@@ -393,7 +394,7 @@ NfcCommand picopass_poller_write_key_handler(PicopassPoller* instance) {
             }
         }
 
-        FURI_LOG_D(TAG, "Writing %d block", PICOPASS_SECURE_KD_BLOCK_INDEX);
+        FURI_LOG_D(TAG, "Writing key to %d block", PICOPASS_SECURE_KD_BLOCK_INDEX);
         uint8_t data[9] = {};
         data[0] = PICOPASS_SECURE_KD_BLOCK_INDEX;
         memcpy(&data[1], new_block.data, PICOPASS_BLOCK_LEN);
@@ -422,6 +423,7 @@ NfcCommand picopass_poller_write_key_handler(PicopassPoller* instance) {
             instance->state = PicopassPollerStateFail;
             break;
         }
+        instance->state = PicopassPollerStateSuccess;
 
     } while(false);
 

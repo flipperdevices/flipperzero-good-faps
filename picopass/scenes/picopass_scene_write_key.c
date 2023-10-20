@@ -12,7 +12,7 @@ NfcCommand picopass_scene_write_key_poller_callback(PicopassPollerEvent event, v
         event.data->req_key.is_key_provided = true;
         memcpy(event.data->req_key.key, data->pacs.key, PICOPASS_KEY_LEN);
         event.data->req_key.is_elite_key = data->pacs.elite_kdf;
-    } else if(event.type == PicopassPollerEventTypeRequestWriteBlock) {
+    } else if(event.type == PicopassPollerEventTypeRequestWriteKey) {
         event.data->req_write_key.data = data;
         memcpy(
             event.data->req_write_key.key,

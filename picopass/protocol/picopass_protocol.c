@@ -242,3 +242,13 @@ void picopass_protocol_parse_wiegand(PicopassData* instance) {
     memcpy(instance->pacs.credential, &swapped, sizeof(uint64_t));
     FURI_LOG_D(TAG, "instance->pacs: (%d) %016llx", instance->pacs.bitLength, swapped);
 }
+
+bool picopass_protocol_device_hid_csn(const PicopassData* instance) {
+    furi_assert(instance);
+
+    const uint8_t* csn = instance->AA1[PICOPASS_CSN_BLOCK_INDEX].data;
+    // From Proxmark3 RRG sourcecode
+    bool isHidRange = (memcmp(csn + 5, "\xFF\x12\xE0", 3) == 0) && ((csn[4] & 0xF0) == 0xF0);
+
+    return isHidRange;
+}

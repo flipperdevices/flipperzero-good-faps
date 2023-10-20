@@ -142,6 +142,8 @@ void picopass_protocol_parse_credential(PicopassData* instance);
 
 void picopass_protocol_parse_wiegand(PicopassData* instance);
 
+bool picopass_protocol_device_hid_csn(const PicopassData* instance);
+
 #ifdef __cplusplus
 }
 #endif

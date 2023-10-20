@@ -46,7 +46,7 @@ void picopass_scene_read_card_success_on_enter(void* context) {
 
     if(no_key) {
         furi_string_cat_printf(wiegand_str, "Read Failed");
-        bool hid_csn = picopass_device_hid_csn(picopass->dev);
+        bool hid_csn = picopass_protocol_device_hid_csn(data);
 
         if(pacs->se_enabled) {
             furi_string_cat_printf(credential_str, "SE enabled");

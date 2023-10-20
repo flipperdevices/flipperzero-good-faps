@@ -1,4 +1,5 @@
 #include "picopass_listener_i.h"
+#include "picopass_keys.h"
 
 #include <furi/furi.h>
 
@@ -19,8 +20,34 @@ typedef struct {
     PicopassListenerCommandHandler handler;
 } PicopassListenerCmd;
 
+// CSNs from Proxmark3 repo
+static const uint8_t loclass_csns[PICOPASS_LOCLASS_NUM_CSNS][PICOPASS_BLOCK_LEN] = {
+    {0x01, 0x0A, 0x0F, 0xFF, 0xF7, 0xFF, 0x12, 0xE0},
+    {0x0C, 0x06, 0x0C, 0xFE, 0xF7, 0xFF, 0x12, 0xE0},
+    {0x10, 0x97, 0x83, 0x7B, 0xF7, 0xFF, 0x12, 0xE0},
+    {0x13, 0x97, 0x82, 0x7A, 0xF7, 0xFF, 0x12, 0xE0},
+    {0x07, 0x0E, 0x0D, 0xF9, 0xF7, 0xFF, 0x12, 0xE0},
+    {0x14, 0x96, 0x84, 0x76, 0xF7, 0xFF, 0x12, 0xE0},
+    {0x17, 0x96, 0x85, 0x71, 0xF7, 0xFF, 0x12, 0xE0},
+    {0xCE, 0xC5, 0x0F, 0x77, 0xF7, 0xFF, 0x12, 0xE0},
+    {0xD2, 0x5A, 0x82, 0xF8, 0xF7, 0xFF, 0x12, 0xE0},
+};
+
 static void picopass_listener_reset(PicopassListener* instance) {
     instance->state = PicopassListenerStateIdle;
+}
+
+static void picopass_listener_loclass_update_csn(PicopassListener* instance) {
+    // collect LOCLASS_NUM_PER_CSN nonces in a row for each CSN
+    const uint8_t* csn = loclass_csns
+        [(instance->key_block_num / PICOPASS_LOCLASS_NUM_PER_CSN) % PICOPASS_LOCLASS_NUM_CSNS];
+    memcpy(instance->data->AA1[PICOPASS_CSN_BLOCK_INDEX].data, csn, sizeof(PicopassBlock));
+
+    uint8_t key[PICOPASS_BLOCK_LEN] = {};
+    loclass_iclass_calc_div_key(csn, picopass_iclass_key, key, false);
+    memcpy(instance->data->AA1[PICOPASS_SECURE_KD_BLOCK_INDEX].data, key, sizeof(PicopassBlock));
+
+    picopass_listener_init_cipher_state_key(instance, key);
 }
 
 PicopassListenerCommand
@@ -200,66 +227,67 @@ PicopassListenerCommand
 PicopassListenerCommand
     picopass_listener_check_handler_loclass(PicopassListener* instance, BitBuffer* buf) {
     PicopassListenerCommand command = PicopassListenerCommandSilent;
+
     // LOCLASS Reader attack mode
-
     do {
-        // Copy EPURSE
-        PicopassBlock cc = instance->data->AA1[PICOPASS_SECURE_EPURSE_BLOCK_INDEX];
-
 #ifndef PICOPASS_DEBUG_IGNORE_LOCLASS_STD_KEY
-        uint8_t key[RFAL_PICOPASS_BLOCK_LEN];
         // loclass mode stores the derived standard debit key in Kd to check
-        picopass_emu_read_blocks(nfcv_data, key, PICOPASS_SECURE_KD_BLOCK_INDEX, 1);
 
+        PicopassBlock key = instance->data->AA1[PICOPASS_SECURE_KD_BLOCK_INDEX];
         uint8_t rmac[4];
-        loclass_opt_doReaderMAC_2(ctx->cipher_state, nfcv_data->frame + 1, rmac, key);
+        uint8_t rx_data[9] = {};
+        bit_buffer_write_bytes(buf, rx_data, sizeof(rx_data));
+        loclass_opt_doReaderMAC_2(instance->cipher_state, &rx_data[1], rmac, key.data);
 
-        if(!memcmp(nfcv_data->frame + 5, rmac, 4)) {
+        if(!memcmp(&rx_data[5], rmac, 4)) {
             // MAC from reader matches Standard Key, keyroll mode or non-elite keyed reader.
             // Either way no point logging it.
 
             FURI_LOG_W(TAG, "loclass: standard key detected during collection");
-            ctx->loclass_got_std_key = true;
+            if(instance->callback) {
+                instance->event.type = PicopassListenerEventTypeLoclassGotStandardKey;
+                instance->callback(instance->event, instance->context);
+            }
 
             // Don't reset the state as the reader may try a different key next without going through anticoll
             // The reader is always free to redo the anticoll if it wants to anyway
 
-            return;
+            break;
         }
 #endif
 
         // Save to buffer to defer flushing when we rotate CSN
         memcpy(
-            ctx->loclass_mac_buffer + ((ctx->key_block_num % LOCLASS_NUM_PER_CSN) * 8),
-            nfcv_data->frame + 1,
+            instance->loclass_mac_buffer +
+                ((instance->key_block_num % PICOPASS_LOCLASS_NUM_PER_CSN) * 8),
+            &rx_data[1],
             8);
 
         // Rotate to the next CSN/attempt
-        ctx->key_block_num++;
+        instance->key_block_num++;
 
         // CSN changed
-        if(ctx->key_block_num % LOCLASS_NUM_PER_CSN == 0) {
+        if(instance->key_block_num % PICOPASS_LOCLASS_NUM_PER_CSN == 0) {
             // Flush NR-MACs for this CSN to SD card
-            uint8_t cc[RFAL_PICOPASS_BLOCK_LEN];
-            picopass_emu_read_blocks(nfcv_data, cc, PICOPASS_SECURE_EPURSE_BLOCK_INDEX, 1);
-
-            for(int i = 0; i < LOCLASS_NUM_PER_CSN; i++) {
+            for(int i = 0; i < PICOPASS_LOCLASS_NUM_PER_CSN; i++) {
                 loclass_writer_write_params(
-                    ctx->loclass_writer,
-                    ctx->key_block_num + i - LOCLASS_NUM_PER_CSN,
-                    nfc_data->uid,
-                    cc,
-                    ctx->loclass_mac_buffer + (i * 8),
-                    ctx->loclass_mac_buffer + (i * 8) + 4);
+                    instance->writer,
+                    instance->key_block_num + i - PICOPASS_LOCLASS_NUM_PER_CSN,
+                    instance->data->AA1[PICOPASS_CSN_BLOCK_INDEX].data,
+                    instance->data->AA1[PICOPASS_SECURE_EPURSE_BLOCK_INDEX].data,
+                    instance->loclass_mac_buffer + (i * 8),
+                    instance->loclass_mac_buffer + (i * 8) + 4);
             }
 
-            if(ctx->key_block_num < LOCLASS_NUM_CSNS * LOCLASS_NUM_PER_CSN) {
-                loclass_update_csn(nfc_data, nfcv_data, ctx);
+            if(instance->key_block_num < LOCLASS_NUM_CSNS * PICOPASS_LOCLASS_NUM_PER_CSN) {
+                picopass_listener_loclass_update_csn(instance);
                 // Only reset the state when we change to a new CSN for the same reason as when we get a standard key
-                ctx->state = PicopassEmulatorStateIdle;
-            } else {
-                ctx->state = PicopassEmulatorStateStopEmulation;
+                instance->state = PicopassListenerStateIdle;
             }
+        }
+        if(instance->callback) {
+            instance->event.type = PicopassListenerEventTypeLoclassGotMac;
+            instance->callback(instance->event, instance->context);
         }
 
     } while(false);
@@ -498,8 +526,6 @@ PicopassListener* picopass_listener_alloc(Nfc* nfc, const PicopassData* data) {
     instance->tx_buffer = bit_buffer_alloc(PICOPASS_LISTENER_BUFFER_SIZE_MAX);
     instance->tmp_buffer = bit_buffer_alloc(PICOPASS_LISTENER_BUFFER_SIZE_MAX);
 
-    instance->event.data = &instance->event_data;
-
     nfc_set_fdt_listen_fc(instance->nfc, PICOPASS_FDT_LISTEN_FC);
     nfc_config(instance->nfc, NfcModeListener, NfcTechIso15693);
 
@@ -512,13 +538,30 @@ void picopass_listener_free(PicopassListener* instance) {
     bit_buffer_free(instance->tx_buffer);
     bit_buffer_free(instance->tmp_buffer);
     picopass_protocol_free(instance->data);
+    if(instance->writer) {
+        loclass_writer_write_start_stop(instance->writer, false);
+        loclass_writer_free(instance->writer);
+    }
     free(instance);
 }
 
-void picopass_listener_set_loclass_mode(PicopassListener* instance) {
+bool picopass_listener_set_mode(PicopassListener* instance, PicopassListenerMode mode) {
     furi_assert(instance);
+    bool success = true;
 
-    instance->mode = PicopassListenerModeLoclass;
+    instance->mode = mode;
+    if(instance->mode == PicopassListenerModeLoclass) {
+        instance->key_block_num = 0;
+        picopass_listener_loclass_update_csn(instance);
+        instance->writer = loclass_writer_alloc();
+        if(instance->writer) {
+            loclass_writer_write_start_stop(instance->writer, true);
+        } else {
+            success = false;
+        }
+    }
+
+    return success;
 }
 
 NfcCommand picopass_listener_start_callback(NfcEvent event, void* context) {

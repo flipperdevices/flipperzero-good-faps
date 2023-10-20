@@ -5,6 +5,7 @@
 
 #include <optimized_ikeys.h>
 #include <optimized_cipher.h>
+#include <loclass_writer.h>
 
 #define TAG "PicopassListener"
 
@@ -29,8 +30,10 @@ struct PicopassListener {
     BitBuffer* tmp_buffer;
     uint8_t key_block_num;
 
+    LoclassWriter* writer;
+    uint8_t loclass_mac_buffer[8 * PICOPASS_LOCLASS_NUM_PER_CSN];
+
     PicopassListenerEvent event;
-    PicopassListenerEventData event_data;
     PicopassListenerCallback callback;
     void* context;
 };

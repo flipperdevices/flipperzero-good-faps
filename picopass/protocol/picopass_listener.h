@@ -13,20 +13,12 @@ typedef enum {
 } PicopassListenerMode;
 
 typedef enum {
-    PicopassListenerEventTypeRequestMode,
+    PicopassListenerEventTypeLoclassGotStandardKey,
+    PicopassListenerEventTypeLoclassGotMac,
 } PicopassListenerEventType;
 
 typedef struct {
-    PicopassListenerMode mode;
-} PicopassListenerEventDataRequestMode;
-
-typedef struct {
-    PicopassListenerEventDataRequestMode req_mode;
-} PicopassListenerEventData;
-
-typedef struct {
     PicopassListenerEventType type;
-    PicopassListenerEventData* data;
 } PicopassListenerEvent;
 
 typedef NfcCommand (*PicopassListenerCallback)(PicopassListenerEvent event, void* context);
@@ -37,7 +29,7 @@ PicopassListener* picopass_listener_alloc(Nfc* nfc, const PicopassData* data);
 
 void picopass_listener_free(PicopassListener* instance);
 
-void picopass_listener_set_loclass_mode(PicopassListener* instance);
+bool picopass_listener_set_mode(PicopassListener* instance, PicopassListenerMode mode);
 
 void picopass_listener_start(
     PicopassListener* instance,

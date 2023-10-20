@@ -55,6 +55,8 @@ enum PicopassCustomEvent {
     PicopassCustomEventTextInputDone,
     PicopassCustomEventDictAttackSkip,
     PicopassCustomEventDictAttackUpdateView,
+    PicopassCustomEventLoclassGotMac,
+    PicopassCustomEventLoclassGotStandardKey,
 
     PicopassCustomEventPollerSuccess,
     PicopassCustomEventPollerFail,
@@ -76,6 +78,10 @@ typedef struct {
     uint8_t key_to_write[PICOPASS_BLOCK_LEN];
     bool is_elite;
 } PicopassWriteKeyContext;
+
+typedef struct {
+    size_t macs_collected;
+} PicopassLoclassContext;
 
 struct Picopass {
     PicopassWorker* worker;
@@ -108,6 +114,7 @@ struct Picopass {
 
     PicopassDictAttackContext dict_attack_ctx;
     PicopassWriteKeyContext write_key_context;
+    PicopassLoclassContext loclass_context;
     PicopassDev* device;
     FuriString* file_path;
     FuriString* file_name;

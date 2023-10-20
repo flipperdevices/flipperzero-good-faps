@@ -134,6 +134,8 @@ void picopass_protocol_reset(PicopassData* instance);
 
 bool picopass_protocol_save(const PicopassData* instance, FlipperFormat* ff);
 
+bool picopass_protocol_save_as_lfrfid(const PicopassData* instance, const char* path);
+
 bool picopass_protocol_load(PicopassData* instance, FlipperFormat* ff, uint32_t version);
 
 void picopass_protocol_parse_credential(PicopassData* instance);

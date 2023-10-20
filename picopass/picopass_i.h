@@ -41,6 +41,9 @@
 #define PICOPASS_APP_EXTENSION ".picopass"
 #define PICOPASS_APP_FILE_PREFIX "Picopass"
 
+#define LFRFID_APP_FOLDER ANY_PATH("lfrfid")
+#define LFRFID_APP_EXTENSION ".rfid"
+
 #define PICOPASS_ICLASS_ELITE_DICT_FLIPPER_NAME APP_ASSETS_PATH("iclass_elite_dict.txt")
 #define PICOPASS_ICLASS_STANDARD_DICT_FLIPPER_NAME APP_ASSETS_PATH("iclass_standard_dict.txt")
 #define PICOPASS_ICLASS_ELITE_DICT_USER_NAME APP_DATA_PATH("assets/iclass_elite_dict_user.txt")
@@ -67,6 +70,11 @@ typedef enum {
     EventTypeKey,
 } EventType;
 
+typedef enum {
+    PicopassSaveFormatHf,
+    PicopassSaveFormatLfrfid,
+} PicopassSaveFormat;
+
 typedef struct {
     const char* name;
     uint16_t total_keys;
@@ -92,6 +100,7 @@ struct Picopass {
     DialogsApp* dialogs;
     SceneManager* scene_manager;
     PicopassDevice* dev;
+    PicopassSaveFormat save_format;
 
     Nfc* nfc;
     PicopassPoller* poller;
@@ -156,6 +165,8 @@ void picopass_blink_stop(Picopass* picopass);
 bool picopass_is_memset(const uint8_t* data, const uint8_t pattern, size_t size);
 
 bool picopass_save(Picopass* instance);
+
+bool picopass_save_as_lfrfid(Picopass* instance);
 
 bool picopass_delete(Picopass* instance);
 

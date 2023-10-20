@@ -89,6 +89,25 @@ bool picopass_dev_save(PicopassDev* instance, const char* path) {
     return success;
 }
 
+bool picopass_dev_save_as_lfrfid(PicopassDev* instance, const char* path) {
+    furi_assert(instance);
+    furi_assert(path);
+
+    bool success = false;
+
+    if(instance->callback) {
+        instance->callback(instance->context, true);
+    }
+
+    success = picopass_protocol_save_as_lfrfid(instance->data, path);
+
+    if(instance->callback) {
+        instance->callback(instance->context, false);
+    }
+
+    return success;
+}
+
 bool picopass_dev_load(PicopassDev* instance, const char* path) {
     furi_assert(instance);
     furi_assert(path);

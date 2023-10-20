@@ -27,6 +27,8 @@ const PicopassData* picopass_dev_get_data(PicopassDev* instance);
 
 bool picopass_dev_save(PicopassDev* instance, const char* path);
 
+bool picopass_dev_save_as_lfrfid(PicopassDev* instance, const char* path);
+
 bool picopass_dev_load(PicopassDev* instance, const char* path);
 
 #ifdef __cplusplus

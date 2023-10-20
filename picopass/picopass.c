@@ -275,6 +275,26 @@ bool picopass_save(Picopass* instance) {
     return result;
 }
 
+bool picopass_save_as_lfrfid(Picopass* instance) {
+    furi_assert(instance);
+    bool result = false;
+
+    FuriString* lfrfid_file_path = furi_string_alloc_set_str(LFRFID_APP_FOLDER);
+
+    furi_string_cat_printf(
+        lfrfid_file_path, "/%s%s", furi_string_get_cstr(instance->file_name), LFRFID_APP_EXTENSION);
+
+    result = picopass_dev_save_as_lfrfid(instance->device, furi_string_get_cstr(lfrfid_file_path));
+
+    if(!result) {
+        dialog_message_show_storage_error(instance->dialogs, "Cannot save\nkey file");
+    }
+
+    furi_string_free(lfrfid_file_path);
+
+    return result;
+}
+
 bool picopass_delete(Picopass* instance) {
     furi_assert(instance);
 

@@ -55,7 +55,13 @@ bool picopass_scene_save_name_on_event(void* context, SceneManagerEvent event) {
             }
             furi_string_set(picopass->file_name, picopass->text_store);
 
-            if(picopass_save(picopass)) {
+            bool save_success = false;
+            if(picopass->save_format == PicopassSaveFormatLfrfid) {
+                save_success = picopass_save_as_lfrfid(picopass);
+            } else {
+                save_success = picopass_save(picopass);
+            }
+            if(save_success) {
                 scene_manager_next_scene(picopass->scene_manager, PicopassSceneSaveSuccess);
                 consumed = true;
             } else {

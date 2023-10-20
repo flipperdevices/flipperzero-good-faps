@@ -56,13 +56,13 @@ bool picopass_scene_card_menu_on_event(void* context, SceneManagerEvent event) {
         if(event.event == SubmenuIndexSave) {
             scene_manager_set_scene_state(
                 picopass->scene_manager, PicopassSceneCardMenu, SubmenuIndexSave);
+            picopass->save_format = PicopassSaveFormatHf;
             scene_manager_next_scene(picopass->scene_manager, PicopassSceneSaveName);
-            picopass->dev->format = PicopassDeviceSaveFormatHF;
             consumed = true;
         } else if(event.event == SubmenuIndexSaveAsLF) {
             scene_manager_set_scene_state(
                 picopass->scene_manager, PicopassSceneCardMenu, SubmenuIndexSaveAsLF);
-            picopass->dev->format = PicopassDeviceSaveFormatLF;
+            picopass->save_format = PicopassSaveFormatLfrfid;
             scene_manager_next_scene(picopass->scene_manager, PicopassSceneSaveName);
             consumed = true;
         } else if(event.event == SubmenuIndexWrite) {

@@ -54,12 +54,12 @@ NfcCommand gen4_poller_detect_callback(NfcGenericEvent event, void* context) {
     furi_assert(context);
     furi_assert(event.protocol == NfcProtocolIso14443_3a);
     furi_assert(event.instance);
-    furi_assert(event.data);
+    furi_assert(event.event_data);
 
     NfcCommand command = NfcCommandStop;
     Gen4PollerDetectContext* gen4_poller_detect_ctx = context;
     Iso14443_3aPoller* iso3_poller = event.instance;
-    Iso14443_3aPollerEvent* iso3_event = event.data;
+    Iso14443_3aPollerEvent* iso3_event = event.event_data;
 
     if(iso3_event->type == Iso14443_3aPollerEventTypeReady) {
         do {
@@ -189,13 +189,13 @@ static const Gen4PollerStateHandler gen4_poller_state_handlers[Gen4PollerStateNu
 static NfcCommand gen4_poller_callback(NfcGenericEvent event, void* context) {
     furi_assert(context);
     furi_assert(event.protocol == NfcProtocolIso14443_3a);
-    furi_assert(event.data);
+    furi_assert(event.event_data);
     furi_assert(event.instance);
 
     NfcCommand command = NfcCommandContinue;
     Gen4Poller* instance = context;
     instance->iso3_poller = event.instance;
-    Iso14443_3aPollerEvent* iso3_event = event.data;
+    Iso14443_3aPollerEvent* iso3_event = event.event_data;
 
     if(iso3_event->type == Iso14443_3aPollerEventTypeError) {
         command = gen4_poller_state_handlers[instance->state](instance);

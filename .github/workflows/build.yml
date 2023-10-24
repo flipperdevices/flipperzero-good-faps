@@ -37,15 +37,15 @@ jobs:
         with:
           dir_names: true
           dir_names_max_depth: 1
+          dir_names_exclude_current_dir: true
           files: |
             !.*/**
-            !.
 
       - name: Build & lint updated apps
         if: steps.changed-files.outputs.all_changed_and_modified_files != ''
         run: |
           BUILD_FAILED=0
-          for appdir in $( ${{ steps.changed-files.outputs.all_changed_and_modified_files }} ) ; do
+          for appdir in ${{ steps.changed-files.outputs.all_changed_and_modified_files }} ; do
             echo "Building in $appdir"
             pushd $appdir
             if ! ufbt build faps ; then

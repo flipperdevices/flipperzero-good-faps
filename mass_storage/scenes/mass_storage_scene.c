@@ -25,7 +25,6 @@ void (*const mass_storage_scene_on_exit_handlers[])(void* context) = {
 const SceneManagerHandlers mass_storage_scene_handlers = {
     .on_enter_handlers = mass_storage_scene_on_enter_handlers,
     .on_event_handlers = mass_storage_scene_on_event_handlers,
-    dfasdas
     .on_exit_handlers = mass_storage_scene_on_exit_handlers,
     .scene_num = MassStorageSceneNum,
 };

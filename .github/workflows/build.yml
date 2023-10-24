@@ -33,16 +33,21 @@ jobs:
 
       - name: Build & lint all apps
         run: |
+          BUILD_FAILED=0
           for appdir in $( dirname $( find . -name application.fam ) ) ; do
             echo "Building in $appdir"
             pushd $appdir
-            ufbt lint faps
+            ufbt lint faps || BUILD_FAILED=1
             popd
           done
           rm -rf dist || true && mkdir dist
           for fapfile in $( find . -name "*.fap" ) ; do
             cp $fapfile dist/
           done
+          if [ $BUILD_FAILED -ne 0 ] ; then
+            echo One or more apps failed to build
+            exit 1
+          fi
 
       - name: Upload all .fap files
         uses: actions/upload-artifact@v3

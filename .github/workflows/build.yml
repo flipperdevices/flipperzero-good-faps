@@ -39,18 +39,25 @@ jobs:
           dir_names_max_depth: 1
           files: |
             !.*/**
+            !.
 
       - name: Build & lint updated apps
         if: steps.changed-files.outputs.all_changed_and_modified_files != ''
         run: |
-          for appdir in $( dirname $( echo ${{ steps.changed-files.outputs.all_changed_and_modified_files }} ) ) ; do
+          BUILD_FAILED=0
+          for appdir in $( ${{ steps.changed-files.outputs.all_changed_and_modified_files }} ) ; do
             echo "Building in $appdir"
             pushd $appdir
             if ! ufbt build faps ; then
               echo "::error::Failed to build $appdir"
+              BUILD_FAILED=1
             fi
             popd
           done
+          if [ $BUILD_FAILED -ne 0 ] ; then
+            echo One or more apps failed to build
+            exit 1
+          fi
 
       - name: Build & lint all apps
         if: steps.changed-files.outputs.all_changed_and_modified_files == ''
@@ -65,14 +72,15 @@ jobs:
             fi
             popd
           done
-          rm -rf dist || true && mkdir dist
-          for fapfile in $( find . -name "*.fap" ) ; do
-            cp $fapfile dist/
-          done
           if [ $BUILD_FAILED -ne 0 ] ; then
             echo One or more apps failed to build
             exit 1
           fi
+      
+      - name: Gather build artifacts
+        run: |
+          mkdir -p dist
+          cp -v $( find . -name '*.fap' ) dist/
 
       - name: Upload all .fap files
         uses: actions/upload-artifact@v3

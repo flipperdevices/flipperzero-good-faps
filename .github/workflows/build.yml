@@ -31,7 +31,29 @@ jobs:
           sdk-channel: ${{ github.event.inputs.sdk-channel || 'rc'}}
           task: setup
 
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v39
+        with:
+          dir_names: true
+          dir_names_max_depth: 1
+          files: |
+            **/application.fam
+
+      - name: Build & lint updated apps
+        if: steps.changed-files.outputs.all_changed_and_modified_files != ''
+        run: |
+          for appdir in $( dirname $( echo ${{ steps.changed-files.outputs.all_changed_and_modified_files }} ) ) ; do
+            echo "Building in $appdir"
+            pushd $appdir
+            if ! ufbt build faps ; then
+              echo "::error::Failed to build $appdir"
+            fi
+            popd
+          done
+
       - name: Build & lint all apps
+        if: steps.changed-files.outputs.all_changed_and_modified_files == ''
         run: |
           BUILD_FAILED=0
           for appdir in $( dirname $( find . -name application.fam ) ) ; do

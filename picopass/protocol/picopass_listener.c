@@ -9,6 +9,7 @@ typedef enum {
     PicopassListenerCommandProcessed,
     PicopassListenerCommandSilent,
     PicopassListenerCommandSendSoF,
+    PicopassListenerCommandStop,
 } PicopassListenerCommand;
 
 typedef PicopassListenerCommand (
@@ -227,6 +228,7 @@ PicopassListenerCommand
 PicopassListenerCommand
     picopass_listener_check_handler_loclass(PicopassListener* instance, BitBuffer* buf) {
     PicopassListenerCommand command = PicopassListenerCommandSilent;
+    NfcCommand callback_command = NfcCommandContinue;
 
     // LOCLASS Reader attack mode
     do {
@@ -246,7 +248,10 @@ PicopassListenerCommand
             FURI_LOG_W(TAG, "loclass: standard key detected during collection");
             if(instance->callback) {
                 instance->event.type = PicopassListenerEventTypeLoclassGotStandardKey;
-                instance->callback(instance->event, instance->context);
+                callback_command = instance->callback(instance->event, instance->context);
+                if(callback_command == NfcCommandStop) {
+                    command = PicopassListenerCommandStop;
+                }
             }
 
             // Don't reset the state as the reader may try a different key next without going through anticoll
@@ -629,6 +634,8 @@ NfcCommand picopass_listener_start_callback(NfcEvent event, void* context) {
         }
         if(picopass_cmd == PicopassListenerCommandSendSoF) {
             nfc_iso15693_listener_tx_sof(instance->nfc);
+        } else if(picopass_cmd == PicopassListenerCommandStop) {
+            command = NfcCommandStop;
         }
     }
 

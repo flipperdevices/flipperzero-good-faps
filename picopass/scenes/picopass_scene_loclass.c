@@ -14,6 +14,7 @@ static NfcCommand
     } else if(event.type == PicopassListenerEventTypeLoclassGotStandardKey) {
         view_dispatcher_send_custom_event(
             picopass->view_dispatcher, PicopassCustomEventLoclassGotStandardKey);
+        command = NfcCommandStop;
     }
 
     return command;

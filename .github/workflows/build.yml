@@ -23,7 +23,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0
+          fetch-depth: 2
 
       - name: Set up ufbt
         uses: flipperdevices/flipperzero-ufbt-action@v0.1.2
@@ -38,7 +38,7 @@ jobs:
           dir_names: true
           dir_names_max_depth: 1
           files: |
-            **/application.fam
+            !.*/**
 
       - name: Build & lint updated apps
         if: steps.changed-files.outputs.all_changed_and_modified_files != ''

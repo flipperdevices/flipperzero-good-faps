@@ -37,7 +37,10 @@ jobs:
           for appdir in $( dirname $( find . -name application.fam ) ) ; do
             echo "Building in $appdir"
             pushd $appdir
-            ufbt lint faps || BUILD_FAILED=1
+            if ! ufbt build faps ; then
+              BUILD_FAILED=1
+              echo "::error::Failed to build $appdir"
+            fi
             popd
           done
           rm -rf dist || true && mkdir dist

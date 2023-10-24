@@ -132,8 +132,7 @@ static bool picopass_device_save_file(
             // Write header
             if(!flipper_format_write_header_cstr(file, picopass_file_header, picopass_file_version))
                 break;
-            if(!flipper_format_write_hex(
-                   file, "Credential", pacs->credential, PICOPASS_BLOCK_LEN))
+            if(!flipper_format_write_hex(file, "Credential", pacs->credential, PICOPASS_BLOCK_LEN))
                 break;
 
             // TODO: Add elite
@@ -146,10 +145,7 @@ static bool picopass_device_save_file(
             for(size_t i = 0; i < app_limit; i++) {
                 furi_string_printf(temp_str, "Block %d", i);
                 if(!flipper_format_write_hex(
-                       file,
-                       furi_string_get_cstr(temp_str),
-                       AA1[i].data,
-                       PICOPASS_BLOCK_LEN)) {
+                       file, furi_string_get_cstr(temp_str), AA1[i].data, PICOPASS_BLOCK_LEN)) {
                     block_saved = false;
                     break;
                 }

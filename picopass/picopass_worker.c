@@ -819,9 +819,7 @@ static inline void picopass_emu_read_blocks(
     uint8_t block_num,
     uint8_t block_count) {
     memcpy(
-        buf,
-        nfcv_data->data + (block_num * PICOPASS_BLOCK_LEN),
-        block_count * PICOPASS_BLOCK_LEN);
+        buf, nfcv_data->data + (block_num * PICOPASS_BLOCK_LEN), block_count * PICOPASS_BLOCK_LEN);
 }
 
 static inline void picopass_emu_write_blocks(
@@ -830,9 +828,7 @@ static inline void picopass_emu_write_blocks(
     uint8_t block_num,
     uint8_t block_count) {
     memcpy(
-        nfcv_data->data + (block_num * PICOPASS_BLOCK_LEN),
-        buf,
-        block_count * PICOPASS_BLOCK_LEN);
+        nfcv_data->data + (block_num * PICOPASS_BLOCK_LEN), buf, block_count * PICOPASS_BLOCK_LEN);
 }
 
 static void picopass_init_cipher_state_key(

@@ -44,7 +44,7 @@ bool nfc_magic_scene_gen4_menu_on_event(void* context, SceneManagerEvent event) 
             scene_manager_next_scene(instance->scene_manager, NfcMagicSceneNotImplemented);
             consumed = true;
         } else if(event.event == SubmenuIndexWipe) {
-            scene_manager_next_scene(instance->scene_manager, NfcMagicSceneNotImplemented);
+            scene_manager_next_scene(instance->scene_manager, NfcMagicSceneWipe);
             consumed = true;
         }
         scene_manager_set_scene_state(instance->scene_manager, NfcMagicSceneGen4Menu, event.event);

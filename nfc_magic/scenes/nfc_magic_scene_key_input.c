@@ -1,5 +1,7 @@
 #include "../nfc_magic_app_i.h"
 
+#include <nfc/helpers/nfc_util.h>
+
 void nfc_magic_scene_key_input_byte_input_callback(void* context) {
     NfcMagicApp* instance = context;
 
@@ -18,8 +20,8 @@ void nfc_magic_scene_key_input_on_enter(void* context) {
         nfc_magic_scene_key_input_byte_input_callback,
         NULL,
         instance,
-        (uint8_t*)&instance->gen4_password,
-        4);
+        instance->byte_input_store,
+        NFC_MAGIC_APP_BYTE_INPUT_STORE_SIZE);
     view_dispatcher_switch_to_view(instance->view_dispatcher, NfcMagicAppViewByteInput);
 }
 
@@ -29,6 +31,8 @@ bool nfc_magic_scene_key_input_on_event(void* context, SceneManagerEvent event) 
 
     if(event.type == SceneManagerEventTypeCustom) {
         if(event.event == NfcMagicAppCustomEventByteInputDone) {
+            instance->gen4_password = nfc_util_bytes2num(
+                instance->byte_input_store, NFC_MAGIC_APP_BYTE_INPUT_STORE_SIZE);
             scene_manager_next_scene(instance->scene_manager, NfcMagicSceneCheck);
             consumed = true;
         }

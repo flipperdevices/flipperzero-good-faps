@@ -19,11 +19,35 @@ typedef struct {
     bool detected;
 } Gen4PollerDetectContext;
 
+static const uint8_t gen4_poller_default_config[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02,
+                                                     0x00, 0x09, 0x78, 0x00, 0x91, 0x02, 0xDA,
+                                                     0xBC, 0x19, 0x10, 0x10, 0x11, 0x12, 0x13,
+                                                     0x14, 0x15, 0x16, 0x04, 0x00, 0x08, 0x00};
+static const uint8_t gen4_poller_default_block_0[GEN4_POLLER_BLOCK_SIZE] =
+    {0x00, 0x01, 0x02, 0x03, 0x04, 0x04, 0x08, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+static const uint8_t gen4_poller_default_empty_block[GEN4_POLLER_BLOCK_SIZE] = {0};
+
+static const uint8_t gen4_poller_default_sector_trailer_block[GEN4_POLLER_BLOCK_SIZE] =
+    {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x07, 0x80, 0x69, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+
+static bool gen4_poller_is_sector_trailer(uint8_t block_num) {
+    uint8_t sec_tr_block_num = 0;
+
+    if(block_num < 128) {
+        sec_tr_block_num = block_num | 0x03;
+    } else {
+        sec_tr_block_num = block_num | 0x0f;
+    }
+
+    return block_num == sec_tr_block_num;
+}
+
 Gen4Poller* gen4_poller_alloc(Nfc* nfc) {
     furi_assert(nfc);
 
     Gen4Poller* instance = malloc(sizeof(Gen4Poller));
-    nfc_poller_alloc(nfc, NfcProtocolIso14443_3a);
+    instance->poller = nfc_poller_alloc(nfc, NfcProtocolIso14443_3a);
 
     instance->gen4_event.data = &instance->gen4_event_data;
 
@@ -117,6 +141,7 @@ bool gen4_poller_detect(Nfc* nfc, uint32_t password) {
 NfcCommand gen4_poller_idle_handler(Gen4Poller* instance) {
     NfcCommand command = NfcCommandContinue;
 
+    instance->current_block = 0;
     instance->gen4_event.type = Gen4PollerEventTypeCardDetected;
     command = instance->callback(instance->gen4_event, instance->context);
     instance->state = Gen4PollerStateRequestMode;
@@ -142,7 +167,45 @@ NfcCommand gen4_poller_request_mode_handler(Gen4Poller* instance) {
 
 NfcCommand gen4_poller_wipe_handler(Gen4Poller* instance) {
     NfcCommand command = NfcCommandContinue;
-    UNUSED(instance);
+
+    do {
+        Gen4PollerError error = Gen4PollerErrorNone;
+        if(instance->current_block == 0) {
+            error = gen4_poller_set_config(
+                instance,
+                instance->password,
+                gen4_poller_default_config,
+                sizeof(gen4_poller_default_config),
+                false);
+            if(error != Gen4PollerErrorNone) {
+                FURI_LOG_D(TAG, "Failed to set default config: %d", error);
+                instance->state = Gen4PollerStateFail;
+                break;
+            }
+            error = gen4_poller_write_block(
+                instance, instance->password, instance->current_block, gen4_poller_default_block_0);
+            if(error != Gen4PollerErrorNone) {
+                FURI_LOG_D(TAG, "Failed to write 0 block: %d", error);
+                instance->state = Gen4PollerStateFail;
+                break;
+            }
+        } else if(instance->current_block < GEN4_POLLER_BLOCKS_TOTAL) {
+            const uint8_t* block = gen4_poller_is_sector_trailer(instance->current_block) ?
+                                       gen4_poller_default_sector_trailer_block :
+                                       gen4_poller_default_empty_block;
+            error = gen4_poller_write_block(
+                instance, instance->password, instance->current_block, block);
+            if(error != Gen4PollerErrorNone) {
+                FURI_LOG_D(TAG, "Failed to write %d block: %d", instance->current_block, error);
+                instance->state = Gen4PollerStateFail;
+                break;
+            }
+        } else {
+            instance->state = Gen4PollerStateSuccess;
+            break;
+        }
+        instance->current_block++;
+    } while(false);
 
     return command;
 }
@@ -163,14 +226,24 @@ NfcCommand gen4_poller_write_handler(Gen4Poller* instance) {
 
 NfcCommand gen4_poller_success_handler(Gen4Poller* instance) {
     NfcCommand command = NfcCommandContinue;
-    UNUSED(instance);
+
+    instance->gen4_event.type = Gen4PollerEventTypeSuccess;
+    command = instance->callback(instance->gen4_event, instance->context);
+    if(command != NfcCommandStop) {
+        furi_delay_ms(100);
+    }
 
     return command;
 }
 
 NfcCommand gen4_poller_fail_handler(Gen4Poller* instance) {
     NfcCommand command = NfcCommandContinue;
-    UNUSED(instance);
+
+    instance->gen4_event.type = Gen4PollerEventTypeFail;
+    command = instance->callback(instance->gen4_event, instance->context);
+    if(command != NfcCommandStop) {
+        furi_delay_ms(100);
+    }
 
     return command;
 }
@@ -197,7 +270,7 @@ static NfcCommand gen4_poller_callback(NfcGenericEvent event, void* context) {
     instance->iso3_poller = event.instance;
     Iso14443_3aPollerEvent* iso3_event = event.event_data;
 
-    if(iso3_event->type == Iso14443_3aPollerEventTypeError) {
+    if(iso3_event->type == Iso14443_3aPollerEventTypeReady) {
         command = gen4_poller_state_handlers[instance->state](instance);
     }
 

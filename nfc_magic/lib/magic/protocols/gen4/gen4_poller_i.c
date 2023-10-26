@@ -94,3 +94,36 @@ Gen4PollerError gen4_poller_write_block(
 
     return ret;
 }
+
+Gen4PollerError
+    gen4_poller_change_password(Gen4Poller* instance, uint32_t pwd_current, uint32_t pwd_new) {
+    Gen4PollerError ret = Gen4PollerErrorNone;
+    bit_buffer_reset(instance->tx_buffer);
+
+    do {
+        uint8_t password_arr[4] = {};
+        nfc_util_num2bytes(pwd_current, COUNT_OF(password_arr), password_arr);
+        bit_buffer_append_byte(instance->tx_buffer, GEN4_CMD_PREFIX);
+        bit_buffer_append_bytes(instance->tx_buffer, password_arr, COUNT_OF(password_arr));
+
+        bit_buffer_append_byte(instance->tx_buffer, GEN4_CMD_SET_PWD);
+        nfc_util_num2bytes(pwd_new, COUNT_OF(password_arr), password_arr);
+        bit_buffer_append_bytes(instance->tx_buffer, password_arr, COUNT_OF(password_arr));
+
+        Iso14443_3aError error = iso14443_3a_poller_send_standard_frame(
+            instance->iso3_poller, instance->tx_buffer, instance->rx_buffer, GEN4_POLLER_MAX_FWT);
+
+        if(error != Iso14443_3aErrorNone) {
+            ret = gen4_poller_process_error(error);
+            break;
+        }
+
+        size_t rx_bytes = bit_buffer_get_size_bytes(instance->rx_buffer);
+        if(rx_bytes != 2) {
+            ret = Gen4PollerErrorProtocol;
+            break;
+        }
+    } while(false);
+
+    return ret;
+}

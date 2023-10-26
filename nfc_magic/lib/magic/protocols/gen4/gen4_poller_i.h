@@ -54,6 +54,7 @@ typedef enum {
     Gen4PollerStateRequestWriteData,
     Gen4PollerStateWrite,
     Gen4PollerStateWipe,
+    Gen4PollerStateChangePassword,
     Gen4PollerStateSuccess,
     Gen4PollerStateFail,
 
@@ -74,6 +75,7 @@ struct Gen4Poller {
 
     NfcProtocol protocol;
     const NfcDeviceData* data;
+    uint32_t new_password;
 
     uint8_t config[GEN4_POLLER_CONFIG_SIZE_MAX];
 
@@ -96,6 +98,9 @@ Gen4PollerError gen4_poller_write_block(
     uint32_t password,
     uint8_t block_num,
     const uint8_t* data);
+
+Gen4PollerError
+    gen4_poller_change_password(Gen4Poller* instance, uint32_t pwd_current, uint32_t pwd_new);
 
 #ifdef __cplusplus
 }

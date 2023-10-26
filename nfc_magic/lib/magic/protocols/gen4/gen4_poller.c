@@ -159,6 +159,8 @@ NfcCommand gen4_poller_request_mode_handler(Gen4Poller* instance) {
         instance->state = Gen4PollerStateWipe;
     } else if(instance->gen4_event_data.request_mode.mode == Gen4PollerModeWrite) {
         instance->state = Gen4PollerStateRequestWriteData;
+    } else if(instance->gen4_event_data.request_mode.mode == Gen4PollerModeSetPassword) {
+        instance->state = Gen4PollerStateChangePassword;
     } else {
         instance->state = Gen4PollerStateFail;
     }
@@ -427,6 +429,30 @@ NfcCommand gen4_poller_write_handler(Gen4Poller* instance) {
     return command;
 }
 
+NfcCommand gen4_poller_change_password_handler(Gen4Poller* instance) {
+    NfcCommand command = NfcCommandContinue;
+
+    do {
+        instance->gen4_event.type = Gen4PollerEventTypeRequestNewPassword;
+        command = instance->callback(instance->gen4_event, instance->context);
+        if(command != NfcCommandContinue) break;
+
+        uint32_t new_password = instance->gen4_event_data.request_password.password;
+        Gen4PollerError error =
+            gen4_poller_change_password(instance, instance->password, new_password);
+        if(error != Gen4PollerErrorNone) {
+            FURI_LOG_E(TAG, "Failed to change password: %d", error);
+            instance->state = Gen4PollerStateFail;
+            break;
+        }
+
+        instance->password = new_password;
+        instance->state = Gen4PollerStateSuccess;
+    } while(false);
+
+    return command;
+}
+
 NfcCommand gen4_poller_success_handler(Gen4Poller* instance) {
     NfcCommand command = NfcCommandContinue;
 
@@ -457,6 +483,7 @@ static const Gen4PollerStateHandler gen4_poller_state_handlers[Gen4PollerStateNu
     [Gen4PollerStateRequestWriteData] = gen4_poller_request_write_data_handler,
     [Gen4PollerStateWrite] = gen4_poller_write_handler,
     [Gen4PollerStateWipe] = gen4_poller_wipe_handler,
+    [Gen4PollerStateChangePassword] = gen4_poller_change_password_handler,
     [Gen4PollerStateSuccess] = gen4_poller_success_handler,
     [Gen4PollerStateFail] = gen4_poller_fail_handler,
 

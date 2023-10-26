@@ -31,9 +31,15 @@ bool nfc_magic_scene_key_input_on_event(void* context, SceneManagerEvent event) 
 
     if(event.type == SceneManagerEventTypeCustom) {
         if(event.event == NfcMagicAppCustomEventByteInputDone) {
-            instance->gen4_password = nfc_util_bytes2num(
-                instance->byte_input_store, NFC_MAGIC_APP_BYTE_INPUT_STORE_SIZE);
-            scene_manager_next_scene(instance->scene_manager, NfcMagicSceneCheck);
+            if(scene_manager_has_previous_scene(instance->scene_manager, NfcMagicSceneGen4Menu)) {
+                instance->gen4_password_new = nfc_util_bytes2num(
+                    instance->byte_input_store, NFC_MAGIC_APP_BYTE_INPUT_STORE_SIZE);
+                scene_manager_next_scene(instance->scene_manager, NfcMagicSceneChangeKey);
+            } else {
+                instance->gen4_password = nfc_util_bytes2num(
+                    instance->byte_input_store, NFC_MAGIC_APP_BYTE_INPUT_STORE_SIZE);
+                scene_manager_next_scene(instance->scene_manager, NfcMagicSceneCheck);
+            }
             consumed = true;
         }
     }

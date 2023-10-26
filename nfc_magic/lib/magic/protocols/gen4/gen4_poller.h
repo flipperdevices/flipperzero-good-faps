@@ -21,6 +21,7 @@ typedef enum {
     Gen4PollerEventTypeCardDetected,
     Gen4PollerEventTypeRequestMode,
     Gen4PollerEventTypeRequestDataToWrite,
+    Gen4PollerEventTypeRequestNewPassword,
 
     Gen4PollerEventTypeSuccess,
     Gen4PollerEventTypeFail,
@@ -41,9 +42,14 @@ typedef struct {
     const NfcDeviceData* data;
 } Gen4PollerEventDataRequestDataToWrite;
 
+typedef struct {
+    uint32_t password;
+} Gen4PollerEventDataRequestNewPassword;
+
 typedef union {
     Gen4PollerEventDataRequestMode request_mode;
     Gen4PollerEventDataRequestDataToWrite request_data;
+    Gen4PollerEventDataRequestNewPassword request_password;
 } Gen4PollerEventData;
 
 typedef struct {

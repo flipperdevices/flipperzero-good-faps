@@ -142,6 +142,7 @@ NfcCommand gen4_poller_idle_handler(Gen4Poller* instance) {
     NfcCommand command = NfcCommandContinue;
 
     instance->current_block = 0;
+    memset(instance->config, 0, sizeof(instance->config));
     instance->gen4_event.type = Gen4PollerEventTypeCardDetected;
     command = instance->callback(instance->gen4_event, instance->context);
     instance->state = Gen4PollerStateRequestMode;
@@ -157,7 +158,7 @@ NfcCommand gen4_poller_request_mode_handler(Gen4Poller* instance) {
     if(instance->gen4_event_data.request_mode.mode == Gen4PollerModeWipe) {
         instance->state = Gen4PollerStateWipe;
     } else if(instance->gen4_event_data.request_mode.mode == Gen4PollerModeWrite) {
-        instance->state = Gen4PollerStateWriteDataRequest;
+        instance->state = Gen4PollerStateRequestWriteData;
     } else {
         instance->state = Gen4PollerStateFail;
     }
@@ -210,16 +211,218 @@ NfcCommand gen4_poller_wipe_handler(Gen4Poller* instance) {
     return command;
 }
 
-NfcCommand gen4_poller_write_data_request_handler(Gen4Poller* instance) {
+NfcCommand gen4_poller_request_write_data_handler(Gen4Poller* instance) {
     NfcCommand command = NfcCommandContinue;
-    UNUSED(instance);
+
+    instance->gen4_event.type = Gen4PollerEventTypeRequestDataToWrite;
+    command = instance->callback(instance->gen4_event, instance->context);
+    instance->protocol = instance->gen4_event_data.request_data.protocol;
+    instance->data = instance->gen4_event_data.request_data.data;
+
+    if((instance->protocol == NfcProtocolMfClassic) ||
+       (instance->protocol == NfcProtocolMfUltralight)) {
+        instance->state = Gen4PollerStateWrite;
+    } else {
+        FURI_LOG_E(TAG, "Unsupported protocol");
+        instance->state = Gen4PollerStateFail;
+    }
+
+    return command;
+}
+
+static NfcCommand gen4_poller_write_mf_classic(Gen4Poller* instance) {
+    NfcCommand command = NfcCommandContinue;
+
+    do {
+        const MfClassicData* mfc_data = instance->data;
+        const Iso14443_3aData* iso3_data = mfc_data->iso14443_3a_data;
+        if(instance->current_block == 0) {
+            instance->config[0] = 0x00;
+            instance->total_blocks = mf_classic_get_total_block_num(mfc_data->type);
+
+            if(iso3_data->uid_len == 4) {
+                instance->config[1] = Gen4PollerUIDLengthSingle;
+            } else if(iso3_data->uid_len == 7) {
+                instance->config[1] = Gen4PollerUIDLengthDouble;
+            } else {
+                FURI_LOG_E(TAG, "Unsupported UID len: %d", iso3_data->uid_len);
+                instance->state = Gen4PollerStateFail;
+                break;
+            }
+
+            instance->config[6] = Gen4PollerShadowModeIgnore;
+            instance->config[24] = iso3_data->atqa[0];
+            instance->config[25] = iso3_data->atqa[1];
+            instance->config[26] = iso3_data->sak;
+            instance->config[27] = 0x00;
+            instance->config[28] = instance->total_blocks;
+            instance->config[29] = 0x01;
+
+            Gen4PollerError error = gen4_poller_set_config(
+                instance, instance->password, instance->config, sizeof(instance->config), false);
+            if(error != Gen4PollerErrorNone) {
+                FURI_LOG_D(TAG, "Failed to write config: %d", error);
+                instance->state = Gen4PollerStateFail;
+                break;
+            }
+        }
+        if(instance->current_block < instance->total_blocks) {
+            FURI_LOG_D(TAG, "Writing block %d", instance->current_block);
+            Gen4PollerError error = gen4_poller_write_block(
+                instance,
+                instance->password,
+                instance->current_block,
+                mfc_data->block[instance->current_block].data);
+            if(error != Gen4PollerErrorNone) {
+                FURI_LOG_D(TAG, "Failed to write %d block: %d", instance->current_block, error);
+                instance->state = Gen4PollerStateFail;
+                break;
+            }
+        } else {
+            instance->state = Gen4PollerStateSuccess;
+            break;
+        }
+        instance->current_block++;
+    } while(false);
+
+    return command;
+}
+
+static NfcCommand gen4_poller_write_mf_ultralight(Gen4Poller* instance) {
+    NfcCommand command = NfcCommandContinue;
+
+    do {
+        const MfUltralightData* mfu_data = instance->data;
+        const Iso14443_3aData* iso3_data = mfu_data->iso14443_3a_data;
+        if(instance->current_block == 0) {
+            instance->total_blocks = 64;
+            instance->config[0] = 0x01;
+            switch(mfu_data->type) {
+            case MfUltralightTypeNTAG203:
+            case MfUltralightTypeNTAG213:
+            case MfUltralightTypeNTAG215:
+            case MfUltralightTypeNTAG216:
+            case MfUltralightTypeNTAGI2C1K:
+            case MfUltralightTypeNTAGI2C2K:
+            case MfUltralightTypeNTAGI2CPlus1K:
+            case MfUltralightTypeNTAGI2CPlus2K:
+                instance->config[27] = Gen4PollerUltralightModeNTAG;
+                instance->total_blocks = 64 * 2;
+                break;
+
+            case MfUltralightTypeUL11:
+            case MfUltralightTypeUL21:
+                // UL-C?
+                // UL?
+            default:
+                instance->config[27] = Gen4PollerUltralightModeUL_EV1;
+                break;
+            }
+
+            if(iso3_data->uid_len == 4) {
+                instance->config[1] = Gen4PollerUIDLengthSingle;
+            } else if(iso3_data->uid_len == 7) {
+                instance->config[1] = Gen4PollerUIDLengthDouble;
+            } else {
+                FURI_LOG_E(TAG, "Unsupported UID len: %d", iso3_data->uid_len);
+                instance->state = Gen4PollerStateFail;
+                break;
+            }
+
+            instance->config[6] = Gen4PollerShadowModeHighSpeedIgnore;
+            instance->config[24] = iso3_data->atqa[0];
+            instance->config[25] = iso3_data->atqa[1];
+            instance->config[26] = iso3_data->sak;
+            instance->config[27] = 0x00;
+            instance->config[28] = instance->total_blocks;
+            instance->config[29] = 0x01;
+
+            Gen4PollerError error = gen4_poller_set_config(
+                instance, instance->password, instance->config, sizeof(instance->config), false);
+            if(error != Gen4PollerErrorNone) {
+                FURI_LOG_D(TAG, "Failed to write config: %d", error);
+                instance->state = Gen4PollerStateFail;
+                break;
+            }
+        }
+
+        if(instance->current_block < mfu_data->pages_read) {
+            FURI_LOG_D(
+                TAG, "Writing page %zu / %zu", instance->current_block, mfu_data->pages_read);
+            Gen4PollerError error = gen4_poller_write_block(
+                instance,
+                instance->password,
+                instance->current_block,
+                mfu_data->page[instance->current_block].data);
+            if(error != Gen4PollerErrorNone) {
+                FURI_LOG_D(TAG, "Failed to write %d page: %d", instance->current_block, error);
+                instance->state = Gen4PollerStateFail;
+                break;
+            }
+            instance->current_block++;
+        } else {
+            uint8_t block[GEN4_POLLER_BLOCK_SIZE] = {};
+            bool write_success = true;
+            for(size_t i = 0; i < 8; i++) {
+                memcpy(block, &mfu_data->signature.data[i * 4], 4); //-V1086
+                Gen4PollerError error =
+                    gen4_poller_write_block(instance, instance->password, 0xF2 + i, block);
+                if(error != Gen4PollerErrorNone) {
+                    write_success = false;
+                    break;
+                }
+            }
+            if(!write_success) {
+                FURI_LOG_E(TAG, "Failed to write Signature");
+                instance->state = Gen4PollerStateFail;
+                break;
+            }
+
+            block[0] = mfu_data->version.header;
+            block[1] = mfu_data->version.vendor_id;
+            block[2] = mfu_data->version.prod_type;
+            block[3] = mfu_data->version.prod_subtype;
+            Gen4PollerError error =
+                gen4_poller_write_block(instance, instance->password, 0xFA, block);
+            if(error != Gen4PollerErrorNone) {
+                FURI_LOG_E(TAG, "Failed to write 1st part Version");
+                instance->state = Gen4PollerStateFail;
+                break;
+            }
+
+            block[0] = mfu_data->version.prod_ver_major;
+            block[1] = mfu_data->version.prod_ver_minor;
+            block[2] = mfu_data->version.storage_size;
+            block[3] = mfu_data->version.protocol_type;
+            error = gen4_poller_write_block(instance, instance->password, 0xFB, block);
+            if(error != Gen4PollerErrorNone) {
+                FURI_LOG_E(TAG, "Failed to write 2nd part Version");
+                instance->state = Gen4PollerStateFail;
+                break;
+            }
+
+            instance->state = Gen4PollerStateSuccess;
+        }
+    } while(false);
 
     return command;
 }
 
 NfcCommand gen4_poller_write_handler(Gen4Poller* instance) {
     NfcCommand command = NfcCommandContinue;
-    UNUSED(instance);
+
+    memcpy(instance->config, gen4_poller_default_config, sizeof(gen4_poller_default_config));
+    uint8_t password_arr[4] = {};
+    nfc_util_num2bytes(instance->password, sizeof(password_arr), password_arr);
+    memcpy(&instance->config[2], password_arr, sizeof(password_arr));
+    memset(&instance->config[7], 0, 17);
+    if(instance->protocol == NfcProtocolMfClassic) {
+        command = gen4_poller_write_mf_classic(instance);
+    } else if(instance->protocol == NfcProtocolMfUltralight) {
+        command = gen4_poller_write_mf_ultralight(instance);
+    } else {
+        furi_crash("Unsupported protocol to write");
+    }
 
     return command;
 }
@@ -251,9 +454,9 @@ NfcCommand gen4_poller_fail_handler(Gen4Poller* instance) {
 static const Gen4PollerStateHandler gen4_poller_state_handlers[Gen4PollerStateNum] = {
     [Gen4PollerStateIdle] = gen4_poller_idle_handler,
     [Gen4PollerStateRequestMode] = gen4_poller_request_mode_handler,
-    [Gen4PollerStateWipe] = gen4_poller_wipe_handler,
-    [Gen4PollerStateWriteDataRequest] = gen4_poller_write_data_request_handler,
+    [Gen4PollerStateRequestWriteData] = gen4_poller_request_write_data_handler,
     [Gen4PollerStateWrite] = gen4_poller_write_handler,
+    [Gen4PollerStateWipe] = gen4_poller_wipe_handler,
     [Gen4PollerStateSuccess] = gen4_poller_success_handler,
     [Gen4PollerStateFail] = gen4_poller_fail_handler,
 

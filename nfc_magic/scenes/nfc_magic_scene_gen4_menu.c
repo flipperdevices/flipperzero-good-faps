@@ -38,7 +38,7 @@ bool nfc_magic_scene_gen4_menu_on_event(void* context, SceneManagerEvent event) 
 
     if(event.type == SceneManagerEventTypeCustom) {
         if(event.event == SubmenuIndexWrite) {
-            scene_manager_next_scene(instance->scene_manager, NfcMagicSceneNotImplemented);
+            scene_manager_next_scene(instance->scene_manager, NfcMagicSceneFileSelect);
             consumed = true;
         } else if(event.event == SubmenuIndexChangePassword) {
             scene_manager_next_scene(instance->scene_manager, NfcMagicSceneNotImplemented);

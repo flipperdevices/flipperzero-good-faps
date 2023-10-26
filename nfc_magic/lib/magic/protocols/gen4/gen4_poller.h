@@ -1,6 +1,9 @@
 #pragma once
 
 #include <nfc/nfc.h>
+#include <nfc/protocols/nfc_protocol.h>
+#include <nfc/protocols/mf_classic/mf_classic.h>
+#include <nfc/protocols/mf_ultralight/mf_ultralight.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -17,6 +20,7 @@ extern "C" {
 typedef enum {
     Gen4PollerEventTypeCardDetected,
     Gen4PollerEventTypeRequestMode,
+    Gen4PollerEventTypeRequestDataToWrite,
 
     Gen4PollerEventTypeSuccess,
     Gen4PollerEventTypeFail,
@@ -32,8 +36,14 @@ typedef struct {
     Gen4PollerMode mode;
 } Gen4PollerEventDataRequestMode;
 
+typedef struct {
+    NfcProtocol protocol;
+    const NfcDeviceData* data;
+} Gen4PollerEventDataRequestDataToWrite;
+
 typedef union {
     Gen4PollerEventDataRequestMode request_mode;
+    Gen4PollerEventDataRequestDataToWrite request_data;
 } Gen4PollerEventData;
 
 typedef struct {

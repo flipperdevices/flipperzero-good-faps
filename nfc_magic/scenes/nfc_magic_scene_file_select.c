@@ -7,55 +7,32 @@ static bool nfc_magic_scene_file_select_is_file_suitable(NfcMagicApp* instance) 
     nfc_device_get_uid(instance->source_dev, &uid_len);
 
     bool suitable = false;
-    if((uid_len == 4) && (protocol == NfcProtocolMfClassic)) {
-        const MfClassicData* mfc_data =
-            nfc_device_get_data(instance->source_dev, NfcProtocolMfClassic);
-        if(mfc_data->type == MfClassicType1k) {
+    if(instance->protocol == NfcMagicProtocolGen1) {
+        if((uid_len == 4) && (protocol == NfcProtocolMfClassic)) {
+            const MfClassicData* mfc_data =
+                nfc_device_get_data(instance->source_dev, NfcProtocolMfClassic);
+            if(mfc_data->type == MfClassicType1k) {
+                suitable = true;
+            }
+        }
+    } else if(instance->protocol == NfcMagicProtocolGen4) {
+        if(protocol == NfcProtocolMfClassic) {
             suitable = true;
+        } else if(protocol == NfcProtocolMfUltralight) {
+            const MfUltralightData* mfu_data =
+                nfc_device_get_data(instance->source_dev, NfcProtocolMfUltralight);
+            const Iso14443_3aData* iso3_data = mfu_data->iso14443_3a_data;
+            if(iso3_data->uid_len == 7) {
+                MfUltralightType mfu_type = mfu_data->type;
+                suitable = (mfu_type != MfUltralightTypeNTAGI2C1K) &&
+                           (mfu_type != MfUltralightTypeNTAGI2C2K) &&
+                           (mfu_type != MfUltralightTypeNTAGI2CPlus1K) &&
+                           (mfu_type != MfUltralightTypeNTAGI2CPlus2K);
+            }
         }
     }
 
     return suitable;
-
-    // NfcDevice* nfc_dev = instance->source_dev;
-    // if(nfc_dev->format == NfcDeviceSaveFormatMifareClassic) {
-    //     switch(instance->dev->type) {
-    //     case MagicTypeClassicGen1:
-    //     case MagicTypeClassicDirectWrite:
-    //     case MagicTypeClassicAPDU:
-    //         if((nfc_dev->dev_data.mf_classic_data.type != MfClassicType1k) ||
-    //            (nfc_dev->dev_data.nfc_data.uid_len != instance->dev->uid_len)) {
-    //             return false;
-    //         }
-    //         return true;
-
-    //     case MagicTypeGen4:
-    //         return true;
-    //     default:
-    //         return false;
-    //     }
-    // } else if(
-    //     (nfc_dev->format == NfcDeviceSaveFormatMifareUl) &&
-    //     (nfc_dev->dev_data.nfc_data.uid_len == 7)) {
-    //     switch(instance->dev->type) {
-    //     case MagicTypeUltralightGen1:
-    //     case MagicTypeUltralightDirectWrite:
-    //     case MagicTypeUltralightC_Gen1:
-    //     case MagicTypeUltralightC_DirectWrite:
-    //     case MagicTypeGen4:
-    //         switch(nfc_dev->dev_data.mf_ul_data.type) {
-    //         case MfUltralightTypeNTAGI2C1K:
-    //         case MfUltralightTypeNTAGI2C2K:
-    //         case MfUltralightTypeNTAGI2CPlus1K:
-    //         case MfUltralightTypeNTAGI2CPlus2K:
-    //             return false;
-    //         default:
-    //             return true;
-    //         }
-    //     default:
-    //         return false;
-    //     }
-    // }
 }
 
 void nfc_magic_scene_file_select_on_enter(void* context) {

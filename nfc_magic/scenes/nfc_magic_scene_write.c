@@ -36,9 +36,29 @@ NfcCommand nfc_mafic_scene_write_gen1_poller_callback(Gen1aPollerEvent event, vo
 NfcCommand nfc_mafic_scene_write_gen4_poller_callback(Gen4PollerEvent event, void* context) {
     NfcMagicApp* instance = context;
     furi_assert(event.data);
-    UNUSED(instance);
 
-    return NfcCommandContinue;
+    NfcCommand command = NfcCommandContinue;
+
+    if(event.type == Gen4PollerEventTypeCardDetected) {
+        view_dispatcher_send_custom_event(
+            instance->view_dispatcher, NfcMagicCustomEventCardDetected);
+    } else if(event.type == Gen4PollerEventTypeRequestMode) {
+        event.data->request_mode.mode = Gen4PollerModeWrite;
+    } else if(event.type == Gen4PollerEventTypeRequestDataToWrite) {
+        NfcProtocol protocol = nfc_device_get_protocol(instance->source_dev);
+        event.data->request_data.protocol = protocol;
+        event.data->request_data.data = nfc_device_get_data(instance->source_dev, protocol);
+    } else if(event.type == Gen4PollerEventTypeSuccess) {
+        view_dispatcher_send_custom_event(
+            instance->view_dispatcher, NfcMagicCustomEventWorkerSuccess);
+        command = NfcCommandStop;
+    } else if(event.type == Gen4PollerEventTypeFail) {
+        view_dispatcher_send_custom_event(
+            instance->view_dispatcher, NfcMagicCustomEventWorkerFail);
+        command = NfcCommandStop;
+    }
+
+    return command;
 }
 
 static void nfc_magic_scene_write_setup_view(NfcMagicApp* instance) {
@@ -112,7 +132,7 @@ void nfc_magic_scene_write_on_exit(void* context) {
         gen1a_poller_stop(instance->gen1a_poller);
         gen1a_poller_free(instance->gen1a_poller);
     } else {
-        // gen4_poller_stop(instance->gen4_poller);
+        gen4_poller_stop(instance->gen4_poller);
         gen4_poller_free(instance->gen4_poller);
     }
     scene_manager_set_scene_state(

@@ -16,6 +16,32 @@ extern "C" {
 #define GEN4_POLLER_BLOCK_SIZE (16)
 #define GEN4_POLLER_BLOCKS_TOTAL (256)
 
+#define GEN4_POLLER_CONFIG_SIZE_MAX (30)
+
+typedef enum {
+    Gen4PollerUIDLengthSingle = 0x00,
+    Gen4PollerUIDLengthDouble = 0x01,
+    Gen4PollerUIDLengthTriple = 0x02
+} Gen4PollerUIDLength;
+
+typedef enum {
+    Gen4PollerUltralightModeUL_EV1 = 0x00,
+    Gen4PollerUltralightModeNTAG = 0x01,
+    Gen4PollerUltralightModeUL_C = 0x02,
+    Gen4PollerUltralightModeUL = 0x03
+} Gen4PollerUltralightMode;
+
+typedef enum {
+    // for writing original (shadow) data
+    Gen4PollerShadowModePreWrite = 0x00,
+    // written data can be read once before restored to original
+    Gen4PollerShadowModeRestore = 0x01,
+    // written data is discarded
+    Gen4PollerShadowModeIgnore = 0x02,
+    // apparently for UL?
+    Gen4PollerShadowModeHighSpeedIgnore = 0x03
+} Gen4PollerShadowMode;
+
 typedef enum {
     Gen4PollerErrorNone,
     Gen4PollerErrorTimeout,
@@ -25,9 +51,9 @@ typedef enum {
 typedef enum {
     Gen4PollerStateIdle,
     Gen4PollerStateRequestMode,
-    Gen4PollerStateWipe,
-    Gen4PollerStateWriteDataRequest,
+    Gen4PollerStateRequestWriteData,
     Gen4PollerStateWrite,
+    Gen4PollerStateWipe,
     Gen4PollerStateSuccess,
     Gen4PollerStateFail,
 
@@ -44,6 +70,12 @@ struct Gen4Poller {
     BitBuffer* rx_buffer;
 
     uint16_t current_block;
+    uint16_t total_blocks;
+
+    NfcProtocol protocol;
+    const NfcDeviceData* data;
+
+    uint8_t config[GEN4_POLLER_CONFIG_SIZE_MAX];
 
     Gen4PollerEvent gen4_event;
     Gen4PollerEventData gen4_event_data;

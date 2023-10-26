@@ -42,7 +42,7 @@ void nfc_magic_scene_file_select_on_enter(void* context) {
         if(nfc_magic_scene_file_select_is_file_suitable(instance)) {
             scene_manager_next_scene(instance->scene_manager, NfcMagicSceneWriteConfirm);
         } else {
-            scene_manager_next_scene(instance->scene_manager, NfcMagicSceneNotImplemented);
+            scene_manager_next_scene(instance->scene_manager, NfcMagicSceneWrongCard);
         }
     } else {
         scene_manager_previous_scene(instance->scene_manager);

@@ -9,6 +9,9 @@ void nfc_magic_check_worker_callback(NfcMagicScannerEvent event, void* context) 
         instance->protocol = event.data.protocol;
         view_dispatcher_send_custom_event(
             instance->view_dispatcher, NfcMagicCustomEventWorkerSuccess);
+    } else if(event.type == NfcMagicScannerEventTypeDetectedNotMagic) {
+        view_dispatcher_send_custom_event(
+            instance->view_dispatcher, NfcMagicCustomEventWorkerFail);
     }
 }
 
@@ -32,6 +35,9 @@ bool nfc_magic_scene_check_on_event(void* context, SceneManagerEvent event) {
     if(event.type == SceneManagerEventTypeCustom) {
         if(event.event == NfcMagicCustomEventWorkerSuccess) {
             scene_manager_next_scene(instance->scene_manager, NfcMagicSceneMagicInfo);
+            consumed = true;
+        } else if(event.event == NfcMagicCustomEventWorkerFail) {
+            scene_manager_next_scene(instance->scene_manager, NfcMagicSceneNotMagic);
             consumed = true;
         }
     }

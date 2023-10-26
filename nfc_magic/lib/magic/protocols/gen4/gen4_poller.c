@@ -16,7 +16,7 @@ typedef struct {
     BitBuffer* tx_buffer;
     BitBuffer* rx_buffer;
     FuriThreadId thread_id;
-    bool detected;
+    Gen4PollerError error;
 } Gen4PollerDetectContext;
 
 static const uint8_t gen4_poller_default_config[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02,
@@ -84,6 +84,7 @@ NfcCommand gen4_poller_detect_callback(NfcGenericEvent event, void* context) {
     Gen4PollerDetectContext* gen4_poller_detect_ctx = context;
     Iso14443_3aPoller* iso3_poller = event.instance;
     Iso14443_3aPollerEvent* iso3_event = event.event_data;
+    gen4_poller_detect_ctx->error = Gen4PollerErrorTimeout;
 
     if(iso3_event->type == Iso14443_3aPollerEventTypeReady) {
         do {
@@ -99,19 +100,27 @@ NfcCommand gen4_poller_detect_callback(NfcGenericEvent event, void* context) {
                 gen4_poller_detect_ctx->rx_buffer,
                 GEN4_POLLER_MAX_FWT);
 
-            if(error != Iso14443_3aErrorNone) break;
+            if(error != Iso14443_3aErrorNone) {
+                gen4_poller_detect_ctx->error = Gen4PollerErrorProtocol;
+                break;
+            }
             size_t rx_bytes = bit_buffer_get_size_bytes(gen4_poller_detect_ctx->rx_buffer);
-            if((rx_bytes != 30) && (rx_bytes != 32)) break;
+            if((rx_bytes != 30) && (rx_bytes != 32)) {
+                gen4_poller_detect_ctx->error = Gen4PollerErrorProtocol;
+                break;
+            }
 
-            gen4_poller_detect_ctx->detected = true;
+            gen4_poller_detect_ctx->error = Gen4PollerErrorNone;
         } while(false);
+    } else if(iso3_event->type == Iso14443_3aPollerEventTypeError) {
+        gen4_poller_detect_ctx->error = Gen4PollerErrorTimeout;
     }
     furi_thread_flags_set(gen4_poller_detect_ctx->thread_id, GEN4_POLLER_THREAD_FLAG_DETECTED);
 
     return command;
 }
 
-bool gen4_poller_detect(Nfc* nfc, uint32_t password) {
+Gen4PollerError gen4_poller_detect(Nfc* nfc, uint32_t password) {
     furi_assert(nfc);
 
     Gen4PollerDetectContext gen4_poller_detect_ctx = {};
@@ -120,7 +129,7 @@ bool gen4_poller_detect(Nfc* nfc, uint32_t password) {
     gen4_poller_detect_ctx.tx_buffer = bit_buffer_alloc(GEN4_POLLER_MAX_BUFFER_SIZE);
     gen4_poller_detect_ctx.rx_buffer = bit_buffer_alloc(GEN4_POLLER_MAX_BUFFER_SIZE);
     gen4_poller_detect_ctx.thread_id = furi_thread_get_current_id();
-    gen4_poller_detect_ctx.detected = false;
+    gen4_poller_detect_ctx.error = Gen4PollerErrorNone;
 
     nfc_poller_start(
         gen4_poller_detect_ctx.poller, gen4_poller_detect_callback, &gen4_poller_detect_ctx);
@@ -135,7 +144,7 @@ bool gen4_poller_detect(Nfc* nfc, uint32_t password) {
     bit_buffer_free(gen4_poller_detect_ctx.tx_buffer);
     bit_buffer_free(gen4_poller_detect_ctx.rx_buffer);
 
-    return gen4_poller_detect_ctx.detected;
+    return gen4_poller_detect_ctx.error;
 }
 
 NfcCommand gen4_poller_idle_handler(Gen4Poller* instance) {

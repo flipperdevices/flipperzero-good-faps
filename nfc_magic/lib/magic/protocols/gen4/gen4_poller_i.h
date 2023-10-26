@@ -43,12 +43,6 @@ typedef enum {
 } Gen4PollerShadowMode;
 
 typedef enum {
-    Gen4PollerErrorNone,
-    Gen4PollerErrorTimeout,
-    Gen4PollerErrorProtocol,
-} Gen4PollerError;
-
-typedef enum {
     Gen4PollerStateIdle,
     Gen4PollerStateRequestMode,
     Gen4PollerStateRequestWriteData,

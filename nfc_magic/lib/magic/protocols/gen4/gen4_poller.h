@@ -18,6 +18,12 @@ extern "C" {
 #define GEN4_CMD_SET_PWD (0xFE)
 
 typedef enum {
+    Gen4PollerErrorNone,
+    Gen4PollerErrorTimeout,
+    Gen4PollerErrorProtocol,
+} Gen4PollerError;
+
+typedef enum {
     Gen4PollerEventTypeCardDetected,
     Gen4PollerEventTypeRequestMode,
     Gen4PollerEventTypeRequestDataToWrite,
@@ -61,7 +67,7 @@ typedef NfcCommand (*Gen4PollerCallback)(Gen4PollerEvent event, void* context);
 
 typedef struct Gen4Poller Gen4Poller;
 
-bool gen4_poller_detect(Nfc* nfc, uint32_t password);
+Gen4PollerError gen4_poller_detect(Nfc* nfc, uint32_t password);
 
 Gen4Poller* gen4_poller_alloc(Nfc* nfc);
 

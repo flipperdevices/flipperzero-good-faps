@@ -2,6 +2,7 @@
 
 #include "protocols/gen1a/gen1a_poller.h"
 #include "protocols/gen4/gen4_poller.h"
+#include <nfc/nfc_poller.h>
 
 #include <furi/furi.h>
 
@@ -23,6 +24,12 @@ struct NfcMagicScanner {
     void* context;
 
     FuriThread* scan_worker;
+};
+
+static const NfcProtocol nfc_magic_scanner_not_magic_protocols[] = {
+    NfcProtocolIso14443_3b,
+    NfcProtocolIso15693_3,
+    NfcProtocolFelica,
 };
 
 static void nfc_magic_scanner_reset(NfcMagicScanner* instance) {
@@ -61,8 +68,16 @@ static int32_t nfc_magic_scanner_worker(void* context) {
         if(instance->current_protocol == NfcMagicProtocolGen1) {
             instance->magic_protocol_detected = gen1a_poller_detect(instance->nfc);
         } else if(instance->current_protocol == NfcMagicProtocolGen4) {
-            instance->magic_protocol_detected =
-                gen4_poller_detect(instance->nfc, instance->gen4_password);
+            Gen4PollerError error = gen4_poller_detect(instance->nfc, instance->gen4_password);
+            if(error == Gen4PollerErrorProtocol) {
+                NfcMagicScannerEvent event = {
+                    .type = NfcMagicScannerEventTypeDetectedNotMagic,
+                };
+                instance->callback(event, instance->context);
+                break;
+            } else {
+                instance->magic_protocol_detected = (error == Gen4PollerErrorNone);
+            }
         }
 
         if(instance->magic_protocol_detected) {
@@ -74,6 +89,25 @@ static int32_t nfc_magic_scanner_worker(void* context) {
             break;
         }
 
+        if(instance->current_protocol == NfcMagicProtocolNum - 1) {
+            bool not_magic_protocol_detected = false;
+            for(size_t i = 0; i < COUNT_OF(nfc_magic_scanner_not_magic_protocols); i++) {
+                NfcProtocol protocol = nfc_magic_scanner_not_magic_protocols[i];
+                NfcPoller* poller = nfc_poller_alloc(instance->nfc, protocol);
+                not_magic_protocol_detected = nfc_poller_detect(poller);
+                nfc_poller_free(poller);
+                if(not_magic_protocol_detected) {
+                    break;
+                }
+            }
+            if(not_magic_protocol_detected) {
+                NfcMagicScannerEvent event = {
+                    .type = NfcMagicScannerEventTypeDetectedNotMagic,
+                };
+                instance->callback(event, instance->context);
+                break;
+            }
+        }
         instance->current_protocol = (instance->current_protocol + 1) % NfcMagicProtocolNum;
     }
 

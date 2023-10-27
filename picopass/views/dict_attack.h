@@ -3,8 +3,6 @@
 #include <gui/view.h>
 #include <gui/modules/widget.h>
 
-#include <lib/nfc/protocols/mifare_classic.h>
-
 typedef struct DictAttack DictAttack;
 
 typedef void (*DictAttackCallback)(void* context);

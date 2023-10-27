@@ -15,7 +15,6 @@ struct DictAttack {
 
 typedef struct {
     DictAttackState state;
-    MfClassicType type;
     FuriString* header;
     uint8_t sectors_total;
     uint8_t sectors_read;
@@ -123,7 +122,6 @@ void dict_attack_reset(DictAttack* dict_attack) {
         DictAttackViewModel * model,
         {
             model->state = DictAttackStateRead;
-            model->type = MfClassicType1k;
             model->sectors_total = 1;
             model->sectors_read = 0;
             model->sector_current = 0;

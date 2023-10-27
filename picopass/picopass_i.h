@@ -1,7 +1,6 @@
 #pragma once
 
 #include "picopass.h"
-#include "picopass_worker.h"
 #include "picopass_device.h"
 
 #include "rfal_picopass.h"
@@ -29,6 +28,11 @@
 #include <lib/toolbox/path.h>
 #include <picopass_icons.h>
 
+#include <nfc/nfc.h>
+#include <nfc/helpers/nfc_dict.h>
+#include "protocol/picopass_poller.h"
+#include "protocol/picopass_listener.h"
+
 #define PICOPASS_TEXT_STORE_SIZE 128
 
 enum PicopassCustomEvent {
@@ -48,12 +52,16 @@ typedef enum {
 } EventType;
 
 struct Picopass {
-    PicopassWorker* worker;
     ViewDispatcher* view_dispatcher;
     Gui* gui;
     NotificationApp* notifications;
     SceneManager* scene_manager;
     PicopassDevice* dev;
+
+    Nfc* nfc;
+    PicopassPoller* poller;
+    PicopassListener* listener;
+    NfcDict* dict;
 
     char text_store[PICOPASS_TEXT_STORE_SIZE + 1];
     FuriString* text_box_store;

@@ -22,7 +22,7 @@ typedef struct {
 } PicopassListenerCmd;
 
 // CSNs from Proxmark3 repo
-static const uint8_t loclass_csns[PICOPASS_LOCLASS_NUM_CSNS][PICOPASS_BLOCK_LEN] = {
+static const uint8_t loclass_csns[LOCLASS_NUM_CSNS][PICOPASS_BLOCK_LEN] = {
     {0x01, 0x0A, 0x0F, 0xFF, 0xF7, 0xFF, 0x12, 0xE0},
     {0x0C, 0x06, 0x0C, 0xFE, 0xF7, 0xFF, 0x12, 0xE0},
     {0x10, 0x97, 0x83, 0x7B, 0xF7, 0xFF, 0x12, 0xE0},
@@ -41,7 +41,7 @@ static void picopass_listener_reset(PicopassListener* instance) {
 static void picopass_listener_loclass_update_csn(PicopassListener* instance) {
     // collect LOCLASS_NUM_PER_CSN nonces in a row for each CSN
     const uint8_t* csn =
-        loclass_csns[(instance->key_block_num / LOCLASS_NUM_PER_CSN) % PICOPASS_LOCLASS_NUM_CSNS];
+        loclass_csns[(instance->key_block_num / LOCLASS_NUM_PER_CSN) % LOCLASS_NUM_CSNS];
     memcpy(instance->data->AA1[PICOPASS_CSN_BLOCK_INDEX].data, csn, sizeof(PicopassBlock));
 
     uint8_t key[PICOPASS_BLOCK_LEN] = {};
@@ -283,7 +283,7 @@ PicopassListenerCommand
                     instance->loclass_mac_buffer + (i * 8) + 4);
             }
 
-            if(instance->key_block_num < PICOPASS_LOCLASS_NUM_CSNS * LOCLASS_NUM_PER_CSN) {
+            if(instance->key_block_num < LOCLASS_NUM_CSNS * LOCLASS_NUM_PER_CSN) {
                 picopass_listener_loclass_update_csn(instance);
                 // Only reset the state when we change to a new CSN for the same reason as when we get a standard key
                 instance->state = PicopassListenerStateIdle;

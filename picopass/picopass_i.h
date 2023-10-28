@@ -35,6 +35,10 @@
 
 #define PICOPASS_TEXT_STORE_SIZE 128
 
+#define PICOPASS_ICLASS_ELITE_DICT_FLIPPER_NAME APP_ASSETS_PATH("iclass_elite_dict.txt")
+#define PICOPASS_ICLASS_STANDARD_DICT_FLIPPER_NAME APP_ASSETS_PATH("iclass_standard_dict.txt")
+#define PICOPASS_ICLASS_ELITE_DICT_USER_NAME APP_DATA_PATH("assets/iclass_elite_dict_user.txt")
+
 enum PicopassCustomEvent {
     // Reserve first 100 events for button types and indexes, starting from 0
     PicopassCustomEventReserved = 100,
@@ -44,12 +48,34 @@ enum PicopassCustomEvent {
     PicopassCustomEventByteInputDone,
     PicopassCustomEventTextInputDone,
     PicopassCustomEventDictAttackSkip,
+    PicopassCustomEventDictAttackUpdateView,
+    PicopassCustomEventLoclassGotMac,
+    PicopassCustomEventLoclassGotStandardKey,
+
+    PicopassCustomEventPollerSuccess,
+    PicopassCustomEventPollerFail,
 };
 
 typedef enum {
     EventTypeTick,
     EventTypeKey,
 } EventType;
+
+typedef struct {
+    const char* name;
+    uint16_t total_keys;
+    uint16_t current_key;
+    bool card_detected;
+} PicopassDictAttackContext;
+
+typedef struct {
+    uint8_t key_to_write[PICOPASS_BLOCK_LEN];
+    bool is_elite;
+} PicopassWriteKeyContext;
+
+typedef struct {
+    size_t macs_collected;
+} PicopassLoclassContext;
 
 struct Picopass {
     ViewDispatcher* view_dispatcher;
@@ -76,6 +102,10 @@ struct Picopass {
     Widget* widget;
     DictAttack* dict_attack;
     Loclass* loclass;
+
+    PicopassDictAttackContext dict_attack_ctx;
+    PicopassWriteKeyContext write_key_context;
+    PicopassLoclassContext loclass_context;
 };
 
 typedef enum {

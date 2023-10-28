@@ -102,7 +102,6 @@ typedef struct {
 typedef struct {
     PicopassBlock AA1[PICOPASS_MAX_APP_LIMIT];
     PicopassPacs pacs;
-    IclassEliteDictAttackData iclass_elite_dict_attack_data;
 } PicopassDeviceData;
 
 typedef struct {

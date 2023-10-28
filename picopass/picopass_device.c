@@ -225,8 +225,8 @@ static bool picopass_device_load_data(PicopassDevice* dev, FuriString* path, boo
         }
         if(!block_read) break;
 
-        if(picopass_device_parse_credential(AA1, pacs) != ERR_NONE) break;
-        if(picopass_device_parse_wiegand(pacs->credential, pacs) != ERR_NONE) break;
+        picopass_device_parse_credential(AA1, pacs);
+        picopass_device_parse_wiegand(pacs->credential, pacs);
 
         parsed = true;
     } while(false);
@@ -351,7 +351,6 @@ void picopass_device_decrypt(uint8_t* enc_data, uint8_t* dec_data) {
     mbedtls_des3_set2key_dec(&ctx, key);
     mbedtls_des3_crypt_ecb(&ctx, enc_data, dec_data);
     mbedtls_des3_free(&ctx);
-    return ERR_NONE;
 }
 
 void picopass_device_parse_credential(PicopassBlock* AA1, PicopassPacs* pacs) {

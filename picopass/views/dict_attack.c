@@ -240,6 +240,15 @@ void dict_attack_set_total_dict_keys(DictAttack* dict_attack, uint16_t dict_keys
         true);
 }
 
+void dict_attack_set_current_dict_key(DictAttack* dict_attack, uint16_t current_key) {
+    furi_assert(dict_attack);
+    with_view_model(
+        dict_attack->view,
+        DictAttackViewModel * model,
+        { model->dict_keys_current = current_key; },
+        true);
+}
+
 void dict_attack_inc_current_dict_key(DictAttack* dict_attack, uint16_t keys_tried) {
     furi_assert(dict_attack);
     with_view_model(

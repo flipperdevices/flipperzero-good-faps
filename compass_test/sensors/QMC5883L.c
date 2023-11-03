@@ -41,8 +41,7 @@ bool qmc5883l_init(QMC5883L* qmc5883l) {
     // Read the chip-id
     uint8_t id = i2c_read_reg(qmc5883l->device, QMC5883L_REG_ID);
     if(id != QMC5883L_ID_VALUE) {
-        FURI_LOG_E(
-            TAG, "Sensor returned wrong ID 0x%02X, expected 0x%02X", id, QMC5883L_ID_VALUE);
+        FURI_LOG_E(TAG, "Sensor returned wrong ID 0x%02X, expected 0x%02X", id, QMC5883L_ID_VALUE);
         return false;
     }
 

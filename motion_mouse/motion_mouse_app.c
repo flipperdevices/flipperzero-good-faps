@@ -2,11 +2,10 @@
 #include <furi_hal.h>
 #include <gui/gui.h>
 #include <dialogs/dialogs.h>
-#include "imu.h"
+#include "imu_mouse.h"
+#include "motion_mouse_icons.h"
 
 #define TAG "SensorModule"
-
-#define ACCEL_GYRO_RAW_RATE DataRate200Hz
 
 typedef struct {
     Gui* gui;
@@ -24,15 +23,20 @@ static void render_callback(Canvas* canvas, void* ctx) {
     UNUSED(ctx);
     canvas_clear(canvas);
     canvas_set_color(canvas, ColorBlack);
+
+    canvas_draw_icon(canvas, 64 + 14, 8, &I_Circles_47x47);
+    canvas_draw_icon(canvas, 83 + 14, 27, &I_Left_mouse_icon_9x9);
+    canvas_draw_icon(canvas, 83 + 14, 11, &I_Right_mouse_icon_9x9);
+
     canvas_set_font(canvas, FontPrimary);
-    canvas_draw_str(canvas, 0, 12, "Motion Mouse");
+    canvas_draw_str(canvas, 0, 14, "Motion Mouse");
+    canvas_set_font(canvas, FontSecondary);
+    canvas_draw_str(canvas, 0, 56, "Press Back to exit");
 }
 
 static void input_callback(InputEvent* input_event, void* ctx) {
     SensorModuleApp* app = ctx;
-    if(input_event->type == InputTypeShort) {
-        furi_message_queue_put(app->input_queue, input_event, 0);
-    }
+    furi_message_queue_put(app->input_queue, input_event, 0);
 }
 
 static SensorModuleApp* sensor_module_alloc(void) {
@@ -43,10 +47,6 @@ static SensorModuleApp* sensor_module_alloc(void) {
     app->icm42688p_device->cs = &gpio_ext_pc3;
     app->icm42688p = icm42688p_alloc(app->icm42688p_device, &gpio_ext_pb2);
     app->icm42688p_valid = icm42688p_init(app->icm42688p);
-    if(app->icm42688p_valid) {
-        icm42688p_accel_config(app->icm42688p, AccelFullScale16G, ACCEL_GYRO_RAW_RATE);
-        icm42688p_gyro_config(app->icm42688p, GyroFullScale2000DPS, ACCEL_GYRO_RAW_RATE);
-    }
 
     app->input_queue = furi_message_queue_alloc(8, sizeof(InputEvent));
 
@@ -106,8 +106,20 @@ int32_t motion_mouse_app(void* arg) {
     while(1) {
         InputEvent input;
         if(furi_message_queue_get(app->input_queue, &input, FuriWaitForever) == FuriStatusOk) {
-            if(input.key == InputKeyBack) {
+            if((input.key == InputKeyBack) && (input.type == InputTypeShort)) {
                 break;
+            } else if(input.key == InputKeyOk) {
+                if(input.type == InputTypePress) {
+                    imu_mouse_key_press(app->imu_thread, ImuMouseKeyLeft, true);
+                } else if(input.type == InputTypeRelease) {
+                    imu_mouse_key_press(app->imu_thread, ImuMouseKeyLeft, false);
+                }
+            } else if(input.key == InputKeyUp) {
+                if(input.type == InputTypePress) {
+                    imu_mouse_key_press(app->imu_thread, ImuMouseKeyRight, true);
+                } else if(input.type == InputTypeRelease) {
+                    imu_mouse_key_press(app->imu_thread, ImuMouseKeyRight, false);
+                }
             }
         }
     }

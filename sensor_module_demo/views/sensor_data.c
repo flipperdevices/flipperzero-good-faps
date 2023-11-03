@@ -205,22 +205,31 @@ static bool sensor_data_input_callback(InputEvent* event, void* context) {
     if((event->type == InputTypeShort) &&
        ((event->key == InputKeyRight) || (event->key == InputKeyLeft))) {
         SensorDataType data_type = SensorDataNone;
+        SensorDataPage page_new = SensorPageMax;
+        with_view_model(
+            sensor_data->view, SensorDataModel * model, { page_new = model->page; }, false);
+
+        bool data_ready = true;
+        do {
+            if(event->key == InputKeyRight) {
+                page_new = (page_new + 1) % SensorPageMax;
+            } else {
+                page_new = ((page_new - 1) + SensorPageMax) % SensorPageMax;
+            }
+            data_type = get_page_data_type(page_new);
+            if((data_type != SensorDataNone) && (sensor_data->page_cb)) {
+                data_ready = sensor_data->page_cb(data_type, sensor_data->context);
+            }
+        } while(!data_ready);
+
         with_view_model(
             sensor_data->view,
             SensorDataModel * model,
             {
-                if(event->key == InputKeyRight) {
-                    model->page = (model->page + 1) % SensorPageMax;
-                } else {
-                    model->page = ((model->page - 1) + SensorPageMax) % SensorPageMax;
-                }
+                model->page = page_new;
                 model->data_ready = false;
-                data_type = get_page_data_type(model->page);
             },
             true);
-        if((data_type != SensorDataNone) && (sensor_data->page_cb)) {
-            sensor_data->page_cb(data_type, sensor_data->context);
-        }
         consumed = true;
     }
 
@@ -252,9 +261,26 @@ SensorData*
     view_allocate_model(sensor_data->view, ViewModelTypeLocking, sizeof(SensorDataModel));
     view_set_draw_callback(sensor_data->view, sensor_data_draw_callback);
     view_set_input_callback(sensor_data->view, sensor_data_input_callback);
-    if(sensor_data->page_cb) {
-        sensor_data->page_cb(SensorDataBME280, sensor_data->context);
-    }
+
+    bool data_ready = true;
+    SensorDataType data_type = SensorDataNone;
+    SensorDataPage page_new = SensorPageMax;
+    do {
+        page_new = (page_new + 1) % SensorPageMax;
+        data_type = get_page_data_type(page_new);
+        if((data_type != SensorDataNone) && (sensor_data->page_cb)) {
+            data_ready = sensor_data->page_cb(data_type, sensor_data->context);
+        }
+    } while(!data_ready);
+
+    with_view_model(
+        sensor_data->view,
+        SensorDataModel * model,
+        {
+            model->page = page_new;
+            model->data_ready = false;
+        },
+        true);
     return sensor_data;
 }
 

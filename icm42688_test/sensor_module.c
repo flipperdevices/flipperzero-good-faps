@@ -27,7 +27,8 @@ int32_t sensor_module_app(void* arg) {
         icm42688_selftest(icm42688p, &gyro_ok, &accel_ok);
         furi_string_printf(msg_string, "Gyro %s\n", gyro_ok ? "OK" : "FAIL");
         furi_string_cat_printf(msg_string, "Accel %s", accel_ok ? "OK" : "FAIL");
-        dialog_message_set_text(message, furi_string_get_cstr(msg_string), 63, 20, AlignCenter, AlignTop);
+        dialog_message_set_text(
+            message, furi_string_get_cstr(msg_string), 63, 20, AlignCenter, AlignTop);
     }
 
     if(!icm42688p_deinit(icm42688p)) {

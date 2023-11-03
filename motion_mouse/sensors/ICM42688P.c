@@ -284,9 +284,6 @@ bool icm42688p_init(ICM42688P* icm42688p) {
     icm42688p_accel_config(icm42688p, AccelFullScale16G, DataRate1kHz);
     icm42688p_gyro_config(icm42688p, GyroFullScale2000DPS, DataRate1kHz);
 
-    float temp = icm42688p_read_temp(icm42688p);
-    FURI_LOG_I(TAG, "Temp %f", (double)temp);
-
     return true;
 }
 

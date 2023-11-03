@@ -37,7 +37,7 @@ typedef union {
     } imu_data;
 } SensorDataValues;
 
-typedef void (*SensorDataPageCallback)(SensorDataType type, void* context);
+typedef bool (*SensorDataPageCallback)(SensorDataType type, void* context);
 
 typedef void (*SensorDataKeyCallback)(SensorDataType data_type, InputKey key, void* context);
 

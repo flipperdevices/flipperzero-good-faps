@@ -129,7 +129,7 @@ static void sensor_module_tick_callback(void* context) {
                 heading -= 2.f * M_PI;
             }
 
-            data.mag_raw.x = heading * 180.f / M_PI; //app->x_min;
+            data.mag_raw.x = heading * 180.f / M_PI;
             data.mag_raw.y = app->y_min;
             data.mag_raw.z = app->z_min;
             data.mag_raw.x_max = app->x_max;
@@ -141,16 +141,37 @@ static void sensor_module_tick_callback(void* context) {
     }
 }
 
-static void sensor_module_change_page_callback(SensorDataType type, void* context) {
+static bool sensor_module_change_page_callback(SensorDataType type, void* context) {
     furi_assert(context);
     SensorModuleApp* app = context;
-    app->sensor_type_current = type;
-    if((type == SensorDataIMU) && (app->icm42688p_valid)) {
-        app->imu_thread = imu_start(app->icm42688p);
-    } else if(app->imu_thread) {
+
+    if((app->imu_thread) && (type != SensorDataIMU)) {
         imu_stop(app->imu_thread);
         app->imu_thread = NULL;
     }
+
+    if(!app->bme280_valid) {
+        if(type == SensorDataBME280) {
+            return false;
+        }
+    }
+    if(!app->icm42688p_valid) {
+        if((type == SensorDataGyroRaw) || (type == SensorDataAccelRaw) ||
+           (type == SensorDataIMU)) {
+            return false;
+        }
+    }
+    if(!app->qmc5883p_valid) {
+        if(type == SensorDataMagRaw) {
+            return false;
+        }
+    }
+
+    app->sensor_type_current = type;
+    if(type == SensorDataIMU) {
+        app->imu_thread = imu_start(app->icm42688p);
+    }
+    return true;
 }
 
 #define IMU_CALI_AVG 64

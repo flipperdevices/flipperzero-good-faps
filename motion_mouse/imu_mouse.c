@@ -1,30 +1,49 @@
-#include "imu.h"
+#include "imu_mouse.h"
 #include <furi_hal.h>
 #include <furi.h>
 #include "sensors/ICM42688P.h"
 
 #define TAG "IMU"
 
-#define FILTER_SAMPLE_FREQ 200.f
-#define FILTER_BETA 0.1f
+#define ACCEL_GYRO_RATE DataRate1kHz
+
+#define FILTER_SAMPLE_FREQ 1000.f
+#define FILTER_BETA 0.08f
+
+#define HID_RATE_DIV 5
 
 #define SENSITIVITY_K 30.f
+#define EXP_RATE 1.1f
 
 #define IMU_CALI_AVG 64
 
 typedef enum {
-    ImuThreadStop = (1 << 0),
-    ImuThreadNewData = (1 << 1),
-    ImuThreadGetData = (1 << 2),
+    ImuMouseStop = (1 << 0),
+    ImuMouseNewData = (1 << 1),
+    ImuMouseRightPress = (1 << 2),
+    ImuMouseRightRelease = (1 << 3),
+    ImuMouseLeftPress = (1 << 4),
+    ImuMouseLeftRelease = (1 << 5),
 } ImuThreadFlags;
+
+#define FLAGS_ALL                                                                 \
+    (ImuMouseStop | ImuMouseNewData | ImuMouseRightPress | ImuMouseRightRelease | \
+     ImuMouseLeftPress | ImuMouseLeftRelease)
+
+typedef struct {
+    float q0;
+    float q1;
+    float q2;
+    float q3;
+    float roll;
+    float pitch;
+    float yaw;
+} ImuProcessedData;
 
 struct ImuThread {
     FuriThread* thread;
     ICM42688P* icm42688p;
-
     ImuProcessedData processed_data;
-    ImuDataCallback data_callback;
-    void* data_context;
 };
 
 static void imu_madgwick_filter(
@@ -35,7 +54,7 @@ static void imu_madgwick_filter(
 static void imu_irq_callback(void* context) {
     furi_assert(context);
     ImuThread* imu = context;
-    furi_thread_flags_set(furi_thread_get_id(imu->thread), ImuThreadNewData);
+    furi_thread_flags_set(furi_thread_get_id(imu->thread), ImuMouseNewData);
 }
 
 static void imu_process_data(ImuThread* imu, ICM42688PFifoPacket* in_data) {
@@ -98,8 +117,6 @@ static void calibrate_gyro(ImuThread* imu) {
         (double)offset_scaled.y,
         (double)offset_scaled.z);
     icm42688p_write_gyro_offset(imu->icm42688p, &offset_scaled);
-
-    // TODO: save offsets to file
 }
 
 static float imu_angle_diff(float a, float b) {
@@ -112,20 +129,30 @@ static float imu_angle_diff(float a, float b) {
     return diff;
 }
 
+static int8_t mouse_exp_rate(float in) {
+    int8_t sign = (in < 0.f) ? (-1) : (1);
+    float val_in = (in * sign) / 127.f;
+    float val_out = powf(val_in, EXP_RATE) * 127.f;
+    return ((int8_t)val_out) * sign;
+}
+
 static int32_t imu_thread(void* context) {
     furi_assert(context);
     ImuThread* imu = context;
-    FURI_LOG_I(TAG, "Start");
 
     float yaw_last = 0.f;
     float pitch_last = 0.f;
     float diff_x = 0.f;
     float diff_y = 0.f;
+    uint32_t sample_cnt = 0;
 
     FuriHalUsbInterface* usb_mode_prev = furi_hal_usb_get_config();
     furi_hal_usb_set_config(&usb_hid, NULL);
 
     calibrate_gyro(imu);
+
+    icm42688p_accel_config(imu->icm42688p, AccelFullScale16G, ACCEL_GYRO_RATE);
+    icm42688p_gyro_config(imu->icm42688p, GyroFullScale2000DPS, ACCEL_GYRO_RATE);
 
     imu->processed_data.q0 = 1.f;
     imu->processed_data.q1 = 0.f;
@@ -134,72 +161,76 @@ static int32_t imu_thread(void* context) {
     icm42688_fifo_enable(imu->icm42688p, imu_irq_callback, imu);
 
     while(1) {
-        uint32_t events = furi_thread_flags_wait(
-            ImuThreadStop | ImuThreadNewData | ImuThreadGetData, FuriFlagWaitAny, FuriWaitForever);
+        uint32_t events = furi_thread_flags_wait(FLAGS_ALL, FuriFlagWaitAny, FuriWaitForever);
 
-        if(events & ImuThreadStop) {
+        if(events & ImuMouseStop) {
             break;
         }
 
-        if(events & ImuThreadNewData) {
+        if(events & ImuMouseRightPress) {
+            furi_hal_hid_mouse_press(HID_MOUSE_BTN_RIGHT);
+        }
+        if(events & ImuMouseRightRelease) {
+            furi_hal_hid_mouse_release(HID_MOUSE_BTN_RIGHT);
+        }
+        if(events & ImuMouseLeftPress) {
+            furi_hal_hid_mouse_press(HID_MOUSE_BTN_LEFT);
+        }
+        if(events & ImuMouseLeftRelease) {
+            furi_hal_hid_mouse_release(HID_MOUSE_BTN_LEFT);
+        }
+
+        if(events & ImuMouseNewData) {
             uint16_t data_pending = icm42688_fifo_get_count(imu->icm42688p);
             ICM42688PFifoPacket data;
             while(data_pending--) {
                 icm42688_fifo_read(imu->icm42688p, &data);
                 imu_process_data(imu, &data);
+
                 if((imu->processed_data.pitch > -75.f) && (imu->processed_data.pitch < 75.f) &&
                    (isfinite(imu->processed_data.pitch) != 0)) {
-                    int8_t mouse_x = 0;
-                    int8_t mouse_y = 0;
-
                     diff_x += imu_angle_diff(yaw_last, imu->processed_data.yaw) * SENSITIVITY_K;
-                    if(diff_x < -127.f) {
-                        mouse_x = -127;
-                    } else if(diff_x > 127.f) {
-                        mouse_x = 127;
-                    } else {
-                        mouse_x = (int8_t)diff_x;
-                    }
-                    diff_x -= (float)mouse_x;
-                    yaw_last = imu->processed_data.yaw;
-
                     diff_y +=
                         imu_angle_diff(pitch_last, -imu->processed_data.pitch) * SENSITIVITY_K;
-                    if(diff_y < -127.f) {
-                        mouse_y = -127;
-                    } else if(diff_y > 127.f) {
-                        mouse_y = 127;
-                    } else {
-                        mouse_y = (int8_t)diff_y;
-                    }
-                    diff_y -= (float)mouse_y;
+
+                    yaw_last = imu->processed_data.yaw;
                     pitch_last = -imu->processed_data.pitch;
 
-                    furi_hal_hid_mouse_move(mouse_x, mouse_y);
-                }
-            }
-        }
+                    sample_cnt++;
+                    if(sample_cnt >= HID_RATE_DIV) {
+                        sample_cnt = 0;
 
-        if(events & ImuThreadGetData) {
-            if(imu->data_callback) {
-                imu->data_callback(&(imu->processed_data), imu->data_context);
+                        float mouse_x = CLAMP(diff_x, 127.f, -127.f);
+                        float mouse_y = CLAMP(diff_y, 127.f, -127.f);
+
+                        furi_hal_hid_mouse_move(mouse_exp_rate(mouse_x), mouse_exp_rate(mouse_y));
+
+                        diff_x -= (float)(int8_t)mouse_x;
+                        diff_y -= (float)(int8_t)mouse_y;
+                    }
+                }
             }
         }
     }
 
+    furi_hal_hid_mouse_release(HID_MOUSE_BTN_RIGHT | HID_MOUSE_BTN_LEFT);
     furi_hal_usb_set_config(usb_mode_prev, NULL);
 
     icm42688_fifo_disable(imu->icm42688p);
-    FURI_LOG_I(TAG, "End");
 
     return 0;
 }
 
-void imu_get_data(ImuThread* imu, ImuDataCallback callback, void* context) {
+void imu_mouse_key_press(ImuThread* imu, ImuMouseKey key, bool state) {
     furi_assert(imu);
-    imu->data_callback = callback;
-    imu->data_context = context;
-    furi_thread_flags_set(furi_thread_get_id(imu->thread), ImuThreadGetData);
+    uint32_t flag = 0;
+    if(key == ImuMouseKeyRight) {
+        flag = (state) ? (ImuMouseRightPress) : (ImuMouseRightRelease);
+    } else if(key == ImuMouseKeyLeft) {
+        flag = (state) ? (ImuMouseLeftPress) : (ImuMouseLeftRelease);
+    }
+
+    furi_thread_flags_set(furi_thread_get_id(imu->thread), flag);
 }
 
 ImuThread* imu_start(ICM42688P* icm42688p) {
@@ -214,7 +245,7 @@ ImuThread* imu_start(ICM42688P* icm42688p) {
 void imu_stop(ImuThread* imu) {
     furi_assert(imu);
 
-    furi_thread_flags_set(furi_thread_get_id(imu->thread), ImuThreadStop);
+    furi_thread_flags_set(furi_thread_get_id(imu->thread), ImuMouseStop);
 
     furi_thread_join(imu->thread);
     furi_thread_free(imu->thread);
@@ -222,14 +253,17 @@ void imu_stop(ImuThread* imu) {
     free(imu);
 }
 
-/* Simple madgwik filter, based on: https://github.com/arduino-libraries/MadgwickAHRS/*/
-
-static float imu_inv_sqrt(float x) {
-    /* close-to-optimal method with low cost from http://pizer.wordpress.com/2008/10/12/fast-inverse-square-root */
-    unsigned int i = 0x5F1F1412 - (*(unsigned int*)&x >> 1);
-    float tmp = *(float*)&i;
-    return tmp * (1.69000231f - 0.714158168f * x * tmp * tmp);
+static float imu_inv_sqrt(float number) {
+    union {
+        float f;
+        uint32_t i;
+    } conv = {.f = number};
+    conv.i = 0x5F3759Df - (conv.i >> 1);
+    conv.f *= 1.5f - (number * 0.5f * conv.f * conv.f);
+    return conv.f;
 }
+
+/* Simple madgwik filter, based on: https://github.com/arduino-libraries/MadgwickAHRS/ */
 
 static void imu_madgwick_filter(
     ImuProcessedData* out,

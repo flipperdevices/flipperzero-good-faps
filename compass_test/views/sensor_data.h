@@ -4,8 +4,7 @@
 
 typedef struct SensorData SensorData;
 
-SensorData*
-    sensor_data_alloc(void);
+SensorData* sensor_data_alloc(void);
 
 void sensor_data_free(SensorData* sensor_data);
 

@@ -129,15 +129,17 @@ void imu_stop(ImuThread* imu) {
     free(imu);
 }
 
-/* Simple madgwik filter, based on: https://github.com/arduino-libraries/MadgwickAHRS/*/
-
-static float imu_inv_sqrt(float x) {
-    /* close-to-optimal method with low cost from http://pizer.wordpress.com/2008/10/12/fast-inverse-square-root */
-    unsigned int i = 0x5F1F1412 - (*(unsigned int*)&x >> 1);
-    float tmp = *(float*)&i;
-    return tmp * (1.69000231f - 0.714158168f * x * tmp * tmp);
+static float imu_inv_sqrt(float number) {
+    union {
+        float f;
+        uint32_t i;
+    } conv = {.f = number};
+    conv.i = 0x5F3759Df - (conv.i >> 1);
+    conv.f *= 1.5f - (number * 0.5f * conv.f * conv.f);
+    return conv.f;
 }
 
+/* Simple madgwik filter, based on: https://github.com/arduino-libraries/MadgwickAHRS/ */
 static void imu_madgwick_filter(
     ImuProcessedData* out,
     ICM42688PScaledData* accel,

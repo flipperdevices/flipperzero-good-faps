@@ -1,0 +1,8 @@
+App(
+    appid="icm42688_test",
+    name="ICM42688 noise test",
+    apptype=FlipperAppType.EXTERNAL,
+    entry_point="sensor_module_app",
+    stack_size=4 * 1024,
+    fap_category="Debug",
+)

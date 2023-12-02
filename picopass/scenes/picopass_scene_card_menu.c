@@ -19,15 +19,27 @@ void picopass_scene_card_menu_on_enter(void* context) {
     Picopass* picopass = context;
     Submenu* submenu = picopass->submenu;
     PicopassPacs* pacs = &picopass->dev->dev_data.pacs;
+    PicopassBlock* AA1 = picopass->dev->dev_data.AA1;
+
+    bool sio = 0x30 == AA1[PICOPASS_ICLASS_PACS_CFG_BLOCK_INDEX].data[0];
 
     if(pacs->se_enabled) {
-        submenu_add_item(
-            submenu,
-            "Save Partial",
-            SubmenuIndexSavePartial,
-            picopass_scene_card_menu_submenu_callback,
-            picopass);
+        if(sio) {
+            submenu_add_item(
+                submenu,
+                "Save",
+                SubmenuIndexSave,
+                picopass_scene_card_menu_submenu_callback,
+                picopass);
 
+        } else {
+            submenu_add_item(
+                submenu,
+                "Save Partial",
+                SubmenuIndexSavePartial,
+                picopass_scene_card_menu_submenu_callback,
+                picopass);
+        }
     } else {
         submenu_add_item(
             submenu, "Save", SubmenuIndexSave, picopass_scene_card_menu_submenu_callback, picopass);

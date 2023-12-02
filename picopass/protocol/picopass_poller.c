@@ -255,7 +255,8 @@ NfcCommand picopass_poller_auth_handler(PicopassPoller* instance) {
         loclass_opt_doReaderMAC(ccnr, div_key, mac.data);
 
         PicopassCheckResp check_resp = {};
-        error = picopass_poller_check(instance, &mac, &check_resp);
+        uint8_t null_arr[4];
+        error = picopass_poller_check(instance, null_arr, &mac, &check_resp);
         if(error == PicopassErrorNone) {
             FURI_LOG_I(TAG, "Found key");
             memcpy(instance->mac.data, mac.data, sizeof(PicopassMac));

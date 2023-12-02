@@ -75,6 +75,7 @@ PicopassError
 
 PicopassError picopass_poller_check(
     PicopassPoller* instance,
+    uint8_t* nr,
     PicopassMac* mac,
     PicopassCheckResp* check_resp);
 

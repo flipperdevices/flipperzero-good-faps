@@ -95,7 +95,7 @@ NfcCommand picopass_poller_pre_auth_handler(PicopassPoller* instance) {
             instance->data->AA1[PICOPASS_CSN_BLOCK_INDEX].data[7]);
 
         PicopassBlock block = {};
-        error = picopass_poller_read_block(instance, 1, &block);
+        error = picopass_poller_read_block(instance, PICOPASS_CONFIG_BLOCK_INDEX, &block);
         if(error != PicopassErrorNone) {
             instance->state = PicopassPollerStateFail;
             break;
@@ -115,6 +115,27 @@ NfcCommand picopass_poller_pre_auth_handler(PicopassPoller* instance) {
             instance->data->AA1[PICOPASS_CONFIG_BLOCK_INDEX].data[5],
             instance->data->AA1[PICOPASS_CONFIG_BLOCK_INDEX].data[6],
             instance->data->AA1[PICOPASS_CONFIG_BLOCK_INDEX].data[7]);
+
+        error = picopass_poller_read_block(instance, PICOPASS_SECURE_EPURSE_BLOCK_INDEX, &block);
+        if(error != PicopassErrorNone) {
+            instance->state = PicopassPollerStateFail;
+            break;
+        }
+        memcpy(
+            instance->data->AA1[PICOPASS_SECURE_EPURSE_BLOCK_INDEX].data,
+            block.data,
+            sizeof(PicopassBlock));
+        FURI_LOG_D(
+            TAG,
+            "epurse %02x%02x%02x%02x%02x%02x%02x%02x",
+            instance->data->AA1[PICOPASS_SECURE_EPURSE_BLOCK_INDEX].data[0],
+            instance->data->AA1[PICOPASS_SECURE_EPURSE_BLOCK_INDEX].data[1],
+            instance->data->AA1[PICOPASS_SECURE_EPURSE_BLOCK_INDEX].data[2],
+            instance->data->AA1[PICOPASS_SECURE_EPURSE_BLOCK_INDEX].data[3],
+            instance->data->AA1[PICOPASS_SECURE_EPURSE_BLOCK_INDEX].data[4],
+            instance->data->AA1[PICOPASS_SECURE_EPURSE_BLOCK_INDEX].data[5],
+            instance->data->AA1[PICOPASS_SECURE_EPURSE_BLOCK_INDEX].data[6],
+            instance->data->AA1[PICOPASS_SECURE_EPURSE_BLOCK_INDEX].data[7]);
 
         error = picopass_poller_read_block(instance, 5, &block);
         if(error != PicopassErrorNone) {

@@ -300,7 +300,8 @@ PicopassListenerCommand
     return command;
 }
 
-void picopass_listener_save_mac(PicopassListener* instance, uint8_t* rx_data) {
+PicopassListenerCommand picopass_listener_save_mac(PicopassListener* instance, uint8_t* rx_data) {
+    PicopassListenerCommand command = PicopassListenerCommandSilent;
     Picopass* picopass = instance->context;
 
     PicopassDevice* dev = picopass->dev;
@@ -342,11 +343,16 @@ void picopass_listener_save_mac(PicopassListener* instance, uint8_t* rx_data) {
             rx_data[8]);
 
         notification_message(picopass->notifications, &sequence_double_vibro);
+        command = PicopassListenerCommandStop;
+        view_dispatcher_send_custom_event(
+            picopass->view_dispatcher, PicopassCustomEventNrMacSaved);
     } while(0);
 
     furi_string_free(temp_str);
     furi_string_free(filename);
     flipper_format_free(file);
+
+    return command;
 }
 
 PicopassListenerCommand
@@ -364,7 +370,8 @@ PicopassListenerCommand
 
         if(no_key) {
             // We're emulating a partial dump of an iClass SE card and should capture the NR and MAC
-            picopass_listener_save_mac(instance, rx_data);
+            command = picopass_listener_save_mac(instance, rx_data);
+            break;
         } else {
             loclass_opt_doBothMAC_2(instance->cipher_state, &rx_data[1], rmac, tmac, key);
 

@@ -187,15 +187,15 @@ NfcCommand picopass_poller_check_security(PicopassPoller* instance) {
 
     if(instance->data->pacs.se_enabled) {
         FURI_LOG_D(TAG, "SE enabled");
+        instance->state = PicopassPollerStateNrMacAuth;
+    } else {
+        instance->state = PicopassPollerStateAuth;
     }
-    // TODO: add state for doing partial SE
-    instance->state = PicopassPollerStateAuth;
-
     return command;
 }
 
-bool picopass_poller_partial_se(PicopassPoller* instance) {
-    bool success = false;
+NfcCommand picopass_poller_nr_mac_auth(PicopassPoller* instance) {
+    NfcCommand command = NfcCommandContinue;
     Picopass* picopass = instance->context;
     PicopassDevice* dev = picopass->dev;
 
@@ -257,6 +257,7 @@ bool picopass_poller_partial_se(PicopassPoller* instance) {
             break;
         } else if(error != PicopassErrorNone) {
             FURI_LOG_E(TAG, "Read check failed: %d", error);
+            instance->state = PicopassPollerStateFail;
             break;
         }
         memcpy(ccnr, read_check_resp.data, sizeof(PicopassReadCheckResp)); // last 4 bytes left 0
@@ -283,8 +284,9 @@ bool picopass_poller_partial_se(PicopassPoller* instance) {
             if(instance->mode == PicopassPollerModeRead) {
                 picopass_poller_prepare_read(instance);
                 instance->state = PicopassPollerStateReadBlock;
-                success = true;
             }
+        } else {
+            instance->state = PicopassPollerStateFail;
         }
 
     } while(false);
@@ -292,20 +294,13 @@ bool picopass_poller_partial_se(PicopassPoller* instance) {
     furi_string_free(filename);
     flipper_format_free(file);
 
-    return success;
+    return command;
 }
 
 NfcCommand picopass_poller_auth_handler(PicopassPoller* instance) {
     NfcCommand command = NfcCommandContinue;
 
     do {
-        if(instance->data->pacs.se_enabled) {
-            if(!picopass_poller_partial_se(instance)) {
-                instance->state = PicopassPollerStateFail;
-                break;
-            }
-        }
-
         // Request key
         instance->event.type = PicopassPollerEventTypeRequestKey;
         command = instance->callback(instance->event, instance->context);
@@ -587,6 +582,7 @@ static const PicopassPollerStateHandler picopass_poller_state_handler[PicopassPo
     [PicopassPollerStateSelect] = picopass_poller_select_handler,
     [PicopassPollerStatePreAuth] = picopass_poller_pre_auth_handler,
     [PicopassPollerStateCheckSecurity] = picopass_poller_check_security,
+    [PicopassPollerStateNrMacAuth] = picopass_poller_nr_mac_auth,
     [PicopassPollerStateAuth] = picopass_poller_auth_handler,
     [PicopassPollerStateReadBlock] = picopass_poller_read_block_handler,
     [PicopassPollerStateWriteBlock] = picopass_poller_write_block_handler,

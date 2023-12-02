@@ -20,6 +20,7 @@ typedef enum {
     PicopassPollerStateSelect,
     PicopassPollerStatePreAuth,
     PicopassPollerStateCheckSecurity,
+    PicopassPollerStateNrMacAuth,
     PicopassPollerStateAuth,
     PicopassPollerStateReadBlock,
     PicopassPollerStateWriteBlock,

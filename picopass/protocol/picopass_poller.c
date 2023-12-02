@@ -218,9 +218,11 @@ NfcCommand picopass_poller_nr_mac_auth(PicopassPoller* instance) {
     furi_string_printf(
         temp_str, "%s/%s%s", STORAGE_APP_DATA_PATH_PREFIX, furi_string_get_cstr(filename), ".mac");
 
-    // FURI_LOG_D(TAG, "Looking for %s", furi_string_get_cstr(temp_str));
+    FURI_LOG_D(TAG, "Looking for %s", furi_string_get_cstr(temp_str));
     uint8_t nr_mac[PICOPASS_BLOCK_LEN];
 
+    // Presume failure unless all steps are successful and the state is made "read block"
+    instance->state = PicopassPollerStateFail;
     do {
         //check for file
         if(!flipper_format_file_open_existing(file, furi_string_get_cstr(temp_str))) break;
@@ -257,7 +259,6 @@ NfcCommand picopass_poller_nr_mac_auth(PicopassPoller* instance) {
             break;
         } else if(error != PicopassErrorNone) {
             FURI_LOG_E(TAG, "Read check failed: %d", error);
-            instance->state = PicopassPollerStateFail;
             break;
         }
         memcpy(ccnr, read_check_resp.data, sizeof(PicopassReadCheckResp)); // last 4 bytes left 0
@@ -285,8 +286,6 @@ NfcCommand picopass_poller_nr_mac_auth(PicopassPoller* instance) {
                 picopass_poller_prepare_read(instance);
                 instance->state = PicopassPollerStateReadBlock;
             }
-        } else {
-            instance->state = PicopassPollerStateFail;
         }
 
     } while(false);

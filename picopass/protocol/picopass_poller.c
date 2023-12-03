@@ -285,6 +285,9 @@ NfcCommand picopass_poller_nr_mac_auth(PicopassPoller* instance) {
             if(instance->mode == PicopassPollerModeRead) {
                 picopass_poller_prepare_read(instance);
                 instance->state = PicopassPollerStateReadBlock;
+                // Set to non-zero keys to allow emulation
+                memset(instance->data->AA1[PICOPASS_SECURE_KD_BLOCK_INDEX].data, 0xff, PICOPASS_BLOCK_LEN);
+                memset(instance->data->AA1[PICOPASS_SECURE_KC_BLOCK_INDEX].data, 0xff, PICOPASS_BLOCK_LEN);
             }
         }
 

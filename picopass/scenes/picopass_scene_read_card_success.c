@@ -39,16 +39,31 @@ void picopass_scene_read_card_success_on_enter(void* context) {
     }
 
     // We can't test the pacs->key in case it is intentionally all 0's and we can't test the key block since it is populated with the diversified key before each key test, so we approximate with the PACS config block being blank.
-    bool no_key = picopass_is_memset(
+    bool zero_config = picopass_is_memset(
         AA1[PICOPASS_ICLASS_PACS_CFG_BLOCK_INDEX].data, 0x00, PICOPASS_BLOCK_LEN);
     bool empty = picopass_is_memset(
         AA1[PICOPASS_ICLASS_PACS_CFG_BLOCK_INDEX].data, 0xFF, PICOPASS_BLOCK_LEN);
     bool SE = 0x30 == AA1[PICOPASS_ICLASS_PACS_CFG_BLOCK_INDEX].data[0];
     bool configCard = (AA1[PICOPASS_ICLASS_PACS_CFG_BLOCK_INDEX].data[7] >> 2 & 3) == 2;
+    bool secured = (AA1[PICOPASS_CONFIG_BLOCK_INDEX].data[7] & PICOPASS_FUSE_CRYPT10) !=
+                   PICOPASS_FUSE_CRYPT0;
+    bool hid_csn = picopass_device_hid_csn(picopass->dev);
 
-    if(no_key) {
+    if(!secured) {
+        furi_string_cat_printf(wiegand_str, "Non-Secured Chip");
+
+        if(!hid_csn) {
+            furi_string_cat_printf(credential_str, "Non-HID CSN");
+        }
+
+        widget_add_button_element(
+            widget,
+            GuiButtonTypeRight,
+            "More",
+            picopass_scene_read_card_success_widget_callback,
+            picopass);
+    } else if(zero_config) {
         furi_string_cat_printf(wiegand_str, "Read Failed");
-        bool hid_csn = picopass_device_hid_csn(picopass->dev);
 
         if(pacs->se_enabled) {
             furi_string_cat_printf(credential_str, "SE enabled");
@@ -118,7 +133,12 @@ void picopass_scene_read_card_success_on_enter(void* context) {
             furi_string_cat_printf(credential_str, " +SIO");
         }
 
-        if(pacs->key) {
+        bool no_key =
+            picopass_is_memset(AA1[PICOPASS_SECURE_KD_BLOCK_INDEX].data, 0xFF, PICOPASS_BLOCK_LEN);
+
+        if(no_key) {
+            furi_string_cat_printf(key_str, "No Key: used NR-MAC");
+        } else if(pacs->key) {
             furi_string_cat_printf(key_str, "Key: ");
             uint8_t key[PICOPASS_BLOCK_LEN];
             memcpy(key, &pacs->key, PICOPASS_BLOCK_LEN);

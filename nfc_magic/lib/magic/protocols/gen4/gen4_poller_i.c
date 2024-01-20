@@ -58,7 +58,7 @@ Gen4PollerError gen4_poller_set_shadow_mode(
             break;
         }
 
-        uint16_t response = bit_buffer_get_size_bytes(instance->rx_buffer);
+        size_t response = bit_buffer_get_size_bytes(instance->rx_buffer);
 
         FURI_LOG_D(TAG, "Card response: 0x%02X, Shadow mode set: 0x%02X", response, mode);
 
@@ -94,7 +94,7 @@ Gen4PollerError gen4_poller_set_direct_write_block_0_mode(
             ret = gen4_poller_process_error(error);
             break;
         }
-        uint16_t response = bit_buffer_get_size_bytes(instance->rx_buffer);
+        size_t response = bit_buffer_get_size_bytes(instance->rx_buffer);
 
         FURI_LOG_D(
             TAG, "Card response: 0x%02X, Direct write to block 0 mode set: 0x%02X", response, mode);
@@ -198,7 +198,7 @@ Gen4PollerError gen4_poller_set_config(
             break;
         }
 
-        uint16_t response = bit_buffer_get_size_bytes(instance->rx_buffer);
+        size_t response = bit_buffer_get_size_bytes(instance->rx_buffer);
 
         FURI_LOG_D(TAG, "Card response to set default config command: 0x%02X", response);
 
@@ -269,7 +269,7 @@ Gen4PollerError
             break;
         }
 
-        uint16_t response = bit_buffer_get_size_bytes(instance->rx_buffer);
+        size_t response = bit_buffer_get_size_bytes(instance->rx_buffer);
 
         FURI_LOG_D(
             TAG,

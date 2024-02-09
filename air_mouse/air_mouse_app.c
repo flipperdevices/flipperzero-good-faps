@@ -42,6 +42,11 @@ enum StertSubmenuIndex {
     StartSubmenuIndexBleReset,
 };
 
+static const BleProfileHidParams ble_hid_params = {
+    .device_name_prefix = "AirMouse",
+    .mac_xor = 0x0001,
+};
+
 static bool usb_hid_mouse_move(void* inst, int8_t dx, int8_t dy) {
     UNUSED(inst);
     return furi_hal_hid_mouse_move(dx, dy);
@@ -130,7 +135,8 @@ static FuriHalBleProfileBase* ble_hid_init(AirMouseApp* app) {
 
     bt_keys_storage_set_storage_path(app->bt, APP_DATA_PATH(HID_BT_KEYS_STORAGE_NAME));
 
-    FuriHalBleProfileBase* ble_hid_profile = bt_profile_start(app->bt, ble_profile_hid);
+    FuriHalBleProfileBase* ble_hid_profile =
+        bt_profile_start(app->bt, ble_profile_hid, (void*)&ble_hid_params);
     furi_check(ble_hid_profile);
 
     furi_hal_bt_start_advertising();

@@ -1,5 +1,5 @@
 App(
-    appid="air_mouse",
+    appid="vgm_air_mouse",
     name="Air Mouse",
     apptype=FlipperAppType.EXTERNAL,
     entry_point="air_mouse_app",

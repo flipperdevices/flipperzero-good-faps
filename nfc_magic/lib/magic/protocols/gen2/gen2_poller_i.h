@@ -9,17 +9,11 @@
 extern "C" {
 #endif
 
+#define GEN2_CMD_READ_ATS (0xE0)
+#define GEN2_FSDI_256 (0x8U)
+
 #define GEN2_POLLER_MAX_BUFFER_SIZE (64U)
 #define GEN2_POLLER_MAX_FWT (60000U)
-
-typedef enum {
-    Gen2PollerErrorNone,
-    Gen2PollerErrorNotPresent,
-    Gen2PollerErrorProtocol,
-    Gen2PollerErrorAuth,
-    Gen2PollerErrorTimeout,
-    Gen2PollerErrorAccess,
-} Gen2PollerError;
 
 typedef enum {
     Gen2PollerStateIdle,

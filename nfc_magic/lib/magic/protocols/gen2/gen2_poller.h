@@ -12,6 +12,15 @@ extern "C" {
 #endif
 
 typedef enum {
+    Gen2PollerErrorNone,
+    Gen2PollerErrorNotPresent,
+    Gen2PollerErrorProtocol,
+    Gen2PollerErrorAuth,
+    Gen2PollerErrorTimeout,
+    Gen2PollerErrorAccess,
+} Gen2PollerError;
+
+typedef enum {
     Gen2PollerEventTypeDetected,
     Gen2PollerEventTypeRequestMode,
     Gen2PollerEventTypeRequestDataToWrite,
@@ -53,7 +62,7 @@ typedef NfcCommand (*Gen2PollerCallback)(Gen2PollerEvent event, void* context);
 
 typedef struct Gen2Poller Gen2Poller;
 
-bool gen2_poller_detect(Nfc* nfc);
+Gen2PollerError gen2_poller_detect(Nfc* nfc);
 
 Gen2Poller* gen2_poller_alloc(Nfc* nfc);
 

@@ -10,12 +10,23 @@
 typedef NfcCommand (*Gen2PollerStateHandler)(Gen2Poller* instance);
 
 typedef struct {
-    Nfc* nfc;
+    NfcPoller* poller;
     BitBuffer* tx_buffer;
     BitBuffer* rx_buffer;
     FuriThreadId thread_id;
     bool detected;
+    Gen2PollerError error;
 } Gen2PollerDetectContext;
+
+// Array of known Gen2 ATS responses
+// 0978009102DABC1910F005 - flavour 2
+// 0978009102DABC1910F005 - flavour 4
+// 0D780071028849A13020150608563D - flavour 6
+// Other flavours can't be detected other than by just trying to write to block 0
+const uint8_t GEN2_ATS[3][16] = {
+    {0x09, 0x78, 0x00, 0x91, 0x02, 0xDA, 0xBC, 0x19, 0x10, 0xF0, 0x05},
+    {0x09, 0x78, 0x00, 0x91, 0x02, 0xDA, 0xBC, 0x19, 0x10, 0xF0, 0x05},
+    {0x0D, 0x78, 0x00, 0x71, 0x02, 0x88, 0x49, 0xA1, 0x30, 0x20, 0x15, 0x06, 0x08, 0x56, 0x3D}};
 
 Gen2Poller* gen2_poller_alloc(Nfc* nfc) {
     Gen2Poller* instance = malloc(sizeof(Gen2Poller));
@@ -61,10 +72,81 @@ void gen2_poller_free(Gen2Poller* instance) {
     free(instance);
 }
 
-// static void gen2_poller_reset(Gen2Poller* instance) {
-//     instance->current_block = 0;
-//     nfc_data_generator_fill_data(NfcDataGeneratorTypeMfClassic1k_4b, instance->mfc_device);
-// }
+NfcCommand gen2_poller_detect_callback(NfcGenericEvent event, void* context) {
+    furi_assert(context);
+    furi_assert(event.protocol == NfcProtocolIso14443_3a);
+    furi_assert(event.event_data);
+    furi_assert(event.instance);
+
+    NfcCommand command = NfcCommandStop;
+    Gen2PollerDetectContext* detect_ctx = context;
+    Iso14443_3aPoller* iso3_poller = event.instance;
+    Iso14443_3aPollerEvent* iso3_event = event.event_data;
+    detect_ctx->error = Gen2PollerErrorTimeout;
+
+    bit_buffer_reset(detect_ctx->tx_buffer);
+    bit_buffer_append_byte(detect_ctx->tx_buffer, GEN2_CMD_READ_ATS);
+    bit_buffer_append_byte(detect_ctx->tx_buffer, GEN2_FSDI_256 << 4);
+
+    if(iso3_event->type == Iso14443_3aPollerEventTypeReady) {
+        do {
+            const Iso14443_3aError iso14443_3a_error = iso14443_3a_poller_send_standard_frame(
+                iso3_poller, detect_ctx->tx_buffer, detect_ctx->rx_buffer, GEN2_POLLER_MAX_FWT);
+
+            if(iso14443_3a_error != Iso14443_3aErrorNone &&
+               iso14443_3a_error != Iso14443_3aErrorWrongCrc) {
+                FURI_LOG_E(TAG, "ATS request failed");
+                detect_ctx->error = Gen2PollerErrorProtocol;
+                break;
+
+            } else {
+                FURI_LOG_D(TAG, "ATS request succeeded:");
+                // Check against known ATS responses
+                for(size_t i = 0; i < COUNT_OF(GEN2_ATS); i++) {
+                    if(memcmp(
+                           bit_buffer_get_data(detect_ctx->rx_buffer),
+                           GEN2_ATS[i],
+                           sizeof(GEN2_ATS[i])) == 0) {
+                        detect_ctx->error = Gen2PollerErrorNone;
+                        break;
+                    }
+                }
+            }
+        } while(false);
+    } else if(iso3_event->type == Iso14443_3aPollerEventTypeError) {
+        detect_ctx->error = Gen2PollerErrorTimeout;
+    }
+    furi_thread_flags_set(detect_ctx->thread_id, GEN2_POLLER_THREAD_FLAG_DETECTED);
+
+    return command;
+}
+
+Gen2PollerError gen2_poller_detect(Nfc* nfc) {
+    furi_assert(nfc);
+
+    Gen2PollerDetectContext detect_ctx = {
+        .poller = nfc_poller_alloc(nfc, NfcProtocolIso14443_3a),
+        .tx_buffer = bit_buffer_alloc(GEN2_POLLER_MAX_BUFFER_SIZE),
+        .rx_buffer = bit_buffer_alloc(GEN2_POLLER_MAX_BUFFER_SIZE),
+        .thread_id = furi_thread_get_current_id(),
+        .detected = false,
+        .error = Gen2PollerErrorNone,
+    };
+
+    nfc_poller_start(detect_ctx.poller, gen2_poller_detect_callback, &detect_ctx);
+    uint32_t flags =
+        furi_thread_flags_wait(GEN2_POLLER_THREAD_FLAG_DETECTED, FuriFlagWaitAny, FuriWaitForever);
+    if(flags & GEN2_POLLER_THREAD_FLAG_DETECTED) {
+        furi_thread_flags_clear(GEN2_POLLER_THREAD_FLAG_DETECTED);
+    }
+    nfc_poller_stop(detect_ctx.poller);
+
+    bit_buffer_free(detect_ctx.tx_buffer);
+    bit_buffer_free(detect_ctx.rx_buffer);
+    nfc_poller_free(detect_ctx.poller);
+
+    return detect_ctx.error;
+}
 
 NfcCommand gen2_poller_idle_handler(Gen2Poller* instance) {
     furi_assert(instance);

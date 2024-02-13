@@ -1,6 +1,7 @@
 #include "nfc_magic_scanner.h"
 
 #include "protocols/gen1a/gen1a_poller.h"
+#include "protocols/gen2/gen2_poller.h"
 #include "protocols/gen4/gen4_poller.h"
 #include <nfc/nfc_poller.h>
 
@@ -78,9 +79,14 @@ static int32_t nfc_magic_scanner_worker(void* context) {
             } else {
                 instance->magic_protocol_detected = (error == Gen4PollerErrorNone);
             }
-        } else if(
-            instance->current_protocol == NfcMagicProtocolClassic ||
-            instance->current_protocol == NfcMagicProtocolGen2) {
+        } else if(instance->current_protocol == NfcMagicProtocolGen2) {
+            Gen2PollerError error = gen2_poller_detect(instance->nfc);
+            if(error == Gen2PollerErrorProtocol) {
+                break;
+            } else {
+                instance->magic_protocol_detected = (error == Gen2PollerErrorNone);
+            }
+        } else if(instance->current_protocol == NfcMagicProtocolClassic) {
             NfcPoller* poller = nfc_poller_alloc(instance->nfc, NfcProtocolMfClassic);
             instance->magic_protocol_detected = nfc_poller_detect(poller);
             nfc_poller_free(poller);

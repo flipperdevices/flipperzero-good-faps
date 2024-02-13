@@ -144,8 +144,14 @@ Gen2PollerError gen2_poller_write_block_handler(
     MfClassicKey auth_key = write_ctx->auth_key;
 
     do {
+        // Compare the target and source data
+        if(memcmp(block->data, write_ctx->mfc_data_target->block[block_num].data, 16) == 0) {
+            FURI_LOG_D(TAG, "Block %d is the same, skipping", block_num);
+            break;
+        }
         // Reauth if necessary
         if(write_ctx->need_halt_before_write) {
+            FURI_LOG_D(TAG, "Auth before writing block %d", write_ctx->current_block);
             error = gen2_poller_auth(
                 instance, write_ctx->current_block, &auth_key, write_ctx->write_key, NULL);
             if(error != Gen2PollerErrorNone) {
@@ -156,12 +162,6 @@ Gen2PollerError gen2_poller_write_block_handler(
             }
         }
 
-        // Compare the target and source data
-        if(memcmp(block->data, write_ctx->mfc_data_target->block[block_num].data, 16) == 0) {
-            FURI_LOG_D(TAG, "Block %d is the same, skipping", block_num);
-            break;
-        }
-
         // Write the block
         error = gen2_poller_write_block(instance, write_ctx->current_block, block);
         if(error != Gen2PollerErrorNone) {
@@ -170,11 +170,9 @@ Gen2PollerError gen2_poller_write_block_handler(
             break;
         }
     } while(false);
-
-    if(write_ctx->need_halt_before_write) {
-        gen2_poller_halt(instance);
-    }
-
+    FURI_LOG_D(TAG, "Block %d finished, halting", write_ctx->current_block);
+    gen2_poller_halt(instance);
+    FURI_LOG_D(TAG, "Halt finished");
     return error;
 }
 

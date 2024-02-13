@@ -4,7 +4,6 @@
 #include <nfc/protocols/nfc_generic_event.h>
 #include "crypto1.h" // TODO: Move to a better home
 #include <nfc/protocols/iso14443_3a/iso14443_3a_poller.h>
-#include <lib/nfc/protocols/iso14443_3a/iso14443_3a_poller_i.h>
 
 #ifdef __cplusplus
 extern "C" {

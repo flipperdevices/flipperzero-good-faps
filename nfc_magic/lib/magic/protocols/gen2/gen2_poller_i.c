@@ -135,6 +135,7 @@ static Gen2PollerError gen2_poller_get_nt_common(
                 break;
             }
         } else {
+            FURI_LOG_D(TAG, "Plain auth cmd");
             error = iso14443_3a_poller_send_standard_frame(
                 instance->iso3_poller,
                 instance->tx_plain_buffer,
@@ -262,23 +263,34 @@ Gen2PollerError gen2_poller_halt(Gen2Poller* instance) {
         bit_buffer_copy_bytes(instance->tx_plain_buffer, halt_cmd, sizeof(halt_cmd));
         iso14443_crc_append(Iso14443CrcTypeA, instance->tx_plain_buffer);
 
-        crypto1_encrypt(
-            instance->crypto, NULL, instance->tx_plain_buffer, instance->tx_encrypted_buffer);
-
-        error = iso14443_3a_poller_txrx_custom_parity(
-            instance->iso3_poller,
-            instance->tx_encrypted_buffer,
-            instance->rx_encrypted_buffer,
-            GEN2_POLLER_MAX_FWT);
-        if(error != Iso14443_3aErrorTimeout) {
-            ret = gen2_poller_process_iso3_error(error);
-            break;
+        if(instance->auth_state == Gen2AuthStatePassed) {
+            // Send an encrypted halt command
+            crypto1_encrypt(
+                instance->crypto, NULL, instance->tx_plain_buffer, instance->tx_encrypted_buffer);
+            FURI_LOG_D(TAG, "Sending encrypted halt command");
+            error = iso14443_3a_poller_txrx_custom_parity(
+                instance->iso3_poller,
+                instance->tx_encrypted_buffer,
+                instance->rx_encrypted_buffer,
+                GEN2_POLLER_MAX_FWT);
         }
-        error = iso14443_3a_poller_halt(instance->iso3_poller);
+
         if(error != Iso14443_3aErrorNone) {
             ret = gen2_poller_process_iso3_error(error);
+            FURI_LOG_D(TAG, "Error sending encrypted halt command");
+            // Do not break because we still need to halt the iso3 poller
+        }
+
+        // Send a regular halt command to halt the iso3 poller
+        FURI_LOG_D(TAG, "Sending regular halt command");
+        error = iso14443_3a_poller_halt(instance->iso3_poller);
+
+        if(error != Iso14443_3aErrorTimeout) {
+            ret = gen2_poller_process_iso3_error(error);
+            FURI_LOG_D(TAG, "Error sending regular halt command");
             break;
         }
+
         crypto1_reset(instance->crypto);
         instance->auth_state = Gen2AuthStateIdle;
     } while(false);

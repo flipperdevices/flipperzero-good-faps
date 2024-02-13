@@ -48,12 +48,15 @@ NfcMagicApp* nfc_magic_app_alloc() {
     view_dispatcher_set_tick_event_callback(
         instance->view_dispatcher, nfc_magic_app_tick_event_callback, 100);
 
-    // Nfc device
+    // NFC source device (file)
     instance->source_dev = nfc_device_alloc();
     nfc_device_set_loading_callback(
         instance->source_dev, nfc_magic_app_show_loading_popup, instance);
     instance->file_path = furi_string_alloc_set(NFC_APP_FOLDER);
     instance->file_name = furi_string_alloc();
+
+    // NFC target device (tag)
+    instance->target_dev = nfc_device_alloc();
 
     // Open GUI record
     instance->gui = furi_record_open(RECORD_GUI);
@@ -102,6 +105,13 @@ NfcMagicApp* nfc_magic_app_alloc() {
     instance->widget = widget_alloc();
     view_dispatcher_add_view(
         instance->view_dispatcher, NfcMagicAppViewWidget, widget_get_view(instance->widget));
+
+    // Dict attack
+    instance->dict_attack = dict_attack_alloc();
+    view_dispatcher_add_view(
+        instance->view_dispatcher,
+        NfcMagicAppViewDictAttack,
+        dict_attack_get_view(instance->dict_attack));
 
     instance->nfc = nfc_alloc();
     instance->scanner = nfc_magic_scanner_alloc(instance->nfc);
@@ -162,6 +172,10 @@ void nfc_magic_app_free(NfcMagicApp* instance) {
     // Storage
     furi_record_close(RECORD_STORAGE);
     instance->storage = NULL;
+
+    // Dict attack
+    view_dispatcher_remove_view(instance->view_dispatcher, NfcMagicAppViewDictAttack);
+    dict_attack_free(instance->dict_attack);
 
     nfc_magic_scanner_free(instance->scanner);
     nfc_free(instance->nfc);

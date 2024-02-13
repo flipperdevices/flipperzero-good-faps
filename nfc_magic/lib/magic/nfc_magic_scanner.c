@@ -78,8 +78,13 @@ static int32_t nfc_magic_scanner_worker(void* context) {
             } else {
                 instance->magic_protocol_detected = (error == Gen4PollerErrorNone);
             }
+        } else if(
+            instance->current_protocol == NfcMagicProtocolClassic ||
+            instance->current_protocol == NfcMagicProtocolGen2) {
+            NfcPoller* poller = nfc_poller_alloc(instance->nfc, NfcProtocolMfClassic);
+            instance->magic_protocol_detected = nfc_poller_detect(poller);
+            nfc_poller_free(poller);
         }
-
         if(instance->magic_protocol_detected) {
             NfcMagicScannerEvent event = {
                 .type = NfcMagicScannerEventTypeDetected,

@@ -35,6 +35,7 @@
 #include "lib/magic/nfc_magic_scanner.h"
 #include "lib/magic/protocols/nfc_magic_protocols.h"
 #include "lib/magic/protocols/gen1a/gen1a_poller.h"
+#include "lib/magic/protocols/gen2/gen2_poller.h"
 #include "lib/magic/protocols/gen4/gen4_poller.h"
 
 #include "lib/nfc/protocols/mf_classic/mf_classic_poller.h"
@@ -85,17 +86,21 @@ struct NfcMagicApp {
 
     SceneManager* scene_manager;
     NfcDevice* source_dev;
+    NfcDevice* target_dev;
     FuriString* file_name;
     FuriString* file_path;
 
     Nfc* nfc;
     NfcMagicProtocol protocol;
     NfcMagicScanner* scanner;
+    NfcPoller* poller;
     Gen1aPoller* gen1a_poller;
+    Gen2Poller* gen2_poller;
     Gen4Poller* gen4_poller;
 
     NfcMagicAppMfClassicDictAttackContext nfc_dict_context;
     DictAttack* dict_attack;
+
     uint32_t gen4_password;
     uint32_t gen4_password_new;
 

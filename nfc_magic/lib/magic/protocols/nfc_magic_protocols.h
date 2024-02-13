@@ -6,6 +6,8 @@ extern "C" {
 
 typedef enum {
     NfcMagicProtocolGen1,
+    NfcMagicProtocolGen2,
+    NfcMagicProtocolClassic,
     NfcMagicProtocolGen4,
 
     NfcMagicProtocolNum,

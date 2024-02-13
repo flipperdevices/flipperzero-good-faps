@@ -151,6 +151,10 @@ void nfc_magic_app_free(NfcMagicApp* instance) {
     view_dispatcher_remove_view(instance->view_dispatcher, NfcMagicAppViewWidget);
     widget_free(instance->widget);
 
+    // Dict attack
+    view_dispatcher_remove_view(instance->view_dispatcher, NfcMagicAppViewDictAttack);
+    dict_attack_free(instance->dict_attack);
+
     // View Dispatcher
     view_dispatcher_free(instance->view_dispatcher);
 
@@ -172,10 +176,6 @@ void nfc_magic_app_free(NfcMagicApp* instance) {
     // Storage
     furi_record_close(RECORD_STORAGE);
     instance->storage = NULL;
-
-    // Dict attack
-    view_dispatcher_remove_view(instance->view_dispatcher, NfcMagicAppViewDictAttack);
-    dict_attack_free(instance->dict_attack);
 
     nfc_magic_scanner_free(instance->scanner);
     nfc_free(instance->nfc);

@@ -7,6 +7,22 @@ void nfc_magic_check_worker_callback(NfcMagicScannerEvent event, void* context) 
 
     if(event.type == NfcMagicScannerEventTypeDetected) {
         instance->protocol = event.data.protocol;
+        if(instance->protocol == NfcMagicProtocolGen2 ||
+           instance->protocol == NfcMagicProtocolClassic) {
+            instance->poller = nfc_poller_alloc(instance->nfc, NfcProtocolMfClassic);
+            if(nfc_poller_detect(instance->poller)) {
+                nfc_device_set_data(
+                    instance->target_dev,
+                    NfcProtocolMfClassic,
+                    nfc_poller_get_data(instance->poller));
+            } else {
+                nfc_poller_free(instance->poller);
+                view_dispatcher_send_custom_event(
+                    instance->view_dispatcher, NfcMagicCustomEventWorkerFail);
+                return;
+            }
+        }
+        nfc_poller_free(instance->poller);
         view_dispatcher_send_custom_event(
             instance->view_dispatcher, NfcMagicCustomEventWorkerSuccess);
     } else if(event.type == NfcMagicScannerEventTypeDetectedNotMagic) {

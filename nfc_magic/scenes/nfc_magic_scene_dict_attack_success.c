@@ -58,11 +58,8 @@ bool nfc_magic_scene_dict_attack_success_on_event(void* context, SceneManagerEve
             } else if(instance->protocol == NfcMagicProtocolGen4) {
                 scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4Menu);
                 consumed = true;
-            } else if(instance->protocol == NfcMagicProtocolGen2) {
+            } else if(instance->protocol == NfcMagicProtocolGen2 || instance->protocol == NfcMagicProtocolClassic) {
                 scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen2Menu);
-                consumed = true;
-            } else if(instance->protocol == NfcMagicProtocolClassic) {
-                scene_manager_next_scene(instance->scene_manager, NfcMagicSceneClassicMenu);
                 consumed = true;
             }
         }

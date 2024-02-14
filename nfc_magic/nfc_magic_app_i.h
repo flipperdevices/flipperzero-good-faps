@@ -95,7 +95,10 @@ struct NfcMagicApp {
     NfcMagicScanner* scanner;
     NfcPoller* poller;
     Gen1aPoller* gen1a_poller;
+
     Gen2Poller* gen2_poller;
+    bool gen2_poller_is_wipe_mode;
+
     Gen4Poller* gen4_poller;
 
     NfcMagicAppMfClassicDictAttackContext nfc_dict_context;

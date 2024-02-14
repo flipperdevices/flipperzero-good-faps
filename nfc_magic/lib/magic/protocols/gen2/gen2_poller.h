@@ -20,6 +20,15 @@ typedef enum {
     Gen2PollerErrorAccess,
 } Gen2PollerError;
 
+// Possible write problems, sorted by priority top to bottom
+typedef enum {
+    Gen2PollerWriteProblemNoData, // Shouldn't happen, mfc_data missing in nfc device
+    Gen2PollerWriteProblemLockedAccessBits, // Access bits on the target card don't allow writing in some cases
+    Gen2PollerWriteProblemMissingTargetKeys, // Keys to write some sectors are not available
+    Gen2PollerWriteProblemMissingSourceData, // The source dump is incomplete
+    Gen2PollerWriteProblemNone, // Everything OK
+} Gen2PollerWriteProblem;
+
 typedef enum {
     Gen2PollerEventTypeDetected,
     Gen2PollerEventTypeRequestMode,
@@ -72,7 +81,7 @@ void gen2_poller_start(Gen2Poller* instance, Gen2PollerCallback callback, void* 
 
 void gen2_poller_stop(Gen2Poller* instance);
 
-bool gen2_poller_can_write_everything(NfcDevice* device);
+Gen2PollerWriteProblem gen2_poller_can_write_everything(NfcDevice* device);
 
 #ifdef __cplusplus
 }

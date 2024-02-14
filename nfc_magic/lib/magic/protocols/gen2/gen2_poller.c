@@ -28,6 +28,66 @@ const uint8_t GEN2_ATS[3][16] = {
     {0x09, 0x78, 0x00, 0x91, 0x02, 0xDA, 0xBC, 0x19, 0x10, 0xF0, 0x05},
     {0x0D, 0x78, 0x00, 0x71, 0x02, 0x88, 0x49, 0xA1, 0x30, 0x20, 0x15, 0x06, 0x08, 0x56, 0x3D}};
 
+static MfClassicBlock gen2_poller_default_block_0 = {
+    .data =
+        {0x00,
+         0x01,
+         0x02,
+         0x03,
+         0x00, // BCC - IMPORTANT
+         0x08, // SAK
+         0x04, // ATQA0
+         0x00, // ATQA1
+         0x00,
+         0x00,
+         0x00,
+         0x00,
+         0x00,
+         0x00,
+         0x00,
+         0x00},
+};
+
+static MfClassicBlock gen2_poller_default_empty_block = {
+    .data =
+        {0x00,
+         0x00,
+         0x00,
+         0x00,
+         0x00,
+         0x00,
+         0x00,
+         0x00,
+         0x00,
+         0x00,
+         0x00,
+         0x00,
+         0x00,
+         0x00,
+         0x00,
+         0x00},
+};
+
+static MfClassicBlock gen2_poller_default_sector_trailer_block = {
+    .data =
+        {0xFF,
+         0xFF,
+         0xFF,
+         0xFF,
+         0xFF,
+         0xFF,
+         0xFF,
+         0x07,
+         0x80,
+         0x69,
+         0xFF,
+         0xFF,
+         0xFF,
+         0xFF,
+         0xFF,
+         0xFF},
+};
+
 Gen2Poller* gen2_poller_alloc(Nfc* nfc) {
     Gen2Poller* instance = malloc(sizeof(Gen2Poller));
     instance->poller = nfc_poller_alloc(nfc, NfcProtocolIso14443_3a);
@@ -168,21 +228,12 @@ NfcCommand gen2_poller_request_mode_handler(Gen2Poller* instance) {
 
     instance->gen2_event.type = Gen2PollerEventTypeRequestMode;
     command = instance->callback(instance->gen2_event, instance->context);
+    instance->mode = instance->gen2_event_data.poller_mode.mode;
     if(instance->gen2_event_data.poller_mode.mode == Gen2PollerModeWipe) {
-        instance->state = Gen2PollerStateWipe;
+        instance->state = Gen2PollerStateWriteTargetDataRequest;
     } else {
         instance->state = Gen2PollerStateWriteSourceDataRequest;
     }
-
-    return command;
-}
-
-NfcCommand gen2_poller_wipe_handler(Gen2Poller* instance) {
-    NfcCommand command = NfcCommandContinue;
-    Gen2PollerError error = Gen2PollerErrorNone;
-    UNUSED(error);
-    UNUSED(instance);
-    // TODO: Implement wipe
 
     return command;
 }
@@ -210,7 +261,11 @@ NfcCommand gen2_poller_write_target_data_request_handler(Gen2Poller* instance) {
         instance->mode_ctx.write_ctx.mfc_data_target,
         instance->gen2_event_data.target_data.mfc_data,
         sizeof(MfClassicData));
-    instance->state = Gen2PollerStateWrite;
+    if(instance->mode == Gen2PollerModeWipe) {
+        instance->state = Gen2PollerStateWipe;
+    } else {
+        instance->state = Gen2PollerStateWrite;
+    }
 
     return command;
 }
@@ -258,6 +313,86 @@ Gen2PollerError gen2_poller_write_block_handler(
     return error;
 }
 
+NfcCommand gen2_poller_wipe_handler(Gen2Poller* instance) {
+    NfcCommand command = NfcCommandContinue;
+    Gen2PollerError error = Gen2PollerErrorNone;
+    Gen2PollerWriteContext* write_ctx = &instance->mode_ctx.write_ctx;
+    uint8_t block_num = write_ctx->current_block;
+
+    do {
+        // Check whether the ACs for that block are known in target data
+        if(!mf_classic_is_block_read(
+               write_ctx->mfc_data_target,
+               mf_classic_get_sector_trailer_num_by_block(block_num))) {
+            FURI_LOG_E(TAG, "Sector trailer for block %d not present in target data", block_num);
+            break;
+        }
+        // Check whether ACs need to be reset and whether they can be reset
+        if(!gen2_poller_can_write_block(write_ctx->mfc_data_target, block_num)) {
+            if(!gen2_can_reset_access_conditions(write_ctx->mfc_data_target, block_num)) {
+                FURI_LOG_E(TAG, "Block %d cannot be written", block_num);
+                break;
+            } else {
+                FURI_LOG_D(TAG, "Resetting ACs for block %d", block_num);
+                // Generate a block with old keys and default ACs (0xFF, 0x07, 0x80)
+                MfClassicBlock block;
+                memset(&block, 0, sizeof(block));
+                memcpy(block.data, write_ctx->mfc_data_target->block[block_num].data, 16);
+                memcpy(block.data + 6, "\xFF\x07\x80", 3);
+                error = gen2_poller_write_block_handler(instance, block_num, &block);
+                if(error != Gen2PollerErrorNone) {
+                    FURI_LOG_E(TAG, "Failed to reset ACs for block %d", block_num);
+                    break;
+                } else {
+                    FURI_LOG_D(TAG, "ACs for block %d reset", block_num);
+                    memcpy(write_ctx->mfc_data_target->block[block_num].data, block.data, 16);
+                }
+            }
+        }
+
+        // Figure out which key to use for writing
+        write_ctx->write_key =
+            gen2_poller_get_key_type_to_write(write_ctx->mfc_data_target, block_num);
+
+        // Get the key to use for writing from the target data
+        MfClassicSectorTrailer* sec_tr = mf_classic_get_sector_trailer_by_sector(
+            write_ctx->mfc_data_target, mf_classic_get_sector_by_block(block_num));
+        if(write_ctx->write_key == MfClassicKeyTypeA) {
+            write_ctx->auth_key = sec_tr->key_a;
+        } else {
+            write_ctx->auth_key = sec_tr->key_b;
+        }
+
+        // Write the default block depending on the block type
+        if(block_num == 0) {
+            error =
+                gen2_poller_write_block_handler(instance, block_num, &gen2_poller_default_block_0);
+        } else if(mf_classic_is_sector_trailer(block_num)) {
+            error = gen2_poller_write_block_handler(
+                instance, block_num, &gen2_poller_default_sector_trailer_block);
+        } else {
+            error = gen2_poller_write_block_handler(
+                instance, block_num, &gen2_poller_default_empty_block);
+        }
+        if(error != Gen2PollerErrorNone) {
+            FURI_LOG_E(TAG, "Couldn't write block %d", block_num);
+        }
+    } while(false);
+
+    write_ctx->current_block++;
+
+    if(error != Gen2PollerErrorNone) {
+        FURI_LOG_D(TAG, "Error occurred, stopping: %d", error);
+        instance->state = Gen2PollerStateFail;
+    } else if(
+        write_ctx->current_block ==
+        mf_classic_get_total_block_num(write_ctx->mfc_data_target->type)) {
+        instance->state = Gen2PollerStateSuccess;
+    }
+
+    return command;
+}
+
 NfcCommand gen2_poller_write_handler(Gen2Poller* instance) {
     NfcCommand command = NfcCommandContinue;
     Gen2PollerError error = Gen2PollerErrorNone;
@@ -299,8 +434,8 @@ NfcCommand gen2_poller_write_handler(Gen2Poller* instance) {
                 }
             }
         }
+
         // Figure out which key to use for writing
-        // TODO: MfClassicKeyTypeNone?
         write_ctx->write_key =
             gen2_poller_get_key_type_to_write(write_ctx->mfc_data_target, block_num);
 
@@ -308,28 +443,8 @@ NfcCommand gen2_poller_write_handler(Gen2Poller* instance) {
         MfClassicSectorTrailer* sec_tr = mf_classic_get_sector_trailer_by_sector(
             write_ctx->mfc_data_target, mf_classic_get_sector_by_block(block_num));
         if(write_ctx->write_key == MfClassicKeyTypeA) {
-            FURI_LOG_D(TAG, "Using key A for block %d", block_num);
-            FURI_LOG_D(
-                TAG,
-                "Key A: %02X %02X %02X %02X %02X %02X",
-                sec_tr->key_a.data[0],
-                sec_tr->key_a.data[1],
-                sec_tr->key_a.data[2],
-                sec_tr->key_a.data[3],
-                sec_tr->key_a.data[4],
-                sec_tr->key_a.data[5]);
             write_ctx->auth_key = sec_tr->key_a;
         } else {
-            FURI_LOG_D(TAG, "Using key B for block %d", block_num);
-            FURI_LOG_D(
-                TAG,
-                "Key B: %02X %02X %02X %02X %02X %02X",
-                sec_tr->key_b.data[0],
-                sec_tr->key_b.data[1],
-                sec_tr->key_b.data[2],
-                sec_tr->key_b.data[3],
-                sec_tr->key_b.data[4],
-                sec_tr->key_b.data[5]);
             write_ctx->auth_key = sec_tr->key_b;
         }
 
@@ -337,8 +452,7 @@ NfcCommand gen2_poller_write_handler(Gen2Poller* instance) {
         error = gen2_poller_write_block_handler(
             instance, block_num, &write_ctx->mfc_data_source->block[block_num]);
         if(error != Gen2PollerErrorNone) {
-            FURI_LOG_E(TAG, "Couldn't to write block %d", block_num);
-            break;
+            FURI_LOG_E(TAG, "Couldn't write block %d", block_num);
         }
     } while(false);
     write_ctx->current_block++;
@@ -427,28 +541,28 @@ void gen2_poller_stop(Gen2Poller* instance) {
     return;
 }
 
-bool gen2_poller_can_write_everything(NfcDevice* device) {
+Gen2PollerWriteProblem gen2_poller_can_write_everything(NfcDevice* device) {
     furi_assert(device);
 
-    bool can_write = true;
+    Gen2PollerWriteProblem problem = Gen2PollerWriteProblemNone;
+    Gen2PollerWriteProblem problem_next = Gen2PollerWriteProblemNone;
     const MfClassicData* mfc_data = nfc_device_get_data(device, NfcProtocolMfClassic);
 
     if(mfc_data) {
         uint16_t total_block_num = mf_classic_get_total_block_num(mfc_data->type);
         for(uint16_t i = 0; i < total_block_num; i++) {
             if(mf_classic_is_sector_trailer(i)) {
-                if(!gen2_poller_can_write_sector_trailer(mfc_data, i)) {
-                    can_write = false;
-                    break;
-                }
+                problem_next = gen2_poller_can_write_sector_trailer(mfc_data, i);
             } else {
-                if(!gen2_poller_can_write_data_block(mfc_data, i)) {
-                    can_write = false;
-                    break;
-                }
+                problem_next = gen2_poller_can_write_data_block(mfc_data, i);
+            }
+            if(problem_next < problem) {
+                problem = problem_next;
             }
         }
+    } else {
+        problem = Gen2PollerWriteProblemNoData;
     }
 
-    return can_write;
+    return problem;
 }

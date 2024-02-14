@@ -66,31 +66,34 @@ static int32_t nfc_magic_scanner_worker(void* context) {
     furi_assert(instance->session_state == NfcMagicScannerSessionStateActive);
 
     while(instance->session_state == NfcMagicScannerSessionStateActive) {
-        if(instance->current_protocol == NfcMagicProtocolGen1) {
-            instance->magic_protocol_detected = gen1a_poller_detect(instance->nfc);
-        } else if(instance->current_protocol == NfcMagicProtocolGen4) {
-            Gen4PollerError error = gen4_poller_detect(instance->nfc, instance->gen4_password);
-            if(error == Gen4PollerErrorProtocol) {
-                NfcMagicScannerEvent event = {
-                    .type = NfcMagicScannerEventTypeDetectedNotMagic,
-                };
-                instance->callback(event, instance->context);
-                break;
-            } else {
+        do {
+            if(instance->current_protocol == NfcMagicProtocolGen1) {
+                instance->magic_protocol_detected = gen1a_poller_detect(instance->nfc);
+                if(instance->magic_protocol_detected) {
+                    break;
+                }
+            } else if(instance->current_protocol == NfcMagicProtocolGen4) {
+                Gen4PollerError error = gen4_poller_detect(instance->nfc, instance->gen4_password);
                 instance->magic_protocol_detected = (error == Gen4PollerErrorNone);
-            }
-        } else if(instance->current_protocol == NfcMagicProtocolGen2) {
-            Gen2PollerError error = gen2_poller_detect(instance->nfc);
-            if(error == Gen2PollerErrorProtocol) {
-                break;
-            } else {
+                if(instance->magic_protocol_detected) {
+                    break;
+                }
+            } else if(instance->current_protocol == NfcMagicProtocolGen2) {
+                Gen2PollerError error = gen2_poller_detect(instance->nfc);
                 instance->magic_protocol_detected = (error == Gen2PollerErrorNone);
+                if(instance->magic_protocol_detected) {
+                    break;
+                }
+            } else if(instance->current_protocol == NfcMagicProtocolClassic) {
+                NfcPoller* poller = nfc_poller_alloc(instance->nfc, NfcProtocolMfClassic);
+                instance->magic_protocol_detected = nfc_poller_detect(poller);
+                nfc_poller_free(poller);
+                if(instance->magic_protocol_detected) {
+                    break;
+                }
             }
-        } else if(instance->current_protocol == NfcMagicProtocolClassic) {
-            NfcPoller* poller = nfc_poller_alloc(instance->nfc, NfcProtocolMfClassic);
-            instance->magic_protocol_detected = nfc_poller_detect(poller);
-            nfc_poller_free(poller);
-        }
+        } while(false);
+
         if(instance->magic_protocol_detected) {
             NfcMagicScannerEvent event = {
                 .type = NfcMagicScannerEventTypeDetected,

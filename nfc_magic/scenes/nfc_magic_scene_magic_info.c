@@ -3,20 +3,17 @@
 void nfc_magic_scene_magic_info_widget_callback(
     GuiButtonType result,
     InputType type,
-    void *context)
-{
-    NfcMagicApp *instance = context;
+    void* context) {
+    NfcMagicApp* instance = context;
 
-    if (type == InputTypeShort)
-    {
+    if(type == InputTypeShort) {
         view_dispatcher_send_custom_event(instance->view_dispatcher, result);
     }
 }
 
-void nfc_magic_scene_magic_info_on_enter(void *context)
-{
-    NfcMagicApp *instance = context;
-    Widget *widget = instance->widget;
+void nfc_magic_scene_magic_info_on_enter(void* context) {
+    NfcMagicApp* instance = context;
+    Widget* widget = instance->widget;
 
     notification_message(instance->notifications, &sequence_success);
 
@@ -39,37 +36,25 @@ void nfc_magic_scene_magic_info_on_enter(void *context)
     view_dispatcher_switch_to_view(instance->view_dispatcher, NfcMagicAppViewWidget);
 }
 
-bool nfc_magic_scene_magic_info_on_event(void *context, SceneManagerEvent event)
-{
-    NfcMagicApp *instance = context;
+bool nfc_magic_scene_magic_info_on_event(void* context, SceneManagerEvent event) {
+    NfcMagicApp* instance = context;
     bool consumed = false;
 
-    if (event.type == SceneManagerEventTypeCustom)
-    {
-        if (event.event == GuiButtonTypeLeft)
-        {
+    if(event.type == SceneManagerEventTypeCustom) {
+        if(event.event == GuiButtonTypeLeft) {
             consumed = scene_manager_previous_scene(instance->scene_manager);
-        }
-        else if (event.event == GuiButtonTypeRight)
-        {
-            if (instance->protocol == NfcMagicProtocolGen1)
-            {
+        } else if(event.event == GuiButtonTypeRight) {
+            if(instance->protocol == NfcMagicProtocolGen1) {
                 scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen1Menu);
                 consumed = true;
-            }
-            else if (instance->protocol == NfcMagicProtocolGen4)
-            {
+            } else if(instance->protocol == NfcMagicProtocolGen4) {
                 scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4Menu);
                 consumed = true;
-            }
-            else if (instance->protocol == NfcMagicProtocolGen2)
-            {
+            } else if(instance->protocol == NfcMagicProtocolGen2) {
                 scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen2Menu);
                 consumed = true;
-            }
-            else if (instance->protocol == NfcMagicProtocolClassic)
-            {
-                scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen2Menu); // TODO: Separate menu for MFC
+            } else if(instance->protocol == NfcMagicProtocolClassic) {
+                scene_manager_next_scene(instance->scene_manager, NfcMagicSceneMfClassicMenu);
                 consumed = true;
             }
         }
@@ -77,9 +62,8 @@ bool nfc_magic_scene_magic_info_on_event(void *context, SceneManagerEvent event)
     return consumed;
 }
 
-void nfc_magic_scene_magic_info_on_exit(void *context)
-{
-    NfcMagicApp *instance = context;
+void nfc_magic_scene_magic_info_on_exit(void* context) {
+    NfcMagicApp* instance = context;
 
     widget_reset(instance->widget);
 }

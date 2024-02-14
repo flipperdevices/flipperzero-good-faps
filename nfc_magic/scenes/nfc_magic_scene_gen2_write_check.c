@@ -1,6 +1,6 @@
 #include "../nfc_magic_app_i.h"
 
-void nfc_magic_scene_mf_classic_write_check_widget_callback(
+void nfc_magic_scene_gen2_write_check_widget_callback(
     GuiButtonType result,
     InputType type,
     void* context) {
@@ -11,13 +11,24 @@ void nfc_magic_scene_mf_classic_write_check_widget_callback(
     }
 }
 
-void nfc_magic_scene_mf_classic_write_check_on_enter(void* context) {
+void nfc_magic_scene_gen2_write_check_on_enter(void* context) {
     NfcMagicApp* instance = context;
     Widget* widget = instance->widget;
     Gen2PollerWriteProblem can_write_all = gen2_poller_can_write_everything(instance->target_dev);
     furi_assert(can_write_all != Gen2PollerWriteProblemNoData, "No MFC data in nfc device");
 
-    widget_add_string_element(widget, 3, 0, AlignLeft, AlignTop, FontPrimary, "Write warning");
+    if(can_write_all == Gen2PollerWriteProblemNone) {
+        if(instance->gen2_poller_is_wipe_mode) {
+            scene_manager_next_scene(instance->scene_manager, NfcMagicSceneWipe);
+            return;
+        } else {
+            scene_manager_next_scene(instance->scene_manager, NfcMagicSceneWrite);
+            return;
+        }
+    }
+
+    widget_add_string_element(
+        widget, 3, 0, AlignLeft, AlignTop, FontPrimary, "Not everything can be written");
 
     if(instance->gen2_poller_is_wipe_mode) {
         widget_add_text_box_element(
@@ -28,21 +39,10 @@ void nfc_magic_scene_mf_classic_write_check_on_enter(void* context) {
             54,
             AlignLeft,
             AlignTop,
-            "Not all sectors can be wiped.\nTry wiping anyway?",
+            "Not all sectors can be wiped. Try wiping anyway?",
             false);
     } else {
-        if(can_write_all == Gen2PollerWriteProblemNone) {
-            widget_add_text_box_element(
-                widget,
-                0,
-                13,
-                128,
-                54,
-                AlignLeft,
-                AlignTop,
-                "This card might not have a rewriteable UID. Cloned card may not work. Try writing anyway?",
-                false);
-        } else if(can_write_all == Gen2PollerWriteProblemMissingSourceData) {
+        if(can_write_all == Gen2PollerWriteProblemMissingSourceData) {
             widget_add_text_box_element(
                 widget,
                 0,
@@ -81,20 +81,20 @@ void nfc_magic_scene_mf_classic_write_check_on_enter(void* context) {
         widget,
         GuiButtonTypeCenter,
         "Continue",
-        nfc_magic_scene_mf_classic_write_check_widget_callback,
+        nfc_magic_scene_gen2_write_check_widget_callback,
         instance);
     widget_add_button_element(
         widget,
         GuiButtonTypeLeft,
         "Back",
-        nfc_magic_scene_mf_classic_write_check_widget_callback,
+        nfc_magic_scene_gen2_write_check_widget_callback,
         instance);
 
     // Setup and start worker
     view_dispatcher_switch_to_view(instance->view_dispatcher, NfcMagicAppViewWidget);
 }
 
-bool nfc_magic_scene_mf_classic_write_check_on_event(void* context, SceneManagerEvent event) {
+bool nfc_magic_scene_gen2_write_check_on_event(void* context, SceneManagerEvent event) {
     NfcMagicApp* instance = context;
     bool consumed = false;
 
@@ -113,7 +113,7 @@ bool nfc_magic_scene_mf_classic_write_check_on_event(void* context, SceneManager
     return consumed;
 }
 
-void nfc_magic_scene_mf_classic_write_check_on_exit(void* context) {
+void nfc_magic_scene_gen2_write_check_on_exit(void* context) {
     NfcMagicApp* instance = context;
 
     widget_reset(instance->widget);

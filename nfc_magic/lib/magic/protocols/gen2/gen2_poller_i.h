@@ -12,6 +12,8 @@ extern "C" {
 #define GEN2_CMD_READ_ATS (0xE0)
 #define GEN2_FSDI_256 (0x8U)
 
+#define GEN2_POLLER_BLOCK_SIZE (16)
+
 #define GEN2_POLLER_MAX_BUFFER_SIZE (64U)
 #define GEN2_POLLER_MAX_FWT (60000U)
 
@@ -71,6 +73,7 @@ struct Gen2Poller {
 
     uint8_t sectors_total;
     Gen2PollerModeContext mode_ctx;
+    Gen2PollerMode mode;
 
     Crypto1* crypto;
     BitBuffer* tx_plain_buffer;
@@ -127,9 +130,11 @@ bool gen2_poller_can_write_block(const MfClassicData* mfc_data, uint8_t block_nu
 
 bool gen2_can_reset_access_conditions(const MfClassicData* mfc_data, uint8_t block_num);
 
-bool gen2_poller_can_write_data_block(const MfClassicData* mfc_data, uint8_t block_num);
+Gen2PollerWriteProblem
+    gen2_poller_can_write_data_block(const MfClassicData* mfc_data, uint8_t block_num);
 
-bool gen2_poller_can_write_sector_trailer(const MfClassicData* mfc_data, uint8_t block_num);
+Gen2PollerWriteProblem
+    gen2_poller_can_write_sector_trailer(const MfClassicData* mfc_data, uint8_t block_num);
 
 bool gen2_is_allowed_access(
     const MfClassicData* data,

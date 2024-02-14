@@ -83,29 +83,6 @@ Gen2PollerError gen2_poller_process_mifare_classic_error(MfClassicError error) {
     return ret;
 }
 
-Gen2PollerError gen2_poller_process_nfc_error(NfcError error) {
-    Gen2PollerError ret = Gen2PollerErrorNone;
-
-    switch(error) {
-    case NfcErrorNone:
-        ret = Gen2PollerErrorNone;
-        break;
-    case NfcErrorDataFormat:
-    case NfcErrorIncompleteFrame:
-
-        ret = Gen2PollerErrorProtocol;
-        break;
-    case NfcErrorTimeout:
-        ret = Gen2PollerErrorTimeout;
-        break;
-    default:
-        ret = Gen2PollerErrorProtocol;
-        break;
-    }
-
-    return ret;
-}
-
 static Gen2PollerError gen2_poller_get_nt_common(
     Gen2Poller* instance,
     uint8_t block_num,
@@ -276,7 +253,6 @@ Gen2PollerError gen2_poller_halt(Gen2Poller* instance) {
         }
 
         if(error != Iso14443_3aErrorNone) {
-            ret = gen2_poller_process_iso3_error(error);
             FURI_LOG_D(TAG, "Error sending encrypted halt command");
             // Do not break because we still need to halt the iso3 poller
         }
@@ -286,9 +262,9 @@ Gen2PollerError gen2_poller_halt(Gen2Poller* instance) {
         error = iso14443_3a_poller_halt(instance->iso3_poller);
 
         if(error != Iso14443_3aErrorTimeout) {
-            ret = gen2_poller_process_iso3_error(error);
             FURI_LOG_D(TAG, "Error sending regular halt command");
-            break;
+            // Do not break as well becaue the first halt command might have worked
+            // and the card didn't respond because it was already halted
         }
 
         crypto1_reset(instance->crypto);
@@ -381,7 +357,8 @@ bool gen2_poller_can_write_block(const MfClassicData* mfc_data, uint8_t block_nu
     return can_write;
 }
 
-bool gen2_poller_can_write_data_block(const MfClassicData* mfc_data, uint8_t block_num) {
+Gen2PollerWriteProblem
+    gen2_poller_can_write_data_block(const MfClassicData* mfc_data, uint8_t block_num) {
     // Check whether it's theoretically possible to write the block
     furi_assert(mfc_data);
 
@@ -389,32 +366,37 @@ bool gen2_poller_can_write_data_block(const MfClassicData* mfc_data, uint8_t blo
     // 1. Check if block is read
     // 2. Check if we have any of the keys
     // 3. For each key, check if we can write the block
-    // 3.1. If none of the keys can write the block, return false
+    // 3.1. If none of the keys can write the block, check whether access conditions can be reset to allow writing
+    // 3.2 If any of the above conditions are not met, return false
 
-    bool can_write = true;
+    Gen2PollerWriteProblem can_write = Gen2PollerWriteProblemNone;
 
     bool has_key_a = mf_classic_is_key_found(
         mfc_data, mf_classic_get_sector_by_block(block_num), MfClassicKeyTypeA);
     bool has_key_b = mf_classic_is_key_found(
         mfc_data, mf_classic_get_sector_by_block(block_num), MfClassicKeyTypeB);
+
     if(!mf_classic_is_block_read(mfc_data, block_num)) {
-        can_write = false;
+        can_write = Gen2PollerWriteProblemMissingSourceData;
         return can_write;
     }
     if(!has_key_a && !has_key_b) {
-        can_write = false;
+        can_write = Gen2PollerWriteProblemMissingTargetKeys;
         return can_write;
     }
     if(!gen2_is_allowed_access(mfc_data, block_num, MfClassicKeyTypeA, MfClassicActionDataWrite) &&
        !gen2_is_allowed_access(mfc_data, block_num, MfClassicKeyTypeB, MfClassicActionDataWrite)) {
-        can_write = false;
-        return can_write;
+        if(!gen2_can_reset_access_conditions(mfc_data, block_num)) {
+            can_write = Gen2PollerWriteProblemLockedAccessBits;
+            return can_write;
+        }
     }
 
     return can_write;
 }
 
-bool gen2_poller_can_write_sector_trailer(const MfClassicData* mfc_data, uint8_t block_num) {
+Gen2PollerWriteProblem
+    gen2_poller_can_write_sector_trailer(const MfClassicData* mfc_data, uint8_t block_num) {
     // Check whether it's theoretically possible to write the sector trailer
     furi_assert(mfc_data);
 
@@ -423,38 +405,44 @@ bool gen2_poller_can_write_sector_trailer(const MfClassicData* mfc_data, uint8_t
     // 2. Check if we have any of the keys
     // 3. For each key, check if we can write the block
     // 3.1 Check that at least one of the keys can write Key A
+    // 3.1.1 If none of the keys can write Key A, check whether access conditions can be reset to allow writing
     // 3.2 Check that at least one of the keys can write the Access Conditions
     // 3.3 Check that at least one of the keys can write Key B
+    // 3.3.1 If none of the keys can write Key B, check whether access conditions can be reset to allow writing
     // 3.4 If any of the above conditions are not met, return false
 
-    bool can_write = true;
+    Gen2PollerWriteProblem can_write = Gen2PollerWriteProblemNone;
 
     bool has_key_a = mf_classic_is_key_found(
         mfc_data, mf_classic_get_sector_by_block(block_num), MfClassicKeyTypeA);
     bool has_key_b = mf_classic_is_key_found(
         mfc_data, mf_classic_get_sector_by_block(block_num), MfClassicKeyTypeB);
     if(!mf_classic_is_block_read(mfc_data, block_num)) {
-        can_write = false;
+        can_write = Gen2PollerWriteProblemMissingSourceData;
         return can_write;
     }
     if(!has_key_a && !has_key_b) {
-        can_write = false;
+        can_write = Gen2PollerWriteProblemMissingTargetKeys;
         return can_write;
     }
     if(!gen2_is_allowed_access(mfc_data, block_num, MfClassicKeyTypeA, MfClassicActionKeyAWrite) &&
        !gen2_is_allowed_access(mfc_data, block_num, MfClassicKeyTypeB, MfClassicActionKeyAWrite)) {
-        can_write = false;
-        return can_write;
+        if(!gen2_can_reset_access_conditions(mfc_data, block_num)) {
+            can_write = Gen2PollerWriteProblemLockedAccessBits;
+            return can_write;
+        }
     }
     if(!gen2_is_allowed_access(mfc_data, block_num, MfClassicKeyTypeA, MfClassicActionACWrite) &&
        !gen2_is_allowed_access(mfc_data, block_num, MfClassicKeyTypeB, MfClassicActionACWrite)) {
-        can_write = false;
+        can_write = Gen2PollerWriteProblemLockedAccessBits;
         return can_write;
     }
     if(!gen2_is_allowed_access(mfc_data, block_num, MfClassicKeyTypeA, MfClassicActionKeyBWrite) &&
        !gen2_is_allowed_access(mfc_data, block_num, MfClassicKeyTypeB, MfClassicActionKeyBWrite)) {
-        can_write = false;
-        return can_write;
+        if(!gen2_can_reset_access_conditions(mfc_data, block_num)) {
+            can_write = Gen2PollerWriteProblemLockedAccessBits;
+            return can_write;
+        }
     }
 
     return can_write;

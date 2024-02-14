@@ -348,6 +348,11 @@ bool gen2_poller_can_write_block(const MfClassicData* mfc_data, uint8_t block_nu
 
     bool can_write = true;
 
+    if(block_num == 0 && mfc_data->iso14443_3a_data->uid_len == 7) {
+        // 7-byte UID gen2 cards are not supported yet, need further testing
+        can_write = false;
+    }
+
     if(mf_classic_is_sector_trailer(block_num)) {
         can_write = gen2_poller_can_write_sector_trailer(mfc_data, block_num);
     } else {
@@ -367,7 +372,7 @@ Gen2PollerWriteProblem
     // 2. Check if we have any of the keys
     // 3. For each key, check if we can write the block
     // 3.1. If none of the keys can write the block, check whether access conditions can be reset to allow writing
-    // 3.2 If any of the above conditions are not met, return false
+    // 3.2 If the above conditions are not met, return an error code
 
     Gen2PollerWriteProblem can_write = Gen2PollerWriteProblemNone;
 
@@ -397,7 +402,7 @@ Gen2PollerWriteProblem
 
 Gen2PollerWriteProblem
     gen2_poller_can_write_sector_trailer(const MfClassicData* mfc_data, uint8_t block_num) {
-    // Check whether it's theoretically possible to write the sector trailer
+    // Check whether it's possible to write the sector trailer
     furi_assert(mfc_data);
 
     // Check rules:
@@ -409,7 +414,7 @@ Gen2PollerWriteProblem
     // 3.2 Check that at least one of the keys can write the Access Conditions
     // 3.3 Check that at least one of the keys can write Key B
     // 3.3.1 If none of the keys can write Key B, check whether access conditions can be reset to allow writing
-    // 3.4 If any of the above conditions are not met, return false
+    // 3.4 If any of the above conditions are not met, return an error code
 
     Gen2PollerWriteProblem can_write = Gen2PollerWriteProblemNone;
 

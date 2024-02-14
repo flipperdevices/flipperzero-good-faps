@@ -286,6 +286,7 @@ Gen2PollerError gen2_poller_write_block_handler(
             FURI_LOG_D(TAG, "Block %d is the same, skipping", block_num);
             break;
         }
+
         // Reauth if necessary
         if(write_ctx->need_halt_before_write) {
             FURI_LOG_D(TAG, "Auth before writing block %d", write_ctx->current_block);
@@ -309,7 +310,6 @@ Gen2PollerError gen2_poller_write_block_handler(
     } while(false);
     FURI_LOG_D(TAG, "Block %d finished, halting", write_ctx->current_block);
     gen2_poller_halt(instance);
-    FURI_LOG_D(TAG, "Halt finished");
     return error;
 }
 
@@ -327,6 +327,7 @@ NfcCommand gen2_poller_wipe_handler(Gen2Poller* instance) {
             FURI_LOG_E(TAG, "Sector trailer for block %d not present in target data", block_num);
             break;
         }
+
         // Check whether ACs need to be reset and whether they can be reset
         if(!gen2_poller_can_write_block(write_ctx->mfc_data_target, block_num)) {
             if(!gen2_can_reset_access_conditions(write_ctx->mfc_data_target, block_num)) {
@@ -339,6 +340,7 @@ NfcCommand gen2_poller_wipe_handler(Gen2Poller* instance) {
                 memset(&block, 0, sizeof(block));
                 memcpy(block.data, write_ctx->mfc_data_target->block[block_num].data, 16);
                 memcpy(block.data + 6, "\xFF\x07\x80", 3);
+
                 error = gen2_poller_write_block_handler(instance, block_num, &block);
                 if(error != Gen2PollerErrorNone) {
                     FURI_LOG_E(TAG, "Failed to reset ACs for block %d", block_num);
@@ -405,6 +407,7 @@ NfcCommand gen2_poller_write_handler(Gen2Poller* instance) {
             // FURI_LOG_E(TAG, "Block %d not present in source data", block_num);
             break;
         }
+
         // Check whether the ACs for that block are known in target data
         if(!mf_classic_is_block_read(
                write_ctx->mfc_data_target,
@@ -412,6 +415,7 @@ NfcCommand gen2_poller_write_handler(Gen2Poller* instance) {
             FURI_LOG_E(TAG, "Sector trailer for block %d not present in target data", block_num);
             break;
         }
+
         // Check whether ACs need to be reset and whether they can be reset
         if(!gen2_poller_can_write_block(write_ctx->mfc_data_target, block_num)) {
             if(!gen2_can_reset_access_conditions(write_ctx->mfc_data_target, block_num)) {
@@ -424,6 +428,7 @@ NfcCommand gen2_poller_write_handler(Gen2Poller* instance) {
                 memset(&block, 0, sizeof(block));
                 memcpy(block.data, write_ctx->mfc_data_target->block[block_num].data, 16);
                 memcpy(block.data + 6, "\xFF\x07\x80", 3);
+
                 error = gen2_poller_write_block_handler(instance, block_num, &block);
                 if(error != Gen2PollerErrorNone) {
                     FURI_LOG_E(TAG, "Failed to reset ACs for block %d", block_num);

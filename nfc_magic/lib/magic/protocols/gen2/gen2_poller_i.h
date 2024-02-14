@@ -31,12 +31,6 @@ typedef enum {
 } Gen2PollerState;
 
 typedef enum {
-    Gen2PollerSessionStateIdle,
-    Gen2PollerSessionStateStarted,
-    Gen2PollerSessionStateStopRequest,
-} Gen2PollerSessionState;
-
-typedef enum {
     Gen2AuthStateIdle,
     Gen2AuthStatePassed,
 } Gen2AuthState;
@@ -63,7 +57,6 @@ typedef union {
 struct Gen2Poller {
     Nfc* nfc;
     Gen2PollerState state;
-    Gen2PollerSessionState session_state;
 
     NfcPoller* poller;
     Iso14443_3aPoller* iso3_poller;
@@ -71,7 +64,6 @@ struct Gen2Poller {
     Gen2AuthState auth_state;
     Gen2CardState card_state;
 
-    uint8_t sectors_total;
     Gen2PollerModeContext mode_ctx;
     Gen2PollerMode mode;
 

@@ -122,10 +122,13 @@ NfcMagicApp* nfc_magic_app_alloc() {
 void nfc_magic_app_free(NfcMagicApp* instance) {
     furi_assert(instance);
 
-    // Nfc device
+    // Nfc source device
     nfc_device_free(instance->source_dev);
     furi_string_free(instance->file_name);
     furi_string_free(instance->file_path);
+
+    // Nfc target device
+    nfc_device_free(instance->target_dev);
 
     // Submenu
     view_dispatcher_remove_view(instance->view_dispatcher, NfcMagicAppViewMenu);

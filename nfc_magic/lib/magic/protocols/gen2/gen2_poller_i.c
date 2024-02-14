@@ -305,7 +305,7 @@ Gen2PollerError
             instance->crypto, instance->rx_encrypted_buffer, instance->rx_plain_buffer);
 
         if(bit_buffer_get_byte(instance->rx_plain_buffer, 0) != MF_CLASSIC_CMD_ACK) {
-            FURI_LOG_D(TAG, "Not ACK received");
+            FURI_LOG_D(TAG, "NACK received");
             ret = Gen2PollerErrorProtocol;
             break;
         }
@@ -334,7 +334,7 @@ Gen2PollerError
             instance->crypto, instance->rx_encrypted_buffer, instance->rx_plain_buffer);
 
         if(bit_buffer_get_byte(instance->rx_plain_buffer, 0) != MF_CLASSIC_CMD_ACK) {
-            FURI_LOG_D(TAG, "Not ACK received");
+            FURI_LOG_D(TAG, "NACK received");
             ret = Gen2PollerErrorProtocol;
             break;
         }
@@ -364,7 +364,7 @@ bool gen2_poller_can_write_block(const MfClassicData* mfc_data, uint8_t block_nu
 
 Gen2PollerWriteProblem
     gen2_poller_can_write_data_block(const MfClassicData* mfc_data, uint8_t block_num) {
-    // Check whether it's theoretically possible to write the block
+    // Check whether it's possible to write the block
     furi_assert(mfc_data);
 
     // Check rules:
@@ -454,7 +454,7 @@ Gen2PollerWriteProblem
 }
 
 bool gen2_can_reset_access_conditions(const MfClassicData* mfc_data, uint8_t block_num) {
-    // Check whether it's theoretically possible to reset the access conditions
+    // Check whether it's possible to reset the access conditions
     furi_assert(mfc_data);
 
     // Check rules:

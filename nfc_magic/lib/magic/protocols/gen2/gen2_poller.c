@@ -295,7 +295,6 @@ Gen2PollerError gen2_poller_write_block_handler(
             if(error != Gen2PollerErrorNone) {
                 FURI_LOG_D(
                     TAG, "Failed to auth to block %d for writing", write_ctx->current_block);
-                instance->state = Gen2PollerStateFail;
                 break;
             }
         }
@@ -304,7 +303,6 @@ Gen2PollerError gen2_poller_write_block_handler(
         error = gen2_poller_write_block(instance, write_ctx->current_block, block);
         if(error != Gen2PollerErrorNone) {
             FURI_LOG_D(TAG, "Failed to write block %d", write_ctx->current_block);
-            instance->state = Gen2PollerStateFail;
             break;
         }
     } while(false);
@@ -384,8 +382,7 @@ NfcCommand gen2_poller_wipe_handler(Gen2Poller* instance) {
     write_ctx->current_block++;
 
     if(error != Gen2PollerErrorNone) {
-        FURI_LOG_D(TAG, "Error occurred, stopping: %d", error);
-        instance->state = Gen2PollerStateFail;
+        FURI_LOG_D(TAG, "Error occurred: %d", error);
     } else if(
         write_ctx->current_block ==
         mf_classic_get_total_block_num(write_ctx->mfc_data_target->type)) {
@@ -463,8 +460,7 @@ NfcCommand gen2_poller_write_handler(Gen2Poller* instance) {
     write_ctx->current_block++;
 
     if(error != Gen2PollerErrorNone) {
-        FURI_LOG_D(TAG, "Error occurred, stopping: %d", error);
-        instance->state = Gen2PollerStateFail;
+        FURI_LOG_D(TAG, "Error occurred: %d", error);
     } else if(
         write_ctx->current_block ==
         mf_classic_get_total_block_num(write_ctx->mfc_data_source->type)) {

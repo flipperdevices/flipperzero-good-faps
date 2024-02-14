@@ -15,7 +15,7 @@ extern "C" {
 #define GEN2_POLLER_BLOCK_SIZE (16)
 
 #define GEN2_POLLER_MAX_BUFFER_SIZE (64U)
-#define GEN2_POLLER_MAX_FWT (60000U)
+#define GEN2_POLLER_MAX_FWT (150000U)
 
 typedef enum {
     Gen2PollerStateIdle,

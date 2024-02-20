@@ -61,9 +61,8 @@ typedef enum {
     Gen4PollerStateWipe,
     Gen4PollerStateChangePassword,
 
+    Gen4PollerStateGetInfo,
     Gen4PollerStateSetDefaultConfig,
-    Gen4PollerStateGetCurrentConfig,
-    Gen4PollerStateGetRevision,
     Gen4PollerStateSetShadowMode,
     Gen4PollerStateSetDirectWriteBlock0,
 

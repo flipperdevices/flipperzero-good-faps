@@ -1,42 +1,6 @@
 #include "level_game.h"
 #include "level_message.h"
 
-const NotificationSequence sequence_sound_ball_collide = {
-    &message_note_c7,
-    &message_delay_50,
-    &message_sound_off,
-    NULL,
-};
-
-const NotificationSequence sequence_sound_ball_paddle_collide = {
-    &message_note_d6,
-    &message_delay_10,
-    &message_sound_off,
-    NULL,
-};
-
-const NotificationSequence sequence_sound_ball_lost = {
-    &message_vibro_on,
-
-    &message_note_ds4,
-    &message_delay_10,
-    &message_sound_off,
-    &message_delay_10,
-
-    &message_note_ds4,
-    &message_delay_10,
-    &message_sound_off,
-    &message_delay_10,
-
-    &message_note_ds4,
-    &message_delay_10,
-    &message_sound_off,
-    &message_delay_10,
-
-    &message_vibro_off,
-    NULL,
-};
-
 typedef enum {
     GameEventBallLost,
 } GameEvent;
@@ -49,12 +13,14 @@ typedef struct {
     Vector speed;
     float radius;
     float max_speed;
+    size_t collision_count;
 } Ball;
 
 static void ball_reset(Ball* ball) {
     ball->max_speed = 2;
     ball->speed = (Vector){0, 0};
     ball->radius = 2;
+    ball->collision_count = 0;
 }
 
 static void ball_start(Entity* self, GameManager* manager, void* context) {
@@ -112,6 +78,69 @@ static const EntityDescription ball_desc = {
     .context_size = sizeof(Ball),
 };
 
+/****** Block Debris ******/
+static const EntityDescription block_debris_desc;
+
+typedef struct {
+    Vector size;
+    Vector speed;
+} BlockDebris;
+
+Vector vector_rand() {
+    float x = (rand() % __INT_MAX__) / (float)__INT_MAX__;
+    float y = (rand() % __INT_MAX__) / (float)__INT_MAX__;
+    return (Vector){x - 0.5f, y - 0.5f};
+}
+
+static void block_debrises_spawn(Level* level, Vector pos, Vector area) {
+    size_t count = rand() % 5 + 5;
+    for(size_t i = 0; i < count; i++) {
+        Entity* debris = level_add_entity(level, &block_debris_desc);
+        Vector new_pos = {
+            pos.x - (area.x / 2) + (rand() % (int)area.x),
+            pos.y - (area.y / 2) + (rand() % (int)area.y),
+        };
+
+        entity_pos_set(debris, new_pos);
+        BlockDebris* debris_context = entity_context_get(debris);
+        debris_context->size = (Vector){rand() % 2 + 1, rand() % 2 + 1};
+        debris_context->speed = vector_rand();
+    }
+}
+
+static void block_debris_update(Entity* entity, GameManager* manager, void* context) {
+    BlockDebris* block = context;
+    Vector pos = entity_pos_get(entity);
+    pos = vector_add(pos, block->speed);
+    entity_pos_set(entity, pos);
+    block->speed.y *= 0.9f;
+    block->speed.x *= 0.9f;
+
+    if(fabsf(block->speed.x) < 0.1f && fabsf(block->speed.y) < 0.1f) {
+        Level* level = game_manager_current_level_get(manager);
+        level_remove_entity(level, entity);
+    }
+}
+
+static void
+    block_debris_render(Entity* entity, GameManager* manager, Canvas* canvas, void* context) {
+    UNUSED(manager);
+    BlockDebris* block = context;
+    Vector pos = entity_pos_get(entity);
+    canvas_draw_box(
+        canvas, pos.x - block->size.x / 2, pos.y - block->size.y / 2, block->size.x, block->size.y);
+}
+
+static const EntityDescription block_debris_desc = {
+    .start = NULL,
+    .stop = NULL,
+    .update = block_debris_update,
+    .render = block_debris_render,
+    .collision = NULL,
+    .event = NULL,
+    .context_size = sizeof(BlockDebris),
+};
+
 /****** Block ******/
 
 static const EntityDescription block_desc;
@@ -162,12 +191,16 @@ static void block_collision(Entity* self, Entity* other, GameManager* manager, v
         level_remove_entity(level, self);
 
         GameContext* game = game_manager_game_context_get(manager);
-        game_sound_play(game, &sequence_sound_ball_collide);
+        game_sound_play(game, ball_get_collide_sound(ball->collision_count));
+        ball->collision_count++;
+
+        block_debrises_spawn(level, block_pos, block->size);
 
         if(level_entity_count(level, &block_desc) == 0) {
             LevelMessageContext* message_context = level_context_get(game->levels.message);
             furi_string_set(message_context->message, "You win!");
             game_manager_next_level_set(manager, game->levels.message);
+            game_sound_play(game, &sequence_level_win);
         }
     }
 }
@@ -288,6 +321,7 @@ static void paddle_collision(Entity* self, Entity* other, GameManager* manager, 
         // lerp the angle based on the distance from the paddle center
         float angle = 270.0f - 45.0f + 90.0f * paddle_edge_distance_normalized;
         ball_set_angle(ball, angle);
+        ball->collision_count = 0;
 
         GameContext* game = game_manager_game_context_get(manager);
         game_sound_play(game, &sequence_sound_ball_paddle_collide);

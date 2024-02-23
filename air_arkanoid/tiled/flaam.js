@@ -31,7 +31,7 @@ class MapBuffer {
 
     _push(byte) {
         var b = new Uint8Array(1);
-        b[0] = byte;
+        b[0] = Math.round(byte);
         this.data = concat_arrays(this.data, b);
     }
 
@@ -75,19 +75,27 @@ class MapBuffer {
 
     _add_block(object) {
         this._push(0xFF);
-        this._push(object.pos.x + object.size.width / 2);
-        this._push(object.pos.y + object.size.height / 2);
+        this._push(object.pos.x);
+        this._push(object.pos.y);
         this._push(object.size.width);
         this._push(object.size.height);
         this._push(this._object_lives(object));
     }
 
     _add_round(object) {
+        if (object.size.width != object.size.height) {
+            throw "Diameter must be equal to height";
+        }
+
+        let diameter = object.size.width;
+        if (diameter % 2 == 0) {
+            throw "Diameter must be odd";
+        }
+
         this._push(0xFE);
-        let r = object.size.width / 2;
-        this._push(object.pos.x + r);
-        this._push(object.pos.y + r);
-        this._push(r);
+        this._push(object.pos.x);
+        this._push(object.pos.y);
+        this._push(diameter);
         this._push(this._object_lives(object));
     }
 }

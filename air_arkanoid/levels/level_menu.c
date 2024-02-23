@@ -18,7 +18,7 @@ static void moving_sprite_update(Entity* entity, GameManager* manager, void* con
     // lerp position between start and end for duration
     if(sprite_context->time < sprite_context->duration) {
         Vector dir = vector_sub(sprite_context->pos_end, sprite_context->pos_start);
-        Vector len = vector_mulf(dir, sprite_context->time / sprite_context->duration);
+        Vector len = vector_mul(dir, sprite_context->time / sprite_context->duration);
         Vector pos = vector_add(sprite_context->pos_start, len);
 
         entity_pos_set(entity, pos);

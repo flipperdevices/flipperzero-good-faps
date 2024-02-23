@@ -185,16 +185,20 @@ static void round_render(Entity* entity, GameManager* manager, Canvas* canvas, v
     float r = round->radius - 0.5f;
     canvas_draw_disc(canvas, pos.x - 1, pos.y - 1, r);
 
-    canvas_set_color(canvas, ColorWhite);
     size_t lives_diff = round->max_lives - round->current_lives;
-    for(size_t i = 0; i < lives_diff * 10; i++) {
-        // draw random pixels to simulate damage
-        canvas_draw_dot(
-            canvas,
-            pos.x - round->radius + (rand() % (int)round->radius * 2),
-            pos.y - round->radius + (rand() % (int)round->radius * 2));
+    if(lives_diff > 0) {
+        canvas_set_color(canvas, ColorWhite);
+        float pixel_count = M_PI * r * r;
+        pixel_count = pixel_count * lives_diff / round->max_lives;
+        for(size_t i = 0; i < pixel_count; i++) {
+            // draw random pixels to simulate damage
+            canvas_draw_dot(
+                canvas,
+                pos.x - round->radius + (rand() % ((int)round->radius * 2) + 1),
+                pos.y - round->radius + (rand() % ((int)round->radius * 2)) + 1);
+        }
+        canvas_set_color(canvas, ColorBlack);
     }
-    canvas_set_color(canvas, ColorBlack);
 }
 
 static void round_collision(Entity* self, Entity* other, GameManager* manager, void* context) {
@@ -210,6 +214,11 @@ static void round_collision(Entity* self, Entity* other, GameManager* manager, v
         Vector normal = vector_normalize(vector_sub(ball_pos, round_pos));
         ball->speed =
             vector_sub(ball->speed, vector_mul(normal, 2 * vector_dot(ball->speed, normal)));
+
+        // ball x speed should be at least 0.1
+        if(fabsf(ball->speed.x) < 0.1f) {
+            ball->speed.x = ball->speed.x < 0 ? -0.1f : 0.1f;
+        }
 
         round->current_lives--;
 
@@ -274,16 +283,20 @@ static void block_render(Entity* entity, GameManager* manager, Canvas* canvas, v
     pos = vector_sub(pos, vector_div(block->size, 2));
     canvas_draw_box(canvas, pos.x, pos.y, block->size.x, block->size.y);
 
-    canvas_set_color(canvas, ColorWhite);
     size_t lives_diff = block->max_lives - block->current_lives;
-    for(size_t i = 0; i < lives_diff * 10; i++) {
+    if(lives_diff > 0) {
+        canvas_set_color(canvas, ColorWhite);
         // draw random pixels to simulate damage
-        canvas_draw_dot(
-            canvas,
-            pos.x - block->size.x / 2 + (rand() % (int)block->size.x),
-            pos.y - block->size.y / 2 + (rand() % (int)block->size.y));
+        float pixel_count = block->size.x * block->size.y;
+        pixel_count = pixel_count * lives_diff / block->max_lives;
+        for(size_t i = 0; i < pixel_count; i++) {
+            canvas_draw_dot(
+                canvas,
+                pos.x + (rand() % (int)block->size.x),
+                pos.y + (rand() % (int)block->size.y));
+        }
+        canvas_set_color(canvas, ColorBlack);
     }
-    canvas_set_color(canvas, ColorBlack);
 }
 
 static void block_collision(Entity* self, Entity* other, GameManager* manager, void* context) {

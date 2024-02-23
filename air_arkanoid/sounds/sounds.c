@@ -105,8 +105,8 @@ static const NotificationSequence* sequence_sound_ball_collide[] = {
 
 const NotificationSequence* ball_get_collide_sound(size_t collision_count) {
     const size_t max = sizeof(sequence_sound_ball_collide) / sizeof(NotificationSequence*);
-    if(collision_count > max) {
-        collision_count = max;
+    if(collision_count >= max) {
+        collision_count = max - 1;
     }
     return sequence_sound_ball_collide[collision_count];
 }

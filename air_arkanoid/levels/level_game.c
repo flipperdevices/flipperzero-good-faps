@@ -86,13 +86,7 @@ typedef struct {
     Vector speed;
 } BlockDebris;
 
-Vector vector_rand() {
-    float x = (rand() % __INT_MAX__) / (float)__INT_MAX__;
-    float y = (rand() % __INT_MAX__) / (float)__INT_MAX__;
-    return (Vector){x - 0.5f, y - 0.5f};
-}
-
-static void block_debrises_spawn(Level* level, Vector pos, Vector area) {
+static void block_debrises_spawn_rect(Level* level, Vector pos, Vector area) {
     size_t count = rand() % 5 + 5;
     for(size_t i = 0; i < count; i++) {
         Entity* debris = level_add_entity(level, &block_debris_desc);
@@ -104,7 +98,25 @@ static void block_debrises_spawn(Level* level, Vector pos, Vector area) {
         entity_pos_set(debris, new_pos);
         BlockDebris* debris_context = entity_context_get(debris);
         debris_context->size = (Vector){rand() % 2 + 1, rand() % 2 + 1};
-        debris_context->speed = vector_rand();
+        debris_context->speed = vector_sub(vector_rand(), 0.5f);
+    }
+}
+
+static void block_debrises_spawn_round(Level* level, Vector pos, float radius) {
+    size_t count = rand() % 5 + 5;
+    for(size_t i = 0; i < count; i++) {
+        Entity* debris = level_add_entity(level, &block_debris_desc);
+        float angle = (float)(rand() % 360);
+        float distance = (float)(rand() % (int)radius);
+        Vector new_pos = {
+            pos.x + cosf(angle * (M_PI / 180.0f)) * distance,
+            pos.y + sinf(angle * (M_PI / 180.0f)) * distance,
+        };
+
+        entity_pos_set(debris, new_pos);
+        BlockDebris* debris_context = entity_context_get(debris);
+        debris_context->size = (Vector){rand() % 2 + 1, rand() % 2 + 1};
+        debris_context->speed = vector_sub(vector_rand(), 0.5f);
     }
 }
 
@@ -141,28 +153,137 @@ static const EntityDescription block_debris_desc = {
     .context_size = sizeof(BlockDebris),
 };
 
-/****** Block ******/
+/****** Round Block ******/
 
+static const EntityDescription round_desc;
 static const EntityDescription block_desc;
+
+size_t level_block_count(Level* level) {
+    return level_entity_count(level, &block_desc) + level_entity_count(level, &round_desc);
+}
+
+typedef struct {
+    float radius;
+    size_t current_lives;
+    size_t max_lives;
+} Round;
+
+static void round_spawn(Level* level, Vector pos, float radius, size_t lives) {
+    Entity* round = level_add_entity(level, &round_desc);
+    entity_collider_add_circle(round, radius);
+    entity_pos_set(round, pos);
+    Round* round_context = entity_context_get(round);
+    round_context->radius = radius;
+    round_context->max_lives = lives;
+    round_context->current_lives = round_context->max_lives;
+}
+
+static void round_render(Entity* entity, GameManager* manager, Canvas* canvas, void* context) {
+    UNUSED(manager);
+    Round* round = context;
+    Vector pos = entity_pos_get(entity);
+    float r = round->radius - 0.5f;
+    canvas_draw_disc(canvas, pos.x - 1, pos.y - 1, r);
+
+    canvas_set_color(canvas, ColorWhite);
+    size_t lives_diff = round->max_lives - round->current_lives;
+    for(size_t i = 0; i < lives_diff * 10; i++) {
+        // draw random pixels to simulate damage
+        canvas_draw_dot(
+            canvas,
+            pos.x - round->radius + (rand() % (int)round->radius * 2),
+            pos.y - round->radius + (rand() % (int)round->radius * 2));
+    }
+    canvas_set_color(canvas, ColorBlack);
+}
+
+static void round_collision(Entity* self, Entity* other, GameManager* manager, void* context) {
+    UNUSED(manager);
+
+    if(entity_description_get(other) == &ball_desc) {
+        Ball* ball = entity_context_get(other);
+        Round* round = context;
+        Vector ball_pos = entity_pos_get(other);
+        Vector round_pos = entity_pos_get(self);
+
+        // change the ball speed based on the collision
+        Vector normal = vector_normalize(vector_sub(ball_pos, round_pos));
+        ball->speed =
+            vector_sub(ball->speed, vector_mul(normal, 2 * vector_dot(ball->speed, normal)));
+
+        round->current_lives--;
+
+        Level* level = game_manager_current_level_get(manager);
+        GameContext* game = game_manager_game_context_get(manager);
+
+        if(round->current_lives == 0) {
+            level_remove_entity(level, self);
+        }
+
+        game_sound_play(game, ball_get_collide_sound(ball->collision_count));
+        ball->collision_count++;
+
+        if(level_block_count(level) == 0) {
+            LevelMessageContext* message_context = level_context_get(game->levels.message);
+            furi_string_set(message_context->message, "You win!");
+            game_manager_next_level_set(manager, game->levels.message);
+            game_sound_play(game, &sequence_level_win);
+        }
+    }
+}
+
+static void round_stop(Entity* self, GameManager* manager, void* context) {
+    UNUSED(manager);
+    Round* round = context;
+    Level* level = game_manager_current_level_get(manager);
+    block_debrises_spawn_round(level, entity_pos_get(self), round->radius);
+}
+
+static const EntityDescription round_desc = {
+    .start = NULL,
+    .stop = round_stop,
+    .update = NULL,
+    .render = round_render,
+    .collision = round_collision,
+    .event = NULL,
+    .context_size = sizeof(Round),
+};
+
+/****** Block ******/
 
 typedef struct {
     Vector size;
+    size_t current_lives;
+    size_t max_lives;
 } Block;
 
-static void block_spawn(Level* level, Vector pos, Vector size) {
+static void block_spawn(Level* level, Vector pos, Vector size, size_t lives) {
     Entity* block = level_add_entity(level, &block_desc);
     entity_collider_add_rect(block, size.x, size.y);
     entity_pos_set(block, pos);
     Block* block_context = entity_context_get(block);
     block_context->size = size;
+    block_context->max_lives = lives;
+    block_context->current_lives = block_context->max_lives;
 }
 
 static void block_render(Entity* entity, GameManager* manager, Canvas* canvas, void* context) {
     UNUSED(manager);
     Block* block = context;
     Vector pos = entity_pos_get(entity);
-    canvas_draw_box(
-        canvas, pos.x - block->size.x / 2, pos.y - block->size.y / 2, block->size.x, block->size.y);
+    pos = vector_sub(pos, vector_div(block->size, 2));
+    canvas_draw_box(canvas, pos.x, pos.y, block->size.x, block->size.y);
+
+    canvas_set_color(canvas, ColorWhite);
+    size_t lives_diff = block->max_lives - block->current_lives;
+    for(size_t i = 0; i < lives_diff * 10; i++) {
+        // draw random pixels to simulate damage
+        canvas_draw_dot(
+            canvas,
+            pos.x - block->size.x / 2 + (rand() % (int)block->size.x),
+            pos.y - block->size.y / 2 + (rand() % (int)block->size.y));
+    }
+    canvas_set_color(canvas, ColorBlack);
 }
 
 static void block_collision(Entity* self, Entity* other, GameManager* manager, void* context) {
@@ -187,16 +308,19 @@ static void block_collision(Entity* self, Entity* other, GameManager* manager, v
             ball->speed.x = -ball->speed.x;
         }
 
-        Level* level = game_manager_current_level_get(manager);
-        level_remove_entity(level, self);
+        block->current_lives--;
 
+        Level* level = game_manager_current_level_get(manager);
         GameContext* game = game_manager_game_context_get(manager);
+
+        if(block->current_lives == 0) {
+            level_remove_entity(level, self);
+        }
+
         game_sound_play(game, ball_get_collide_sound(ball->collision_count));
         ball->collision_count++;
 
-        block_debrises_spawn(level, block_pos, block->size);
-
-        if(level_entity_count(level, &block_desc) == 0) {
+        if(level_block_count(level) == 0) {
             LevelMessageContext* message_context = level_context_get(game->levels.message);
             furi_string_set(message_context->message, "You win!");
             game_manager_next_level_set(manager, game->levels.message);
@@ -205,9 +329,16 @@ static void block_collision(Entity* self, Entity* other, GameManager* manager, v
     }
 }
 
+void block_stop(Entity* self, GameManager* manager, void* context) {
+    UNUSED(manager);
+    Block* block = context;
+    Level* level = game_manager_current_level_get(manager);
+    block_debrises_spawn_rect(level, entity_pos_get(self), block->size);
+}
+
 static const EntityDescription block_desc = {
     .start = NULL,
-    .stop = NULL,
+    .stop = block_stop,
     .update = NULL,
     .render = block_render,
     .collision = block_collision,
@@ -351,29 +482,118 @@ static const EntityDescription paddle_desc = {
     .context_size = sizeof(Paddle),
 };
 
-static void level_1_spawn(Level* level) {
-    level_add_entity(level, &paddle_desc);
-    const Vector block_size = {13, 5};
-    const Vector screen = {128, 64};
-    const int block_count_x = screen.x / block_size.x;
-    const int block_count_y = 6;
-    size_t block_spacing = 1;
+#include <storage/storage.h>
 
-    for(int y = 0; y < block_count_y; y++) {
-        for(int x = 0; x < block_count_x; x++) {
-            Vector pos = {
-                (x) * (block_size.x + block_spacing) + block_size.x / 2,
-                (y) * (block_size.y + block_spacing) + block_size.y / 2,
-            };
-            block_spawn(level, pos, block_size);
+typedef enum {
+    SerializedTypeBlock = 0xFF,
+    SerializedTypePaddle = 0xFE,
+} SerializedType;
+
+typedef struct {
+    uint8_t x;
+    uint8_t y;
+    uint8_t width;
+    uint8_t height;
+    uint8_t lives;
+} __attribute__((packed)) SerializedBlock;
+
+typedef struct {
+    uint8_t x;
+    uint8_t y;
+    uint8_t diameter;
+    uint8_t lives;
+} __attribute__((packed)) SerializedRound;
+
+static void level_deserialize(Level* level, const uint8_t* data) {
+    const uint8_t magic[] = {0x46, 0x4C, 0x41, 0x41};
+    const uint8_t version = 1;
+    const char tag[] = "Level loader";
+
+    if(memcmp(data, magic, sizeof(magic)) != 0) {
+        FURI_LOG_E(tag, "Invalid magic");
+        return;
+    }
+    data += 4;
+
+    if(*data != version) {
+        FURI_LOG_E(tag, "Invalid version");
+        return;
+    }
+    data++;
+
+    size_t entity_count = *data;
+    data++;
+
+    for(size_t i = 0; i < entity_count; i++) {
+        const uint8_t type = *data;
+        data++;
+
+        if(type == SerializedTypeBlock) {
+            SerializedBlock* block = (SerializedBlock*)data;
+            Vector block_size = {block->width, block->height};
+            Vector block_pos = {
+                (float)block->x + block_size.x / 2, (float)block->y + block_size.y / 2};
+            FURI_LOG_I(
+                tag,
+                "Block: x %.2f, y %.2f, width %.2f, height %.2f, lives %d",
+                (double)block_pos.x,
+                (double)block_pos.y,
+                (double)block_size.x,
+                (double)block_size.y,
+                block->lives);
+            block_spawn(level, block_pos, block_size, block->lives);
+            data += sizeof(SerializedBlock);
+        } else if(type == SerializedTypePaddle) {
+            SerializedRound* round = (SerializedRound*)data;
+            float radius = (float)round->diameter / 2.0f;
+            Vector pos = {round->x, round->y};
+            pos = vector_add(pos, roundf(radius));
+            FURI_LOG_I(
+                tag,
+                "Round: x %.2f, y %.2f, radius %.2f, lives %d",
+                (double)pos.x,
+                (double)pos.y,
+                (double)radius,
+                round->lives);
+            round_spawn(level, pos, radius, round->lives);
+            data += sizeof(SerializedRound);
         }
     }
+}
+
+static void level_load(Level* level, const char* name) {
+    Storage* storage = furi_record_open(RECORD_STORAGE);
+    File* file = storage_file_alloc(storage);
+    uint8_t* data = NULL;
+    size_t size = 0;
+
+    do {
+        if(!storage_file_open(file, name, FSAM_READ, FSOM_OPEN_EXISTING)) {
+            break;
+        }
+
+        size = storage_file_size(file);
+        data = malloc(size);
+
+        if(storage_file_read(file, data, size) != size) {
+            break;
+        }
+
+        level_clear(level);
+        level_deserialize(level, data);
+        level_add_entity(level, &paddle_desc);
+    } while(false);
+
+    free(data);
+    storage_file_free(file);
+    furi_record_close(RECORD_STORAGE);
 }
 
 static void level_game_start(Level* level, GameManager* manager, void* context) {
     UNUSED(manager);
     UNUSED(context);
-    level_1_spawn(level);
+    // level_1_spawn(level);
+    level_load(level, APP_ASSETS_PATH("levels/1.flaam"));
 }
 
 static void level_game_stop(Level* level, GameManager* manager, void* context) {

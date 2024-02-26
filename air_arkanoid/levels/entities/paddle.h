@@ -1,11 +1,11 @@
 #pragma once
-#include "../game.h"
+#include "../../game.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-extern const LevelBehaviour level_game;
+extern const EntityDescription paddle_desc;
 
 #ifdef __cplusplus
 }

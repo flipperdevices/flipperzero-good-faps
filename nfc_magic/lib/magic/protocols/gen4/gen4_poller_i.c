@@ -3,7 +3,7 @@
 #include "bit_buffer.h"
 #include "core/log.h"
 #include <nfc/protocols/iso14443_3a/iso14443_3a_poller.h>
-#include "bit_lib.h"
+#include <bit_lib/bit_lib.h>
 
 #define GEN4_CMD_PREFIX (0xCF)
 

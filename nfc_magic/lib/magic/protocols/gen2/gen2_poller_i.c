@@ -1,7 +1,7 @@
 #include "gen2_poller_i.h"
 #include <nfc/helpers/iso14443_crc.h>
 
-#include "bit_lib.h"
+#include <bit_lib/bit_lib.h>
 #include "furi_hal_random.h"
 
 #include <furi/furi.h>

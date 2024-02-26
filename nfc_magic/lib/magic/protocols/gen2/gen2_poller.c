@@ -383,9 +383,10 @@ NfcCommand gen2_poller_wipe_handler(Gen2Poller* instance) {
 
     if(error != Gen2PollerErrorNone) {
         FURI_LOG_D(TAG, "Error occurred: %d", error);
-    } else if(
-        write_ctx->current_block ==
-        mf_classic_get_total_block_num(write_ctx->mfc_data_target->type)) {
+    }
+
+    if(write_ctx->current_block ==
+       mf_classic_get_total_block_num(write_ctx->mfc_data_target->type)) {
         instance->state = Gen2PollerStateSuccess;
     }
 

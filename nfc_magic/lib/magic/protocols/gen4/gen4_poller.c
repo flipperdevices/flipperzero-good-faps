@@ -3,6 +3,7 @@
 #include <nfc/protocols/iso14443_3a/iso14443_3a.h>
 #include <nfc/protocols/iso14443_3a/iso14443_3a_poller.h>
 #include <nfc/helpers/nfc_util.h>
+#include "bit_lib.h"
 #include <nfc/nfc_poller.h>
 
 #include <furi/furi.h>
@@ -91,7 +92,7 @@ NfcCommand gen4_poller_detect_callback(NfcGenericEvent event, void* context) {
         do {
             bit_buffer_append_byte(gen4_poller_detect_ctx->tx_buffer, GEN4_CMD_PREFIX);
             uint8_t pwd_arr[4] = {};
-            nfc_util_num2bytes(gen4_poller_detect_ctx->password, COUNT_OF(pwd_arr), pwd_arr);
+            bit_lib_num_to_bytes_be(gen4_poller_detect_ctx->password, COUNT_OF(pwd_arr), pwd_arr);
             bit_buffer_append_bytes(gen4_poller_detect_ctx->tx_buffer, pwd_arr, COUNT_OF(pwd_arr));
             bit_buffer_append_byte(gen4_poller_detect_ctx->tx_buffer, GEN4_CMD_GET_CFG);
 
@@ -432,7 +433,7 @@ NfcCommand gen4_poller_write_handler(Gen4Poller* instance) {
 
     memcpy(instance->config, gen4_poller_default_config, sizeof(gen4_poller_default_config));
     uint8_t password_arr[4] = {};
-    nfc_util_num2bytes(instance->password, sizeof(password_arr), password_arr);
+    bit_lib_num_to_bytes_be(instance->password, sizeof(password_arr), password_arr);
     memcpy(&instance->config[2], password_arr, sizeof(password_arr));
     memset(&instance->config[7], 0, 17);
     if(instance->protocol == NfcProtocolMfClassic) {

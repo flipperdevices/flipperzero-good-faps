@@ -1,7 +1,7 @@
 #include "gen2_poller_i.h"
 #include <nfc/helpers/iso14443_crc.h>
 
-#include <nfc/helpers/nfc_util.h>
+#include "bit_lib.h"
 #include "furi_hal_random.h"
 
 #include <furi/furi.h>
@@ -177,7 +177,7 @@ static Gen2PollerError gen2_poller_auth_common(
         }
 
         uint32_t cuid = iso14443_3a_get_cuid(instance->data->iso14443_3a_data);
-        uint64_t key_num = nfc_util_bytes2num(key->data, sizeof(MfClassicKey));
+        uint64_t key_num = bit_lib_bytes_to_num_be(key->data, sizeof(MfClassicKey));
         MfClassicNr nr = {};
         furi_hal_random_fill_buf(nr.data, sizeof(MfClassicNr));
 

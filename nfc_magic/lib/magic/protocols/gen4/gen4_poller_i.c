@@ -3,7 +3,7 @@
 #include "bit_buffer.h"
 #include "core/log.h"
 #include <nfc/protocols/iso14443_3a/iso14443_3a_poller.h>
-#include <nfc/helpers/nfc_util.h>
+#include "bit_lib.h"
 
 #define GEN4_CMD_PREFIX (0xCF)
 
@@ -37,7 +37,7 @@ Gen4PollerError
 
     do {
         uint8_t password_arr[4] = {};
-        nfc_util_num2bytes(password, COUNT_OF(password_arr), password_arr);
+        bit_lib_num_to_bytes_be(password, COUNT_OF(password_arr), password_arr);
         bit_buffer_append_byte(instance->tx_buffer, GEN4_CMD_PREFIX);
         bit_buffer_append_bytes(instance->tx_buffer, password_arr, COUNT_OF(password_arr));
         bit_buffer_append_byte(instance->tx_buffer, GEN4_CMD_GET_CFG);
@@ -69,7 +69,7 @@ Gen4PollerError
 
     do {
         uint8_t password_arr[4] = {};
-        nfc_util_num2bytes(password, COUNT_OF(password_arr), password_arr);
+        bit_lib_num_to_bytes_be(password, COUNT_OF(password_arr), password_arr);
         bit_buffer_append_byte(instance->tx_buffer, GEN4_CMD_PREFIX);
         bit_buffer_append_bytes(instance->tx_buffer, password_arr, COUNT_OF(password_arr));
         bit_buffer_append_byte(instance->tx_buffer, GEN4_CMD_GET_REVISION);
@@ -104,7 +104,7 @@ Gen4PollerError gen4_poller_set_config(
 
     do {
         uint8_t password_arr[4] = {};
-        nfc_util_num2bytes(password, COUNT_OF(password_arr), password_arr);
+        bit_lib_num_to_bytes_be(password, COUNT_OF(password_arr), password_arr);
         bit_buffer_append_byte(instance->tx_buffer, GEN4_CMD_PREFIX);
         bit_buffer_append_bytes(instance->tx_buffer, password_arr, COUNT_OF(password_arr));
         uint8_t fuse_config = fuse ? GEN4_CMD_FUSE_CFG : GEN4_CMD_SET_CFG;
@@ -139,7 +139,7 @@ Gen4PollerError gen4_poller_write_block(
 
     do {
         uint8_t password_arr[4] = {};
-        nfc_util_num2bytes(password, COUNT_OF(password_arr), password_arr);
+        bit_lib_num_to_bytes_be(password, COUNT_OF(password_arr), password_arr);
         bit_buffer_append_byte(instance->tx_buffer, GEN4_CMD_PREFIX);
         bit_buffer_append_bytes(instance->tx_buffer, password_arr, COUNT_OF(password_arr));
         bit_buffer_append_byte(instance->tx_buffer, GEN4_CMD_WRITE);
@@ -171,12 +171,12 @@ Gen4PollerError
 
     do {
         uint8_t password_arr[4] = {};
-        nfc_util_num2bytes(pwd_current, COUNT_OF(password_arr), password_arr);
+        bit_lib_num_to_bytes_be(pwd_current, COUNT_OF(password_arr), password_arr);
         bit_buffer_append_byte(instance->tx_buffer, GEN4_CMD_PREFIX);
         bit_buffer_append_bytes(instance->tx_buffer, password_arr, COUNT_OF(password_arr));
 
         bit_buffer_append_byte(instance->tx_buffer, GEN4_CMD_SET_PWD);
-        nfc_util_num2bytes(pwd_new, COUNT_OF(password_arr), password_arr);
+        bit_lib_num_to_bytes_be(pwd_new, COUNT_OF(password_arr), password_arr);
         bit_buffer_append_bytes(instance->tx_buffer, password_arr, COUNT_OF(password_arr));
 
         Iso14443_3aError error = iso14443_3a_poller_send_standard_frame(

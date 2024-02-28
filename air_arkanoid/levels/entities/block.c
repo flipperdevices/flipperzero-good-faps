@@ -56,10 +56,9 @@ static void round_collision(Entity* self, Entity* other, GameManager* manager, v
         Round* round = context;
         Vector ball_pos = entity_pos_get(other);
         Vector round_pos = entity_pos_get(self);
-        Level* level = game_manager_current_level_get(manager);
         GameContext* game = game_manager_game_context_get(manager);
 
-        block_debrises_spawn_impact(level, ball_pos, ball_get_speed(ball));
+        block_debrises_spawn_impact(game->levels.game, ball_pos, ball_get_speed(ball));
 
         // change the ball speed based on the collision
         Vector normal = vector_normalize(vector_sub(ball_pos, round_pos));
@@ -76,14 +75,12 @@ static void round_collision(Entity* self, Entity* other, GameManager* manager, v
         round->current_lives--;
 
         if(round->current_lives == 0) {
-            level_remove_entity(level, self);
+            level_remove_entity(game->levels.game, self);
         }
 
-        ball_collide(ball, game);
+        ball_collide(other, game);
 
-        if(level_block_count(level) == 0) {
-            LevelMessageContext* message_context = level_context_get(game->levels.message);
-            furi_string_set(message_context->message, "You win!");
+        if(level_block_count(game->levels.game) == 0) {
             game_manager_next_level_set(manager, game->levels.message);
             game_sound_play(game, &sequence_level_win);
         }
@@ -93,8 +90,8 @@ static void round_collision(Entity* self, Entity* other, GameManager* manager, v
 static void round_stop(Entity* self, GameManager* manager, void* context) {
     UNUSED(manager);
     Round* round = context;
-    Level* level = game_manager_current_level_get(manager);
-    block_debrises_spawn_round(level, entity_pos_get(self), round->radius);
+    GameContext* game = game_manager_game_context_get(manager);
+    block_debrises_spawn_round(game->levels.game, entity_pos_get(self), round->radius);
 }
 
 const EntityDescription round_desc = {
@@ -156,10 +153,9 @@ static void block_collision(Entity* self, Entity* other, GameManager* manager, v
         Block* block = context;
         Vector ball_pos = entity_pos_get(other);
         Vector block_pos = entity_pos_get(self);
-        Level* level = game_manager_current_level_get(manager);
         GameContext* game = game_manager_game_context_get(manager);
 
-        block_debrises_spawn_impact(level, ball_pos, ball_get_speed(ball));
+        block_debrises_spawn_impact(game->levels.game, ball_pos, ball_get_speed(ball));
 
         Vector closest = {
             CLAMP(ball_pos.x, block_pos.x + block->size.x / 2, block_pos.x - block->size.x / 2),
@@ -179,14 +175,12 @@ static void block_collision(Entity* self, Entity* other, GameManager* manager, v
         block->current_lives--;
 
         if(block->current_lives == 0) {
-            level_remove_entity(level, self);
+            level_remove_entity(game->levels.game, self);
         }
 
-        ball_collide(ball, game);
+        ball_collide(other, game);
 
-        if(level_block_count(level) == 0) {
-            LevelMessageContext* message_context = level_context_get(game->levels.message);
-            furi_string_set(message_context->message, "You win!");
+        if(level_block_count(game->levels.game) == 0) {
             game_manager_next_level_set(manager, game->levels.message);
             game_sound_play(game, &sequence_level_win);
         }
@@ -194,10 +188,9 @@ static void block_collision(Entity* self, Entity* other, GameManager* manager, v
 }
 
 static void block_stop(Entity* self, GameManager* manager, void* context) {
-    UNUSED(manager);
     Block* block = context;
-    Level* level = game_manager_current_level_get(manager);
-    block_debrises_spawn_rect(level, entity_pos_get(self), block->size);
+    GameContext* game = game_manager_game_context_get(manager);
+    block_debrises_spawn_rect(game->levels.game, entity_pos_get(self), block->size);
 }
 
 const EntityDescription block_desc = {

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.10.2" orientation="orthogonal" renderorder="right-down" width="128" height="64" tilewidth="1" tileheight="1" infinite="0" nextlayerid="3" nextobjectid="89">
+ <editorsettings>
+  <export target="../assets/levels/3.flaam" format="flaam"/>
+ </editorsettings>
+ <objectgroup id="2" name="Object Layer 1">
+  <object id="39" type="block" x="0" y="0" width="15" height="5">
+   <properties>
+    <property name="lives" type="int" value="1"/>
+   </properties>
+  </object>
+  <object id="40" type="block" x="16" y="0" width="15" height="5">
+   <properties>
+    <property name="lives" type="int" value="1"/>
+   </properties>
+  </object>
+  <object id="41" type="block" x="32" y="0" width="15" height="5">
+   <properties>
+    <property name="lives" type="int" value="1"/>
+   </properties>
+  </object>
+ </objectgroup>
+</map>

@@ -64,8 +64,8 @@ static void block_debris_update(Entity* entity, GameManager* manager, void* cont
     block->speed.x *= 0.9f;
 
     if(fabsf(block->speed.x) < 0.1f && fabsf(block->speed.y) < 0.1f) {
-        Level* level = game_manager_current_level_get(manager);
-        level_remove_entity(level, entity);
+        GameContext* game_context = game_manager_game_context_get(manager);
+        level_remove_entity(game_context->levels.game, entity);
     }
 }
 

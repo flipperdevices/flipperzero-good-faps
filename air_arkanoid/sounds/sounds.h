@@ -7,4 +7,8 @@ extern const NotificationSequence sequence_sound_ball_paddle_collide;
 
 extern const NotificationSequence sequence_sound_ball_lost;
 
+extern const NotificationSequence sequence_level_start;
+
 extern const NotificationSequence sequence_level_win;
+
+extern const NotificationSequence sequence_sound_level_fail;

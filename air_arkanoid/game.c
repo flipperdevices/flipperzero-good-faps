@@ -4,6 +4,7 @@
 #include "levels/level_game.h"
 #include "levels/level_settings.h"
 #include "levels/level_message.h"
+#include "levels/level_pause.h"
 
 const NotificationSequence sequence_sound_blip = {
     &message_note_c7,
@@ -27,11 +28,18 @@ void game_start(GameManager* game_manager, void* ctx) {
     context->levels.settings = game_manager_add_level(game_manager, &level_settings);
     context->levels.game = game_manager_add_level(game_manager, &level_game);
     context->levels.message = game_manager_add_level(game_manager, &level_message);
+    context->levels.pause = game_manager_add_level(game_manager, &level_pause);
 
     if(!game_settings_load(&context->settings)) {
         context->settings.sound = true;
         context->settings.show_fps = false;
     }
+
+    if(!game_state_load(&context->save_state)) {
+        game_state_reset(&context->save_state);
+    }
+
+    context->state = context->save_state;
 
     context->app = furi_record_open(RECORD_NOTIFICATION);
     context->game_manager = game_manager;
@@ -70,4 +78,50 @@ void game_sound_play(GameContext* context, const NotificationSequence* sequence)
     if(context->settings.sound) {
         notification_message(context->app, sequence);
     }
+}
+
+#include <storage/storage.h>
+
+static const char* game_levels[] = {
+    APP_ASSETS_PATH("levels/1.flaam"),
+    APP_ASSETS_PATH("levels/2.flaam"),
+    APP_ASSETS_PATH("levels/3.flaam"),
+};
+
+const size_t level_count = sizeof(game_levels) / sizeof(game_levels[0]);
+
+const char* game_level_get(GameContext* context) {
+    if(context->state.level_index < level_count) {
+        return game_levels[context->state.level_index];
+    } else {
+        return NULL;
+    }
+}
+
+static void game_level_clear_cb(Level* level, void* ctx) {
+    GameContext* context = ctx;
+    level_load(level, game_level_get(context));
+    game_sound_play(context, &sequence_level_start);
+}
+
+void game_level_reset(GameContext* context) {
+    context->state = context->save_state;
+    level_clear(context->levels.game, game_level_clear_cb, context);
+}
+
+bool game_level_is_last(GameContext* context) {
+    return context->state.level_index == level_count - 1;
+}
+
+void game_level_next(GameContext* context) {
+    context->state.level_index++;
+    context->save_state = context->state;
+    game_state_save(&context->state);
+}
+
+void game_level_new_game_plus(GameContext* context) {
+    context->state.level_index = 0;
+    context->state.new_game_index++;
+    context->save_state = context->state;
+    game_state_save(&context->state);
 }

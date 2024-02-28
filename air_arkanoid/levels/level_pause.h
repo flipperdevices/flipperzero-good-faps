@@ -5,9 +5,7 @@
 extern "C" {
 #endif
 
-extern const LevelBehaviour level_game;
-
-void level_load(Level* level, const char* path);
+extern const LevelBehaviour level_pause;
 
 #ifdef __cplusplus
 }

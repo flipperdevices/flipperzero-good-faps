@@ -1,5 +1,10 @@
 #include "sounds.h"
 
+const NotificationMessage message_delay_200 = {
+    .type = NotificationMessageTypeDelay,
+    .data.delay.length = 200,
+};
+
 static const NotificationSequence sequence_sound_ball_collide_0 = {
     &message_note_c6,
     &message_delay_10,
@@ -119,36 +124,74 @@ const NotificationSequence sequence_sound_ball_paddle_collide = {
 };
 
 const NotificationSequence sequence_sound_ball_lost = {
-    &message_vibro_on,
-
-    &message_note_ds4,
+    &message_note_g5,
     &message_delay_10,
     &message_sound_off,
     &message_delay_10,
 
-    &message_note_ds4,
+    &message_note_e5,
     &message_delay_10,
     &message_sound_off,
     &message_delay_10,
 
-    &message_note_ds4,
+    &message_note_d5,
     &message_delay_10,
     &message_sound_off,
     &message_delay_10,
 
-    &message_vibro_off,
+    &message_note_c5,
+    &message_delay_10,
+    &message_sound_off,
+    &message_delay_10,
+    NULL,
+};
+
+const NotificationSequence sequence_sound_level_fail = {
+    &message_note_g5,
+    &message_delay_200,
+    &message_note_e5,
+    &message_delay_200,
+    &message_note_d5,
+    &message_delay_200,
+    &message_note_c5,
+    &message_delay_200,
+    NULL,
+};
+
+const NotificationSequence sequence_level_start = {
+    &message_note_c5,
+    &message_delay_200,
+    &message_note_ds5,
+    &message_delay_200,
+    &message_note_f5,
+    &message_delay_200,
+    &message_note_fs5,
+    &message_delay_100,
+    &message_note_g5,
+    &message_delay_100,
+    &message_note_f5,
+    &message_delay_200,
+    &message_note_c5,
+    &message_delay_200,
+    &message_sound_off,
     NULL,
 };
 
 const NotificationSequence sequence_level_win = {
     &message_note_c5,
-    &message_delay_100,
-    &message_note_e5,
-    &message_delay_100,
+    &message_delay_250,
     &message_note_f5,
-    &message_delay_100,
+    &message_delay_250,
+    &message_note_a5,
+    &message_delay_250,
+    &message_note_c5,
+    &message_delay_250,
+    &message_note_e5,
+    &message_delay_250,
     &message_note_g5,
     &message_delay_250,
+    &message_note_c6,
+    &message_delay_500,
     &message_sound_off,
     NULL,
 };

@@ -7,6 +7,8 @@ extern "C" {
 
 extern const EntityDescription paddle_desc;
 
+void paddle_spawn(Level* level);
+
 #ifdef __cplusplus
 }
 #endif

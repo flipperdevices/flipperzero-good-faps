@@ -105,6 +105,7 @@ static void menu_update(Entity* entity, GameManager* manager, void* context) {
     if(input.pressed & GameKeyOk) {
         switch(menu_context->selected) {
         case 0:
+            game_level_reset(game_context);
             game_manager_next_level_set(manager, game_context->levels.game);
             break;
         case 1:
@@ -120,8 +121,6 @@ static void menu_update(Entity* entity, GameManager* manager, void* context) {
     }
 }
 
-#include "../fonts/fonts.h"
-
 static void menu_render(Entity* entity, GameManager* manager, Canvas* canvas, void* context) {
     UNUSED(entity);
     UNUSED(manager);
@@ -131,11 +130,11 @@ static void menu_render(Entity* entity, GameManager* manager, Canvas* canvas, vo
     const char* line_3 = "Exit";
 
     if(menu_context->selected == 0) {
-        line_1 = ">Play";
+        line_1 = ">Play<";
     } else if(menu_context->selected == 1) {
-        line_2 = ">Settings";
+        line_2 = ">Settings<";
     } else if(menu_context->selected == 2) {
-        line_3 = ">Exit";
+        line_3 = ">Exit<";
     }
 
     canvas_draw_str_aligned(canvas, 64, 39, AlignCenter, AlignCenter, line_1);

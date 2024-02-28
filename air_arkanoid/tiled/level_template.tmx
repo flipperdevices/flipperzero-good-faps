@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.10.2" orientation="orthogonal" renderorder="right-down" width="128" height="64" tilewidth="1" tileheight="1" infinite="0" nextlayerid="3" nextobjectid="89">
+ <editorsettings>
+  <export target="../assets/levels/1.flaam" format="flaam"/>
+ </editorsettings>
+ <objectgroup id="2" name="Object Layer 1">
+  <object id="11" type="round" x="34" y="24" width="11" height="11">
+   <properties>
+    <property name="lives" type="int" value="2"/>
+   </properties>
+   <ellipse/>
+  </object>
+  <object id="13" type="block" x="0" y="36" width="15" height="5">
+   <properties>
+    <property name="lives" type="int" value="1"/>
+   </properties>
+  </object>
+  <object id="22" type="round" x="46" y="23" width="15" height="15">
+   <properties>
+    <property name="lives" type="int" value="10"/>
+   </properties>
+   <ellipse/>
+  </object>
+  <object id="23" type="block" x="16" y="36" width="15" height="5">
+   <properties>
+    <property name="lives" type="int" value="1"/>
+   </properties>
+  </object>
+  <object id="24" type="block" x="32" y="36" width="15" height="5">
+   <properties>
+    <property name="lives" type="int" value="1"/>
+   </properties>
+  </object>
+  <object id="25" type="block" x="81" y="36" width="15" height="5">
+   <properties>
+    <property name="lives" type="int" value="1"/>
+   </properties>
+  </object>
+  <object id="26" type="block" x="97" y="36" width="15" height="5">
+   <properties>
+    <property name="lives" type="int" value="1"/>
+   </properties>
+  </object>
+  <object id="27" type="block" x="113" y="36" width="15" height="5">
+   <properties>
+    <property name="lives" type="int" value="1"/>
+   </properties>
+  </object>
+  <object id="28" type="round" x="83" y="24" width="11" height="11">
+   <properties>
+    <property name="lives" type="int" value="2"/>
+   </properties>
+   <ellipse/>
+  </object>
+  <object id="29" type="block" x="18" y="30" width="15" height="5">
+   <properties>
+    <property name="lives" type="int" value="1"/>
+   </properties>
+  </object>
+  <object id="30" type="block" x="95" y="30" width="15" height="5">
+   <properties>
+    <property name="lives" type="int" value="1"/>
+   </properties>
+  </object>
+  <object id="31" type="block" x="111" y="30" width="16.9952" height="5">
+   <properties>
+    <property name="lives" type="int" value="1"/>
+   </properties>
+  </object>
+  <object id="32" type="block" x="0" y="30" width="16.9952" height="5">
+   <properties>
+    <property name="lives" type="int" value="1"/>
+   </properties>
+  </object>
+  <object id="33" type="block" x="0" y="24" width="10" height="5">
+   <properties>
+    <property name="lives" type="int" value="2"/>
+   </properties>
+  </object>
+  <object id="34" type="block" x="11" y="24" width="10.9976" height="5">
+   <properties>
+    <property name="lives" type="int" value="2"/>
+   </properties>
+  </object>
+  <object id="35" type="block" x="23" y="24" width="10" height="5">
+   <properties>
+    <property name="lives" type="int" value="2"/>
+   </properties>
+  </object>
+  <object id="36" type="block" x="95" y="24" width="10" height="5">
+   <properties>
+    <property name="lives" type="int" value="2"/>
+   </properties>
+  </object>
+  <object id="37" type="block" x="106" y="24" width="10.9976" height="5">
+   <properties>
+    <property name="lives" type="int" value="2"/>
+   </properties>
+  </object>
+  <object id="38" type="block" x="118" y="24" width="10" height="5">
+   <properties>
+    <property name="lives" type="int" value="2"/>
+   </properties>
+  </object>
+  <object id="39" type="block" x="0" y="0" width="15" height="5">
+   <properties>
+    <property name="lives" type="int" value="1"/>
+   </properties>
+  </object>
+  <object id="40" type="block" x="16" y="0" width="15" height="5">
+   <properties>
+    <property name="lives" type="int" value="1"/>
+   </properties>
+  </object>
+  <object id="41" type="block" x="32" y="0" width="15" height="5">
+   <properties>
+    <property name="lives" type="int" value="1"/>
+   </properties>
+  </object>
+  <object id="42" type="block" x="81" y="0" width="15" height="5">
+   <properties>
+    <property name="lives" type="int" value="1"/>
+   </properties>
+  </object>
+  <object id="43" type="block" x="97" y="0" width="15" height="5">
+   <properties>
+    <property name="lives" type="int" value="1"/>
+   </properties>
+  </object>
+  <object id="44" type="block" x="113" y="0" width="15" height="5">
+   <properties>
+    <property name="lives" type="int" value="1"/>
+   </properties>
+  </object>
+  <object id="45" type="block" x="0" y="18" width="14.0071" height="5">
+   <properties>
+    <property name="lives" type="int" value="3"/>
+   </properties>
+  </object>
+  <object id="49" type="block" x="15" y="18" width="14.0071" height="5">
+   <properties>
+    <property name="lives" type="int" value="3"/>
+   </properties>
+  </object>
+  <object id="50" type="block" x="30" y="18" width="13" height="5">
+   <properties>
+    <property name="lives" type="int" value="3"/>
+   </properties>
+  </object>
+  <object id="51" type="block" x="85" y="18" width="13" height="5">
+   <properties>
+    <property name="lives" type="int" value="3"/>
+   </properties>
+  </object>
+  <object id="52" type="block" x="99" y="18" width="14.0071" height="5">
+   <properties>
+    <property name="lives" type="int" value="3"/>
+   </properties>
+  </object>
+  <object id="53" type="block" x="114" y="18" width="14.0071" height="5">
+   <properties>
+    <property name="lives" type="int" value="3"/>
+   </properties>
+  </object>
+  <object id="54" type="block" x="111" y="6" width="16.9952" height="5">
+   <properties>
+    <property name="lives" type="int" value="1"/>
+   </properties>
+  </object>
+  <object id="55" type="block" x="93" y="6" width="16.9952" height="5">
+   <properties>
+    <property name="lives" type="int" value="1"/>
+   </properties>
+  </object>
+  <object id="57" type="block" x="114.99" y="12" width="13.0047" height="5">
+   <properties>
+    <property name="lives" type="int" value="2"/>
+   </properties>
+  </object>
+  <object id="58" type="block" x="97" y="12" width="16.9952" height="5">
+   <properties>
+    <property name="lives" type="int" value="2"/>
+   </properties>
+  </object>
+  <object id="61" type="block" x="85" y="12" width="11" height="5">
+   <properties>
+    <property name="lives" type="int" value="2"/>
+   </properties>
+  </object>
+  <object id="62" type="block" x="32" y="12" width="11" height="5">
+   <properties>
+    <property name="lives" type="int" value="2"/>
+   </properties>
+  </object>
+  <object id="65" type="block" x="14" y="12" width="16.9952" height="5">
+   <properties>
+    <property name="lives" type="int" value="2"/>
+   </properties>
+  </object>
+  <object id="66" type="block" x="0" y="12" width="13.0047" height="5">
+   <properties>
+    <property name="lives" type="int" value="2"/>
+   </properties>
+  </object>
+  <object id="67" type="block" x="83" y="6" width="9" height="5">
+   <properties>
+    <property name="lives" type="int" value="1"/>
+   </properties>
+  </object>
+  <object id="68" type="block" x="36" y="6" width="9" height="5">
+   <properties>
+    <property name="lives" type="int" value="1"/>
+   </properties>
+  </object>
+  <object id="71" type="block" x="18" y="6" width="16.9952" height="5">
+   <properties>
+    <property name="lives" type="int" value="1"/>
+   </properties>
+  </object>
+  <object id="72" type="block" x="0" y="6" width="16.9952" height="5">
+   <properties>
+    <property name="lives" type="int" value="1"/>
+   </properties>
+  </object>
+  <object id="73" type="round" x="67" y="23" width="15" height="15">
+   <properties>
+    <property name="lives" type="int" value="10"/>
+   </properties>
+   <ellipse/>
+  </object>
+  <object id="74" type="round" x="44" y="16" width="7" height="7">
+   <properties>
+    <property name="lives" type="int" value="10"/>
+   </properties>
+   <ellipse/>
+  </object>
+  <object id="76" type="round" x="52" y="14" width="7" height="7">
+   <properties>
+    <property name="lives" type="int" value="10"/>
+   </properties>
+   <ellipse/>
+  </object>
+  <object id="77" type="round" x="77" y="16" width="7" height="7">
+   <properties>
+    <property name="lives" type="int" value="10"/>
+   </properties>
+   <ellipse/>
+  </object>
+  <object id="78" type="round" x="69" y="14" width="7" height="7">
+   <properties>
+    <property name="lives" type="int" value="10"/>
+   </properties>
+   <ellipse/>
+  </object>
+  <object id="79" type="round" x="75" y="8" width="7" height="7">
+   <properties>
+    <property name="lives" type="int" value="10"/>
+   </properties>
+   <ellipse/>
+  </object>
+  <object id="80" type="round" x="67" y="6" width="7" height="7">
+   <properties>
+    <property name="lives" type="int" value="10"/>
+   </properties>
+   <ellipse/>
+  </object>
+  <object id="81" type="round" x="46" y="8" width="7" height="7">
+   <properties>
+    <property name="lives" type="int" value="10"/>
+   </properties>
+   <ellipse/>
+  </object>
+  <object id="82" type="round" x="54" y="6" width="7" height="7">
+   <properties>
+    <property name="lives" type="int" value="10"/>
+   </properties>
+   <ellipse/>
+  </object>
+  <object id="83" type="round" x="73" y="0" width="7" height="7">
+   <properties>
+    <property name="lives" type="int" value="10"/>
+   </properties>
+   <ellipse/>
+  </object>
+  <object id="86" type="round" x="48" y="0" width="7" height="7">
+   <properties>
+    <property name="lives" type="int" value="10"/>
+   </properties>
+   <ellipse/>
+  </object>
+  <object id="87" type="block" x="62" y="4.18196" width="4" height="15.818">
+   <properties>
+    <property name="lives" type="int" value="1"/>
+   </properties>
+  </object>
+  <object id="88" type="block" x="56" y="0" width="16" height="4.10759">
+   <properties>
+    <property name="lives" type="int" value="1"/>
+   </properties>
+  </object>
+ </objectgroup>
+</map>

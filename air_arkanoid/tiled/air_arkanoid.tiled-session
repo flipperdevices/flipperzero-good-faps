@@ -1,0 +1,64 @@
+{
+    "activeFile": "",
+    "expandedProjectPaths": [
+    ],
+    "fileStates": {
+        "level 1.tmx": {
+            "expandedObjectLayers": [
+                2
+            ],
+            "scale": 6.4099,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 64.1975693848578,
+                "y": 28.237570008892497
+            }
+        },
+        "level 2.tmx": {
+            "expandedObjectLayers": [
+                2
+            ],
+            "scale": 6.1351,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 53.21836644879463,
+                "y": 19.885576437221886
+            }
+        },
+        "level 3.tmx": {
+            "expandedObjectLayers": [
+                2
+            ],
+            "scale": 8.216015624999999,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 65.05586459373367,
+                "y": 25.438121047877154
+            }
+        },
+        "level_template.tmx": {
+            "scale": 8.216015624999999,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 64.0821566110398,
+                "y": 32.01064993106072
+            }
+        },
+        "untitled.tmx": {
+            "scale": 8.216015624999999,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 64.0821566110398,
+                "y": 32.01064993106072
+            }
+        }
+    },
+    "last.exportedFilePath": "/Users/drzlo/work/flippers/flipperzero-good-faps/air_arkanoid/assets/levels",
+    "map.lastUsedExportFilter": "Flipper Air Arkanoid Map (*.flaam)",
+    "openFiles": [
+    ],
+    "project": "air_arkanoid.tiled-project",
+    "recentFiles": [
+        "untitled.tmx"
+    ]
+}

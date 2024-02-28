@@ -11,9 +11,9 @@ typedef struct Ball Ball;
 
 void ball_set_angle(Ball* ball, float angle);
 
-void ball_reset(Ball* ball);
+void ball_reset(Ball* ball, GameContext* game);
 
-void ball_collide(Ball* ball, GameContext* game_context);
+void ball_collide(Entity* ball, GameContext* game_context);
 
 void ball_collide_paddle(Ball* ball, GameContext* game_context);
 
@@ -22,6 +22,8 @@ Vector ball_get_speed(Ball* ball);
 void ball_set_speed(Ball* ball, Vector speed);
 
 float ball_get_radius(Ball* ball);
+
+void ball_set_paused(Ball* ball, bool paused);
 
 #ifdef __cplusplus
 }

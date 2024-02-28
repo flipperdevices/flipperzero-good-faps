@@ -70,7 +70,7 @@ static void level_deserialize(Level* level, const uint8_t* data) {
     }
 }
 
-static void level_load(Level* level, const char* name) {
+void level_load(Level* level, const char* name) {
     Storage* storage = furi_record_open(RECORD_STORAGE);
     File* file = storage_file_alloc(storage);
     uint8_t* data = NULL;
@@ -88,9 +88,8 @@ static void level_load(Level* level, const char* name) {
             break;
         }
 
-        level_clear(level);
         level_deserialize(level, data);
-        level_add_entity(level, &paddle_desc);
+        paddle_spawn(level);
     } while(false);
 
     free(data);
@@ -98,22 +97,10 @@ static void level_load(Level* level, const char* name) {
     furi_record_close(RECORD_STORAGE);
 }
 
-static void level_game_start(Level* level, GameManager* manager, void* context) {
-    UNUSED(manager);
-    UNUSED(context);
-    level_load(level, APP_ASSETS_PATH("levels/1.flaam"));
-}
-
-static void level_game_stop(Level* level, GameManager* manager, void* context) {
-    UNUSED(manager);
-    UNUSED(context);
-    level_clear(level);
-}
-
 const LevelBehaviour level_game = {
     .alloc = NULL,
     .free = NULL,
-    .start = level_game_start,
-    .stop = level_game_stop,
+    .start = NULL,
+    .stop = NULL,
     .context_size = 0,
 };

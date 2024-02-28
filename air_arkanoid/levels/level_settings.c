@@ -1,10 +1,12 @@
 #include "level_settings.h"
+#include "../game_settings.h"
 
 /**** Menu ****/
 
 typedef enum {
     Sound = 0,
     ShowFPS,
+    ClearSave,
     Back,
 } MenuOption;
 
@@ -49,6 +51,9 @@ static void menu_update(Entity* entity, GameManager* manager, void* context) {
         case ShowFPS:
             game_switch_show_fps(game_context);
             break;
+        case ClearSave:
+            game_state_reset(&game_context->save_state);
+            break;
         case Back:
             game_manager_next_level_set(manager, game_context->levels.menu);
             break;
@@ -90,7 +95,7 @@ static void menu_render(Entity* entity, GameManager* manager, Canvas* canvas, vo
     }
 
     canvas_draw_str_aligned(
-        canvas, 64 + 3, 18, AlignLeft, AlignCenter, furi_string_get_cstr(line));
+        canvas, 64 + 3, 12, AlignLeft, AlignCenter, furi_string_get_cstr(line));
 
     furi_string_set(line, "FPS: ");
     if(menu_context->selected == ShowFPS) {
@@ -104,7 +109,16 @@ static void menu_render(Entity* entity, GameManager* manager, Canvas* canvas, vo
     }
 
     canvas_draw_str_aligned(
-        canvas, 64 + 3, 33, AlignLeft, AlignCenter, furi_string_get_cstr(line));
+        canvas, 64 + 3, 26, AlignLeft, AlignCenter, furi_string_get_cstr(line));
+
+    furi_string_set(line, "Clear Save");
+
+    if(menu_context->selected == ClearSave) {
+        furi_string_set(line, ">Clear Save");
+    }
+
+    canvas_draw_str_aligned(
+        canvas, 64 + 3, 40, AlignLeft, AlignCenter, furi_string_get_cstr(line));
 
     furi_string_set(line, "Back");
 
@@ -113,7 +127,7 @@ static void menu_render(Entity* entity, GameManager* manager, Canvas* canvas, vo
     }
 
     canvas_draw_str_aligned(
-        canvas, 64 + 3, 48, AlignLeft, AlignCenter, furi_string_get_cstr(line));
+        canvas, 64 + 3, 54, AlignLeft, AlignCenter, furi_string_get_cstr(line));
 
     furi_string_free(line);
 }

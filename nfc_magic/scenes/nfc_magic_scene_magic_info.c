@@ -17,17 +17,20 @@ void nfc_magic_scene_magic_info_on_enter(void* context) {
 
     notification_message(instance->notifications, &sequence_success);
 
-    widget_add_icon_element(widget, 73, 17, &I_DolphinCommon_56x48);
-    widget_add_string_element(
-        widget, 3, 4, AlignLeft, AlignTop, FontPrimary, "Supported card detected");
-    widget_add_string_element(
-        widget,
-        3,
-        17,
-        AlignLeft,
-        AlignTop,
-        FontSecondary,
-        nfc_magic_protocols_get_name(instance->protocol));
+    FuriString* message = furi_string_alloc();
+
+    if(instance->protocol == NfcMagicProtocolClassic) {
+        widget_add_string_element(
+            widget, 0, 0, AlignLeft, AlignTop, FontPrimary, "It Might Be a Magic Card");
+        furi_string_printf(message, "You can make sure the card is\nmagic by writing to it\n");
+    } else {
+        widget_add_string_element(
+            widget, 0, 0, AlignLeft, AlignTop, FontPrimary, "Magic card detected!");
+    }
+    furi_string_cat_printf(
+        message, "Magic Type: %s", nfc_magic_protocols_get_name(instance->protocol));
+    widget_add_text_box_element(
+        widget, 0, 10, 128, 54, AlignLeft, AlignTop, furi_string_get_cstr(message), false);
     widget_add_button_element(
         widget, GuiButtonTypeLeft, "Retry", nfc_magic_scene_magic_info_widget_callback, instance);
     widget_add_button_element(

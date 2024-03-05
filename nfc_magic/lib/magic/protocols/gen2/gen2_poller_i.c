@@ -343,29 +343,29 @@ Gen2PollerError
     return ret;
 }
 
-bool gen2_poller_can_write_block(const MfClassicData* mfc_data, uint8_t block_num) {
-    furi_assert(mfc_data);
+bool gen2_poller_can_write_block(const MfClassicData* target_data, uint8_t block_num) {
+    furi_assert(target_data);
 
     bool can_write = true;
 
-    if(block_num == 0 && mfc_data->iso14443_3a_data->uid_len == 7) {
+    if(block_num == 0 && target_data->iso14443_3a_data->uid_len == 7) {
         // 7-byte UID gen2 cards are not supported yet, need further testing
         can_write = false;
     }
 
     if(mf_classic_is_sector_trailer(block_num)) {
-        can_write = gen2_poller_can_write_sector_trailer(mfc_data, block_num);
+        can_write = gen2_poller_can_write_sector_trailer(target_data, block_num).all_problems == 0;
     } else {
-        can_write = gen2_poller_can_write_data_block(mfc_data, block_num);
+        can_write = gen2_poller_can_write_data_block(target_data, block_num).all_problems == 0;
     }
 
     return can_write;
 }
 
-Gen2PollerWriteProblem
-    gen2_poller_can_write_data_block(const MfClassicData* mfc_data, uint8_t block_num) {
+Gen2PollerWriteProblems
+    gen2_poller_can_write_data_block(const MfClassicData* target_data, uint8_t block_num) {
     // Check whether it's possible to write the block
-    furi_assert(mfc_data);
+    furi_assert(target_data);
 
     // Check rules:
     // 1. Check if block is read
@@ -374,36 +374,32 @@ Gen2PollerWriteProblem
     // 3.1. If none of the keys can write the block, check whether access conditions can be reset to allow writing
     // 3.2 If the above conditions are not met, return an error code
 
-    Gen2PollerWriteProblem can_write = Gen2PollerWriteProblemNone;
+    Gen2PollerWriteProblems can_write = {0};
 
     bool has_key_a = mf_classic_is_key_found(
-        mfc_data, mf_classic_get_sector_by_block(block_num), MfClassicKeyTypeA);
+        target_data, mf_classic_get_sector_by_block(block_num), MfClassicKeyTypeA);
     bool has_key_b = mf_classic_is_key_found(
-        mfc_data, mf_classic_get_sector_by_block(block_num), MfClassicKeyTypeB);
+        target_data, mf_classic_get_sector_by_block(block_num), MfClassicKeyTypeB);
 
-    if(!mf_classic_is_block_read(mfc_data, block_num)) {
-        can_write = Gen2PollerWriteProblemMissingSourceData;
-        return can_write;
-    }
     if(!has_key_a && !has_key_b) {
-        can_write = Gen2PollerWriteProblemMissingTargetKeys;
-        return can_write;
+        can_write.missing_target_keys = true;
     }
-    if(!gen2_is_allowed_access(mfc_data, block_num, MfClassicKeyTypeA, MfClassicActionDataWrite) &&
-       !gen2_is_allowed_access(mfc_data, block_num, MfClassicKeyTypeB, MfClassicActionDataWrite)) {
-        if(!gen2_can_reset_access_conditions(mfc_data, block_num)) {
-            can_write = Gen2PollerWriteProblemLockedAccessBits;
-            return can_write;
+    if(!gen2_is_allowed_access(
+           target_data, block_num, MfClassicKeyTypeA, MfClassicActionDataWrite) &&
+       !gen2_is_allowed_access(
+           target_data, block_num, MfClassicKeyTypeB, MfClassicActionDataWrite)) {
+        if(!gen2_can_reset_access_conditions(target_data, block_num)) {
+            can_write.locked_access_bits = true;
         }
     }
 
     return can_write;
 }
 
-Gen2PollerWriteProblem
-    gen2_poller_can_write_sector_trailer(const MfClassicData* mfc_data, uint8_t block_num) {
+Gen2PollerWriteProblems
+    gen2_poller_can_write_sector_trailer(const MfClassicData* target_data, uint8_t block_num) {
     // Check whether it's possible to write the sector trailer
-    furi_assert(mfc_data);
+    furi_assert(target_data);
 
     // Check rules:
     // 1. Check if block is read
@@ -416,46 +412,43 @@ Gen2PollerWriteProblem
     // 3.3.1 If none of the keys can write Key B, check whether access conditions can be reset to allow writing
     // 3.4 If any of the above conditions are not met, return an error code
 
-    Gen2PollerWriteProblem can_write = Gen2PollerWriteProblemNone;
+    Gen2PollerWriteProblems can_write = {0};
 
     bool has_key_a = mf_classic_is_key_found(
-        mfc_data, mf_classic_get_sector_by_block(block_num), MfClassicKeyTypeA);
+        target_data, mf_classic_get_sector_by_block(block_num), MfClassicKeyTypeA);
     bool has_key_b = mf_classic_is_key_found(
-        mfc_data, mf_classic_get_sector_by_block(block_num), MfClassicKeyTypeB);
-    if(!mf_classic_is_block_read(mfc_data, block_num)) {
-        can_write = Gen2PollerWriteProblemMissingSourceData;
-        return can_write;
-    }
+        target_data, mf_classic_get_sector_by_block(block_num), MfClassicKeyTypeB);
+
     if(!has_key_a && !has_key_b) {
-        can_write = Gen2PollerWriteProblemMissingTargetKeys;
-        return can_write;
+        can_write.missing_target_keys = true;
     }
-    if(!gen2_is_allowed_access(mfc_data, block_num, MfClassicKeyTypeA, MfClassicActionKeyAWrite) &&
-       !gen2_is_allowed_access(mfc_data, block_num, MfClassicKeyTypeB, MfClassicActionKeyAWrite)) {
-        if(!gen2_can_reset_access_conditions(mfc_data, block_num)) {
-            can_write = Gen2PollerWriteProblemLockedAccessBits;
-            return can_write;
+    if(!gen2_is_allowed_access(
+           target_data, block_num, MfClassicKeyTypeA, MfClassicActionKeyAWrite) &&
+       !gen2_is_allowed_access(
+           target_data, block_num, MfClassicKeyTypeB, MfClassicActionKeyAWrite)) {
+        if(!gen2_can_reset_access_conditions(target_data, block_num)) {
+            can_write.locked_access_bits = true;
         }
     }
-    if(!gen2_is_allowed_access(mfc_data, block_num, MfClassicKeyTypeA, MfClassicActionACWrite) &&
-       !gen2_is_allowed_access(mfc_data, block_num, MfClassicKeyTypeB, MfClassicActionACWrite)) {
-        can_write = Gen2PollerWriteProblemLockedAccessBits;
-        return can_write;
+    if(!gen2_is_allowed_access(target_data, block_num, MfClassicKeyTypeA, MfClassicActionACWrite) &&
+       !gen2_is_allowed_access(target_data, block_num, MfClassicKeyTypeB, MfClassicActionACWrite)) {
+        can_write.locked_access_bits = true;
     }
-    if(!gen2_is_allowed_access(mfc_data, block_num, MfClassicKeyTypeA, MfClassicActionKeyBWrite) &&
-       !gen2_is_allowed_access(mfc_data, block_num, MfClassicKeyTypeB, MfClassicActionKeyBWrite)) {
-        if(!gen2_can_reset_access_conditions(mfc_data, block_num)) {
-            can_write = Gen2PollerWriteProblemLockedAccessBits;
-            return can_write;
+    if(!gen2_is_allowed_access(
+           target_data, block_num, MfClassicKeyTypeA, MfClassicActionKeyBWrite) &&
+       !gen2_is_allowed_access(
+           target_data, block_num, MfClassicKeyTypeB, MfClassicActionKeyBWrite)) {
+        if(!gen2_can_reset_access_conditions(target_data, block_num)) {
+            can_write.locked_access_bits = true;
         }
     }
 
     return can_write;
 }
 
-bool gen2_can_reset_access_conditions(const MfClassicData* mfc_data, uint8_t block_num) {
+bool gen2_can_reset_access_conditions(const MfClassicData* target_data, uint8_t block_num) {
     // Check whether it's possible to reset the access conditions
-    furi_assert(mfc_data);
+    furi_assert(target_data);
 
     // Check rules:
     // 1. Check if the sector trailer for this block is read
@@ -466,20 +459,22 @@ bool gen2_can_reset_access_conditions(const MfClassicData* mfc_data, uint8_t blo
     bool can_reset = false;
 
     bool has_key_a = mf_classic_is_key_found(
-        mfc_data, mf_classic_get_sector_by_block(block_num), MfClassicKeyTypeA);
+        target_data, mf_classic_get_sector_by_block(block_num), MfClassicKeyTypeA);
     bool has_key_b = mf_classic_is_key_found(
-        mfc_data, mf_classic_get_sector_by_block(block_num), MfClassicKeyTypeB);
+        target_data, mf_classic_get_sector_by_block(block_num), MfClassicKeyTypeB);
     uint8_t sector_tr_num = mf_classic_get_sector_trailer_num_by_block(block_num);
-    if(!mf_classic_is_block_read(mfc_data, sector_tr_num)) {
+
+    if(!mf_classic_is_block_read(target_data, sector_tr_num)) {
         can_reset = false;
         return can_reset;
     }
+
     if(!has_key_a && !has_key_b) {
         can_reset = false;
         return can_reset;
     }
-    if(gen2_is_allowed_access(mfc_data, block_num, MfClassicKeyTypeA, MfClassicActionACWrite) ||
-       gen2_is_allowed_access(mfc_data, block_num, MfClassicKeyTypeB, MfClassicActionACWrite)) {
+    if(gen2_is_allowed_access(target_data, block_num, MfClassicKeyTypeA, MfClassicActionACWrite) ||
+       gen2_is_allowed_access(target_data, block_num, MfClassicKeyTypeB, MfClassicActionACWrite)) {
         can_reset = true;
     }
 
@@ -487,17 +482,18 @@ bool gen2_can_reset_access_conditions(const MfClassicData* mfc_data, uint8_t blo
 }
 
 MfClassicKeyType
-    gen2_poller_get_key_type_to_write(const MfClassicData* mfc_data, uint8_t block_num) {
+    gen2_poller_get_key_type_to_write(const MfClassicData* target_data, uint8_t block_num) {
     // Get the key type to use for writing
     // We assume that at least one of the keys can write the block
-    furi_assert(mfc_data);
+    furi_assert(target_data);
 
     MfClassicKeyType key_type = MfClassicKeyTypeA;
 
-    if(gen2_is_allowed_access(mfc_data, block_num, MfClassicKeyTypeA, MfClassicActionDataWrite)) {
+    if(gen2_is_allowed_access(
+           target_data, block_num, MfClassicKeyTypeA, MfClassicActionDataWrite)) {
         key_type = MfClassicKeyTypeA;
     } else if(gen2_is_allowed_access(
-                  mfc_data, block_num, MfClassicKeyTypeB, MfClassicActionDataWrite)) {
+                  target_data, block_num, MfClassicKeyTypeB, MfClassicActionDataWrite)) {
         key_type = MfClassicKeyTypeB;
     }
 

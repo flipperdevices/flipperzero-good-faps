@@ -16,6 +16,7 @@
 #include <gui/modules/byte_input.h>
 #include <gui/modules/widget.h>
 #include <views/dict_attack.h>
+#include <views/write_problems.h>
 
 #include <input/input.h>
 
@@ -77,6 +78,13 @@ typedef struct {
     bool is_card_present;
 } NfcMagicAppMfClassicDictAttackContext;
 
+typedef struct {
+    uint8_t problem_index;
+    uint8_t problem_index_abs;
+    uint8_t problems_total;
+    Gen2PollerWriteProblems problems;
+} NfcMagicAppWriteProblemsContext;
+
 struct NfcMagicApp {
     ViewDispatcher* view_dispatcher;
     Gui* gui;
@@ -103,6 +111,8 @@ struct NfcMagicApp {
 
     NfcMagicAppMfClassicDictAttackContext nfc_dict_context;
     DictAttack* dict_attack;
+    NfcMagicAppWriteProblemsContext write_problems_context;
+    WriteProblems* write_problems;
 
     uint32_t gen4_password;
     uint32_t gen4_password_new;
@@ -130,6 +140,7 @@ typedef enum {
     NfcMagicAppViewByteInput,
     NfcMagicAppViewWidget,
     NfcMagicAppViewDictAttack,
+    NfcMagicAppViewWriteProblems,
 } NfcMagicAppView;
 
 void nfc_magic_app_blink_start(NfcMagicApp* nfc_magic);

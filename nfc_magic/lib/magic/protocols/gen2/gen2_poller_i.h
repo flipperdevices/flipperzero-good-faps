@@ -122,10 +122,10 @@ bool gen2_poller_can_write_block(const MfClassicData* mfc_data, uint8_t block_nu
 
 bool gen2_can_reset_access_conditions(const MfClassicData* mfc_data, uint8_t block_num);
 
-Gen2PollerWriteProblem
+Gen2PollerWriteProblems
     gen2_poller_can_write_data_block(const MfClassicData* mfc_data, uint8_t block_num);
 
-Gen2PollerWriteProblem
+Gen2PollerWriteProblems
     gen2_poller_can_write_sector_trailer(const MfClassicData* mfc_data, uint8_t block_num);
 
 bool gen2_is_allowed_access(

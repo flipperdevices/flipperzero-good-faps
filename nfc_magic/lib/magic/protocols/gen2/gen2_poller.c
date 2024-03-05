@@ -88,6 +88,14 @@ static MfClassicBlock gen2_poller_default_sector_trailer_block = {
          0xFF},
 };
 
+char* gen2_problem_strings[] = {
+    "UID may be non-\nrewritable. Check data after writing",
+    "No data in selected file",
+    "Some sectors are locked",
+    "Can't find keys to some sectors",
+    "The selected file is incomplete",
+};
+
 Gen2Poller* gen2_poller_alloc(Nfc* nfc) {
     Gen2Poller* instance = malloc(sizeof(Gen2Poller));
     instance->poller = nfc_poller_alloc(nfc, NfcProtocolIso14443_3a);
@@ -543,28 +551,44 @@ void gen2_poller_stop(Gen2Poller* instance) {
     return;
 }
 
-Gen2PollerWriteProblem gen2_poller_can_write_everything(NfcDevice* device) {
-    furi_assert(device);
+Gen2PollerWriteProblems gen2_poller_check_target_problems(NfcDevice* target_dev) {
+    furi_assert(target_dev);
 
-    Gen2PollerWriteProblem problem = Gen2PollerWriteProblemNone;
-    Gen2PollerWriteProblem problem_next = Gen2PollerWriteProblemNone;
-    const MfClassicData* mfc_data = nfc_device_get_data(device, NfcProtocolMfClassic);
+    Gen2PollerWriteProblems problems = {0};
+    const MfClassicData* mfc_data = nfc_device_get_data(target_dev, NfcProtocolMfClassic);
 
     if(mfc_data) {
         uint16_t total_block_num = mf_classic_get_total_block_num(mfc_data->type);
         for(uint16_t i = 0; i < total_block_num; i++) {
             if(mf_classic_is_sector_trailer(i)) {
-                problem_next = gen2_poller_can_write_sector_trailer(mfc_data, i);
+                problems.all_problems |=
+                    gen2_poller_can_write_sector_trailer(mfc_data, i).all_problems;
             } else {
-                problem_next = gen2_poller_can_write_data_block(mfc_data, i);
-            }
-            if(problem_next < problem) {
-                problem = problem_next;
+                problems.all_problems |=
+                    gen2_poller_can_write_data_block(mfc_data, i).all_problems;
             }
         }
     } else {
-        problem = Gen2PollerWriteProblemNoData;
+        problems.no_data = true;
     }
 
-    return problem;
+    return problems;
+}
+
+Gen2PollerWriteProblems gen2_poller_check_source_problems(NfcDevice* source_dev) {
+    furi_assert(source_dev);
+
+    Gen2PollerWriteProblems problems = {0};
+    const MfClassicData* mfc_data = nfc_device_get_data(source_dev, NfcProtocolMfClassic);
+
+    if(mfc_data) {
+        uint16_t total_block_num = mf_classic_get_total_block_num(mfc_data->type);
+        for(uint16_t i = 0; i < total_block_num; i++) {
+            if(!mf_classic_is_block_read(mfc_data, i)) {
+                problems.missing_source_data = true;
+            }
+        }
+    }
+
+    return problems;
 }

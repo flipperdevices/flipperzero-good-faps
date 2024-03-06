@@ -133,12 +133,12 @@ void picopass_scene_read_card_success_on_enter(void* context) {
             furi_string_cat_printf(credential_str, " +SIO");
         }
 
-        bool no_key =
-            picopass_is_memset(card_data[PICOPASS_SECURE_KD_BLOCK_INDEX].data, 0xFF, PICOPASS_BLOCK_LEN);
+        bool no_key = picopass_is_memset(
+            card_data[PICOPASS_SECURE_KD_BLOCK_INDEX].data, 0xFF, PICOPASS_BLOCK_LEN);
 
         if(no_key) {
             furi_string_cat_printf(key_str, "No Key: used NR-MAC");
-        } else if(pacs->key) {
+        } else {
             furi_string_cat_printf(key_str, "Key: ");
             uint8_t key[PICOPASS_BLOCK_LEN];
             memcpy(key, &pacs->key, PICOPASS_BLOCK_LEN);

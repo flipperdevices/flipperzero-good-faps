@@ -19,7 +19,8 @@ void nfc_magic_scene_check_on_enter(void* context) {
     NfcMagicApp* instance = context;
 
     popup_set_icon(instance->popup, 0, 8, &I_NFC_manual_60x50);
-    popup_set_text(instance->popup, "Apply card to\nthe back", 128, 32, AlignRight, AlignCenter);
+    popup_set_text(
+        instance->popup, "Hold card next\nto Flipper's back", 128, 32, AlignRight, AlignCenter);
 
     nfc_magic_app_blink_start(instance);
 

@@ -19,7 +19,7 @@ void nfc_magic_scene_magic_info_on_enter(void* context) {
 
     widget_add_icon_element(widget, 73, 17, &I_DolphinCommon_56x48);
     widget_add_string_element(
-        widget, 3, 4, AlignLeft, AlignTop, FontPrimary, "Magic card detected");
+        widget, 3, 4, AlignLeft, AlignTop, FontPrimary, "Magic Card Detected!");
     widget_add_string_element(
         widget,
         3,

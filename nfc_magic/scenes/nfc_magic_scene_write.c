@@ -69,7 +69,7 @@ static void nfc_magic_scene_write_setup_view(NfcMagicApp* instance) {
     if(state == NfcMagicSceneWriteStateCardSearch) {
         popup_set_icon(instance->popup, 0, 8, &I_NFC_manual_60x50);
         popup_set_text(
-            instance->popup, "Apply the\nsame card\nto the back", 128, 32, AlignRight, AlignCenter);
+            instance->popup, "Hold card next\nto Flipper's back", 128, 32, AlignRight, AlignCenter);
     } else {
         popup_set_icon(popup, 12, 23, &I_Loading_24);
         popup_set_header(popup, "Writing\nDon't move...", 52, 32, AlignLeft, AlignCenter);

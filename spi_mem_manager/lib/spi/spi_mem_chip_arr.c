@@ -1202,6 +1202,7 @@ const SPIMemChip SPIMemChips[] = {
     {0xEF, 0x40, 0x19, "W25Q256FV", 33554432, 256, SPIMemChipVendorWINBOND, SPIMemChipWriteModePage},
     {0xEF, 0x40, 0x19, "W25Q256JV", 33554432, 256, SPIMemChipVendorWINBOND, SPIMemChipWriteModePage},
     {0xEF, 0x70, 0x19, "W25Q256JV", 33554432, 256, SPIMemChipVendorWINBOND, SPIMemChipWriteModePage},
+    {0xEF, 0x70, 0x20, "W25Q512JV", 67108864, 256, SPIMemChipVendorWINBOND, SPIMemChipWriteModePage},
     {0xEF,
      0x60,
      0x18,

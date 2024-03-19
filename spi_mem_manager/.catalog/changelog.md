@@ -1,3 +1,5 @@
+## 1.4
+   W25Q512JV flash chip support added
 ## 1.3
    XM25QH64C and XM25QH128A flash chip support added
 ## 1.2

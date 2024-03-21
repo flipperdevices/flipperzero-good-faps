@@ -1,5 +1,6 @@
 #include "../nfc_magic_app_i.h"
 #include "furi_hal_rtc.h"
+#include "protocols/gen4/gen4.h"
 #include "protocols/gen4/gen4_poller_i.h"
 
 enum SubmenuIndex {
@@ -58,7 +59,7 @@ bool nfc_magic_scene_gen4_select_direct_write_block_0_mode_on_event(
             scene_manager_set_scene_state(
                 instance->scene_manager,
                 NfcMagicSceneGen4SetDirectWriteBlock0Mode,
-                Gen4PollerDirectWriteBlock0ModeEnabled);
+                Gen4DirectWriteBlock0ModeEnabled);
             scene_manager_next_scene(
                 instance->scene_manager, NfcMagicSceneGen4SetDirectWriteBlock0Mode);
             consumed = true;
@@ -66,7 +67,7 @@ bool nfc_magic_scene_gen4_select_direct_write_block_0_mode_on_event(
             scene_manager_set_scene_state(
                 instance->scene_manager,
                 NfcMagicSceneGen4SetDirectWriteBlock0Mode,
-                Gen4PollerDirectWriteBlock0ModeDisabled);
+                Gen4DirectWriteBlock0ModeDisabled);
             scene_manager_next_scene(
                 instance->scene_manager, NfcMagicSceneGen4SetDirectWriteBlock0Mode);
             consumed = true;
@@ -74,7 +75,7 @@ bool nfc_magic_scene_gen4_select_direct_write_block_0_mode_on_event(
             scene_manager_set_scene_state(
                 instance->scene_manager,
                 NfcMagicSceneGen4SetDirectWriteBlock0Mode,
-                Gen4PollerDirectWriteBlock0ModeDefault);
+                Gen4DirectWriteBlock0ModeDefault);
             scene_manager_next_scene(
                 instance->scene_manager, NfcMagicSceneGen4SetDirectWriteBlock0Mode);
             consumed = true;

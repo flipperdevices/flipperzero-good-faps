@@ -1,4 +1,5 @@
 #include "nfc_magic_app_i.h"
+#include "protocols/gen4/gen4.h"
 
 bool nfc_magic_app_custom_event_callback(void* context, uint32_t event) {
     furi_assert(context);

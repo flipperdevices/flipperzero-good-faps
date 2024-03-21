@@ -22,6 +22,7 @@ void nfc_magic_scene_gen4_show_info_on_enter(void* context) {
 
     notification_message(instance->notifications, &sequence_success);
 
+    // TODO: NULL PTR
     Gen4* gen4 = instance->gen4_poller->gen4;
 
     Gen4DirectWriteBlock0Mode dw_mode = gen4->config.data_parsed.direct_write_mode;

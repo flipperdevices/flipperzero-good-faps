@@ -80,7 +80,7 @@ void gen4_poller_free(Gen4Poller* instance) {
 void gen4_poller_set_password(Gen4Poller* instance, Gen4Password password) {
     furi_assert(instance);
 
-    instance->password.value = password.value;
+    instance->password = password;
 }
 
 NfcCommand gen4_poller_detect_callback(NfcGenericEvent event, void* context) {
@@ -202,6 +202,7 @@ NfcCommand gen4_poller_idle_handler(Gen4Poller* instance) {
     NfcCommand command = NfcCommandContinue;
 
     instance->current_block = 0;
+    //TODO: FOR WHAT?
     //memset(instance->config, 0, sizeof(instance->config));
     instance->gen4_event.type = Gen4PollerEventTypeCardDetected;
     command = instance->callback(instance->gen4_event, instance->context);

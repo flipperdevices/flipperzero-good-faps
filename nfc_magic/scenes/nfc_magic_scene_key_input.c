@@ -33,6 +33,7 @@ bool nfc_magic_scene_key_input_on_event(void* context, SceneManagerEvent event) 
 
     if(event.type == SceneManagerEventTypeCustom) {
         if(event.event == NfcMagicAppCustomEventByteInputDone) {
+            // TODO: NEED TEST
             if(scene_manager_has_previous_scene(instance->scene_manager, NfcMagicSceneGen4Menu)) {
                 memcpy(
                     instance->gen4_password_new.bytes,

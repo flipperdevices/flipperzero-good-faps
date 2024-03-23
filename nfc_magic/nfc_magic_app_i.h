@@ -68,6 +68,8 @@ struct NfcMagicApp {
     Gen1aPoller* gen1a_poller;
     Gen4Poller* gen4_poller;
 
+    Gen4* gen4_data;
+
     Gen4Password gen4_password;
     Gen4Password gen4_password_new;
 

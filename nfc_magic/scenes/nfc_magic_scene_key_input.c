@@ -41,9 +41,7 @@ bool nfc_magic_scene_key_input_on_event(void* context, SceneManagerEvent event) 
                 scene_manager_next_scene(instance->scene_manager, NfcMagicSceneChangeKey);
             } else {
                 memcpy(
-                    instance->gen4_password_new.bytes,
-                    instance->byte_input_store,
-                    GEN4_PASSWORD_LEN);
+                    instance->gen4_password.bytes, instance->byte_input_store, GEN4_PASSWORD_LEN);
                 scene_manager_next_scene(instance->scene_manager, NfcMagicSceneCheck);
             }
             consumed = true;

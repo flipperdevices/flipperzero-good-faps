@@ -1,4 +1,9 @@
 #include "../nfc_magic_app_i.h"
+#include "core/string.h"
+#include "gui/canvas.h"
+#include "gui/modules/widget.h"
+#include "lib/magic/nfc_magic_scanner.h"
+#include "protocols/gen4/gen4.h"
 
 void nfc_magic_scene_magic_info_widget_callback(
     GuiButtonType result,
@@ -17,7 +22,7 @@ void nfc_magic_scene_magic_info_on_enter(void* context) {
 
     notification_message(instance->notifications, &sequence_success);
 
-    widget_add_icon_element(widget, 73, 17, &I_DolphinCommon_56x48);
+    //widget_add_icon_element(widget, 73, 17, &I_DolphinCommon_56x48);
     widget_add_string_element(
         widget, 3, 4, AlignLeft, AlignTop, FontPrimary, "Magic card detected");
     widget_add_string_element(
@@ -28,6 +33,29 @@ void nfc_magic_scene_magic_info_on_enter(void* context) {
         AlignTop,
         FontSecondary,
         nfc_magic_protocols_get_name(instance->protocol));
+    if(instance->protocol == NfcMagicProtocolGen4) {
+        gen4_copy(instance->gen4_data, nfc_magic_scanner_get_gen4_data(instance->scanner));
+
+        FuriString* message = furi_string_alloc();
+
+        furi_string_printf(
+            message,
+            "Revision: %02X %02X\n",
+            instance->gen4_data->revision.data[3],
+            instance->gen4_data->revision.data[4]);
+
+        widget_add_string_element(
+            widget, 3, 27, AlignLeft, AlignTop, FontSecondary, furi_string_get_cstr(message));
+
+        furi_string_printf(
+            message,
+            "Configured As %s",
+            gen4_get_configuration_name(&instance->gen4_data->config));
+
+        widget_add_string_multiline_element(
+            widget, 3, 37, AlignLeft, AlignTop, FontSecondary, furi_string_get_cstr(message));
+        furi_string_free(message);
+    }
     widget_add_button_element(
         widget, GuiButtonTypeLeft, "Retry", nfc_magic_scene_magic_info_widget_callback, instance);
     widget_add_button_element(

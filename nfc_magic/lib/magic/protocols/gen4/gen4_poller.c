@@ -59,7 +59,7 @@ Gen4Poller* gen4_poller_alloc(Nfc* nfc) {
     instance->tx_buffer = bit_buffer_alloc(GEN4_POLLER_MAX_BUFFER_SIZE);
     instance->rx_buffer = bit_buffer_alloc(GEN4_POLLER_MAX_BUFFER_SIZE);
 
-    instance->gen4 = gen4_alloc();
+    instance->gen4_data = gen4_alloc();
 
     return instance;
 }
@@ -72,7 +72,7 @@ void gen4_poller_free(Gen4Poller* instance) {
     bit_buffer_free(instance->tx_buffer);
     bit_buffer_free(instance->rx_buffer);
 
-    gen4_free(instance->gen4);
+    gen4_free(instance->gen4_data);
 
     free(instance);
 }
@@ -561,8 +561,7 @@ NfcCommand gen4_poller_get_current_cfg_handler(Gen4Poller* instance) {
             break;
         }
         // Copy config data to event data buffer
-        memcpy(
-            instance->gen4_event_data.gen4_data.config.data_raw, config.data_raw, sizeof(config));
+        memcpy(instance->gen4_data->config.data_raw, config.data_raw, sizeof(config));
 
         instance->state = Gen4PollerStateSuccess;
     } while(false);
@@ -582,7 +581,7 @@ NfcCommand gen4_poller_get_revision_handler(Gen4Poller* instance) {
             break;
         }
         // Copy revision data to event data buffer
-        memcpy(instance->gen4_event_data.gen4_data.revision.data, revision.data, sizeof(revision));
+        memcpy(instance->gen4_data->revision.data, revision.data, sizeof(revision));
 
         instance->state = Gen4PollerStateSuccess;
     } while(false);
@@ -612,7 +611,7 @@ NfcCommand gen4_poller_get_info_handler(Gen4Poller* instance) {
         }
 
         // Copy config&&revision data to event data buffer
-        gen4_copy(&instance->gen4_event_data.gen4_data, &gen4_data);
+        gen4_copy(instance->gen4_data, &gen4_data);
 
         instance->state = Gen4PollerStateSuccess;
     } while(false);

@@ -65,3 +65,8 @@ char* gen4_get_uid_len_num(Gen4UIDLength code) {
         return "Unknown";
     }
 }
+
+char* gen4_get_configuration_name(const Gen4Config* config) {
+    if(config) return "test";
+    return "ggg";
+}

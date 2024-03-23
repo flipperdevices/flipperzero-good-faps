@@ -19,7 +19,7 @@ void nfc_magic_scene_gen4_show_cfg_on_enter(void* context) {
 
     FuriString* output = furi_string_alloc();
 
-    Gen4Config* config = &instance->gen4_poller->gen4->config;
+    Gen4Config* config = &instance->gen4_data->config;
 
     for(size_t i = 0; i < GEN4_CONFIG_SIZE; i += 2) {
         if(i && !(i % 8)) furi_string_cat_printf(output, "\n");
@@ -40,7 +40,7 @@ bool nfc_magic_scene_gen4_show_cfg_on_event(void* context, SceneManagerEvent eve
 
     if(event.type == SceneManagerEventTypeBack) {
         consumed = scene_manager_search_and_switch_to_previous_scene(
-            instance->scene_manager, NfcMagicSceneGen4GetInfo);
+            instance->scene_manager, NfcMagicSceneGen4ShowInfo);
     }
     return consumed;
 }

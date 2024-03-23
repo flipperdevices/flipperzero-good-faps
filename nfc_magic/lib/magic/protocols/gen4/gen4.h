@@ -97,3 +97,5 @@ char* gen4_get_shadow_mode_name(Gen4ShadowMode mode);
 char* gen4_get_direct_write_mode_name(Gen4DirectWriteBlock0Mode mode);
 
 char* gen4_get_uid_len_num(Gen4UIDLength code);
+
+char* gen4_get_configuration_name(const Gen4Config* config);

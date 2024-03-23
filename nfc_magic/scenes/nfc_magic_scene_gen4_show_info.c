@@ -1,9 +1,10 @@
 #include "../nfc_magic_app_i.h"
+#include "core/string.h"
 #include "gui/modules/widget_elements/widget_element.h"
 #include "gui/scene_manager.h"
-#include "protocols/gen4/gen4_poller_i.h"
 
 #include <bit_lib.h>
+#include <stdbool.h>
 
 void nfc_magic_scene_gen4_show_info_widget_callback(
     GuiButtonType result,
@@ -20,10 +21,11 @@ void nfc_magic_scene_gen4_show_info_on_enter(void* context) {
     NfcMagicApp* instance = context;
     Widget* widget = instance->widget;
 
-    notification_message(instance->notifications, &sequence_success);
+    if(scene_manager_get_scene_state(instance->scene_manager, NfcMagicSceneGen4ShowInfo))
+        notification_message(instance->notifications, &sequence_success);
+    scene_manager_set_scene_state(instance->scene_manager, NfcMagicSceneGen4ShowInfo, false);
 
-    // TODO: NULL PTR
-    Gen4* gen4 = instance->gen4_poller->gen4;
+    Gen4* gen4 = instance->gen4_data;
 
     Gen4DirectWriteBlock0Mode dw_mode = gen4->config.data_parsed.direct_write_mode;
     Gen4ShadowMode s_mode = gen4->config.data_parsed.gtu_mode;
@@ -33,10 +35,16 @@ void nfc_magic_scene_gen4_show_info_on_enter(void* context) {
 
     // Revision
     furi_string_cat_printf(
-        output, "Revision: %02X %02X\n", gen4->revision.data[0], gen4->revision.data[1]);
+        output, "Revision: %02X %02X\n", gen4->revision.data[3], gen4->revision.data[4]);
 
     // Password
-    furi_string_cat_printf(output, "Password: %08lX\n", gen4->config.data_parsed.password.value);
+    furi_string_cat_printf(
+        output,
+        "Password: %02X %02X %02X %02X\n",
+        gen4->config.data_parsed.password.bytes[0],
+        gen4->config.data_parsed.password.bytes[1],
+        gen4->config.data_parsed.password.bytes[2],
+        gen4->config.data_parsed.password.bytes[3]);
 
     // Shadow mode
     furi_string_cat_printf(output, "Shadow Mode: %s\n", gen4_get_shadow_mode_name(s_mode));
@@ -48,6 +56,9 @@ void nfc_magic_scene_gen4_show_info_on_enter(void* context) {
     /////////////////////////////////////////////////////////////////////////////////////////////////////
     furi_string_cat_printf(output, ":::::::::::::[Configured As]::::::::::::::\n");
     /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    // Configuration type:
+    furi_string_cat_printf(output, "%s", gen4_get_configuration_name(&gen4->config));
 
     // UID len
     furi_string_cat_printf(

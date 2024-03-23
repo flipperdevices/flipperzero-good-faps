@@ -1,5 +1,6 @@
 #include "../nfc_magic_app_i.h"
 //TODO: INCAPSULATE?
+#include "gui/scene_manager.h"
 #include "protocols/gen4/gen4_poller_i.h"
 
 enum {
@@ -20,7 +21,8 @@ NfcCommand nfc_mafic_scene_gen4_get_info_poller_callback(Gen4PollerEvent event, 
         event.data->request_mode.mode = Gen4PollerModeGetInfo;
     } else if(event.type == Gen4PollerEventTypeSuccess) {
         // Copy data from event to main instance
-        gen4_copy(instance->gen4_poller->gen4, &event.data->gen4_data);
+        // TODO: From event data? or from poller?
+        gen4_copy(instance->gen4_data, instance->gen4_poller->gen4_data);
 
         view_dispatcher_send_custom_event(
             instance->view_dispatcher, NfcMagicCustomEventWorkerSuccess);
@@ -89,6 +91,9 @@ bool nfc_magic_scene_gen4_get_info_on_event(void* context, SceneManagerEvent eve
             nfc_magic_scene_gen4_get_info_setup_view(instance);
             consumed = true;
         } else if(event.event == NfcMagicCustomEventWorkerSuccess) {
+            // for notification message
+            scene_manager_set_scene_state(
+                instance->scene_manager, NfcMagicSceneGen4ShowInfo, true);
             scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4ShowInfo);
             consumed = true;
         } else if(event.event == NfcMagicCustomEventWorkerFail) {

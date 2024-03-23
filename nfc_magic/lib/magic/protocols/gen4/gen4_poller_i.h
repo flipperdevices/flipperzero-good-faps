@@ -41,7 +41,7 @@ struct Gen4Poller {
     Iso14443_3aPoller* iso3_poller;
     Gen4PollerState state;
 
-    Gen4* gen4;
+    Gen4* gen4_data;
 
     Gen4Password password;
 

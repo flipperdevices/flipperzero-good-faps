@@ -67,6 +67,31 @@ char* gen4_get_uid_len_num(Gen4UIDLength code) {
 }
 
 char* gen4_get_configuration_name(const Gen4Config* config) {
-    if(config) return "test";
-    return "ggg";
+    switch(config->data_parsed.protocol) {
+    case Gen4ProtocolMfClassic: {
+        switch(config->data_parsed.total_blocks) {
+        case 255:
+            return "MIFARE Classic 4K";
+        case 63:
+            return "MIFARE Classic 1K";
+        case 19:
+            return "MIFARE Classic Mini (0.3K)";
+        default:
+            return "Unknown";
+        }
+    } break;
+    case Gen4ProtocolMfUltralight: {
+        switch(config->data_parsed.total_blocks) {
+        case 63:
+            return "MIFARE Ultralight";
+        case 127:
+            return "NTAG 2XX";
+        default:
+            return "Unknown";
+        }
+    } break;
+    default:
+        return "Unknown";
+        break;
+    };
 }

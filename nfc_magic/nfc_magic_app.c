@@ -1,4 +1,5 @@
 #include "nfc_magic_app_i.h"
+#include "protocols/gen4/gen4.h"
 
 bool nfc_magic_app_custom_event_callback(void* context, uint32_t event) {
     furi_assert(context);
@@ -103,6 +104,8 @@ NfcMagicApp* nfc_magic_app_alloc() {
     view_dispatcher_add_view(
         instance->view_dispatcher, NfcMagicAppViewWidget, widget_get_view(instance->widget));
 
+    instance->gen4_data = gen4_alloc();
+
     instance->nfc = nfc_alloc();
     instance->scanner = nfc_magic_scanner_alloc(instance->nfc);
 
@@ -162,6 +165,8 @@ void nfc_magic_app_free(NfcMagicApp* instance) {
     // Storage
     furi_record_close(RECORD_STORAGE);
     instance->storage = NULL;
+
+    gen4_free(instance->gen4_data);
 
     nfc_magic_scanner_free(instance->scanner);
     nfc_free(instance->nfc);

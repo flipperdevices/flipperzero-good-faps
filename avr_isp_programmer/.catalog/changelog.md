@@ -1,4 +1,4 @@
-## 1.2.1
+## 1.3
  - Updade API
 ## 1.2
  - Updade icon

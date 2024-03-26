@@ -48,8 +48,12 @@ jobs:
         run: |
           BUILD_FAILED=0
           for appdir in ${{ steps.changed-files.outputs.all_changed_and_modified_files }} ; do
+            if [ ! -f "$appdir/application.fam" ] ; then
+              echo "Skipping $appdir, no application.fam. File may have been deleted."
+              continue
+            fi
             echo "Building in $appdir"
-            pushd $appdir
+            pushd "$appdir"
             if ! ufbt build faps ; then
               echo "::error::Failed to build $appdir"
               BUILD_FAILED=1
@@ -66,8 +70,12 @@ jobs:
         run: |
           BUILD_FAILED=0
           for appdir in $( dirname $( find . -name application.fam ) ) ; do
+            if [ ! -f "$appdir/application.fam" ] ; then
+              echo "Skipping $appdir, no application.fam. File may have been deleted."
+              continue
+            fi
             echo "Building in $appdir"
-            pushd $appdir
+            pushd "$appdir"
             if ! ufbt build faps ; then
               BUILD_FAILED=1
               echo "::error::Failed to build $appdir"

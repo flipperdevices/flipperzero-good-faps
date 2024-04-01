@@ -34,7 +34,7 @@ typedef union {
 
 #define GEN2_POLLER_WRITE_PROBLEMS_LEN (5)
 
-extern char* gen2_problem_strings[];
+extern const char* const gen2_problem_strings[];
 
 typedef enum {
     Gen2PollerEventTypeDetected,

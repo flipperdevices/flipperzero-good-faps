@@ -88,7 +88,7 @@ static MfClassicBlock gen2_poller_default_sector_trailer_block = {
          0xFF},
 };
 
-char* gen2_problem_strings[] = {
+const char* const gen2_problem_strings[] = {
     "UID may be non-\nrewritable. Check data after writing",
     "No data in selected file",
     "Some sectors are locked",

@@ -28,7 +28,7 @@ const uint8_t GEN2_ATS[3][16] = {
     {0x09, 0x78, 0x00, 0x91, 0x02, 0xDA, 0xBC, 0x19, 0x10, 0xF0, 0x05},
     {0x0D, 0x78, 0x00, 0x71, 0x02, 0x88, 0x49, 0xA1, 0x30, 0x20, 0x15, 0x06, 0x08, 0x56, 0x3D}};
 
-static MfClassicBlock gen2_poller_default_block_0 = {
+static const MfClassicBlock gen2_poller_default_block_0 = {
     .data =
         {0x00,
          0x01,
@@ -48,7 +48,7 @@ static MfClassicBlock gen2_poller_default_block_0 = {
          0x00},
 };
 
-static MfClassicBlock gen2_poller_default_empty_block = {
+static const MfClassicBlock gen2_poller_default_empty_block = {
     .data =
         {0x00,
          0x00,
@@ -281,7 +281,7 @@ NfcCommand gen2_poller_write_target_data_request_handler(Gen2Poller* instance) {
 Gen2PollerError gen2_poller_write_block_handler(
     Gen2Poller* instance,
     uint8_t block_num,
-    MfClassicBlock* block) {
+    const MfClassicBlock* block) {
     furi_assert(instance);
 
     Gen2PollerError error = Gen2PollerErrorNone;

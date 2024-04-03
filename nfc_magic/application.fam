@@ -13,10 +13,5 @@ App(
     fap_version="1.7",
     fap_icon="assets/125_10px.png",
     fap_category="NFC",
-    fap_private_libs=[
-        Lib(
-            name="magic",
-        ),
-    ],
     fap_icon_assets="assets",
 )

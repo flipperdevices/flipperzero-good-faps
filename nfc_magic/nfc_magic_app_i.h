@@ -33,11 +33,11 @@
 #include <nfc/nfc_poller.h>
 #include <toolbox/keys_dict.h>
 
-#include "lib/magic/nfc_magic_scanner.h"
-#include "lib/magic/protocols/nfc_magic_protocols.h"
-#include "lib/magic/protocols/gen1a/gen1a_poller.h"
-#include "lib/magic/protocols/gen2/gen2_poller.h"
-#include "lib/magic/protocols/gen4/gen4_poller.h"
+#include "magic/nfc_magic_scanner.h"
+#include "magic/protocols/nfc_magic_protocols.h"
+#include "magic/protocols/gen1a/gen1a_poller.h"
+#include "magic/protocols/gen2/gen2_poller.h"
+#include "magic/protocols/gen4/gen4_poller.h"
 
 #include "lib/nfc/protocols/mf_classic/mf_classic_poller.h"
 

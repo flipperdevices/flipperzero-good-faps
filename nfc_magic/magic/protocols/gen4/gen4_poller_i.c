@@ -17,16 +17,12 @@
 #define CONFIG_SIZE (32)
 #define REVISION_SIZE (5)
 
-static Gen4PollerError gen4_poller_process_error(Iso14443_3aError error)
-{
+static Gen4PollerError gen4_poller_process_error(Iso14443_3aError error) {
     Gen4PollerError ret = Gen4PollerErrorNone;
 
-    if (error == Iso14443_3aErrorNone)
-    {
+    if(error == Iso14443_3aErrorNone) {
         ret = Gen4PollerErrorNone;
-    }
-    else
-    {
+    } else {
         ret = Gen4PollerErrorTimeout;
     }
 
@@ -34,13 +30,11 @@ static Gen4PollerError gen4_poller_process_error(Iso14443_3aError error)
 }
 
 Gen4PollerError
-gen4_poller_get_config(Gen4Poller *instance, uint32_t password, uint8_t *config_result)
-{
+    gen4_poller_get_config(Gen4Poller* instance, uint32_t password, uint8_t* config_result) {
     Gen4PollerError ret = Gen4PollerErrorNone;
     bit_buffer_reset(instance->tx_buffer);
 
-    do
-    {
+    do {
         uint8_t password_arr[4] = {};
         bit_lib_num_to_bytes_be(password, COUNT_OF(password_arr), password_arr);
         bit_buffer_append_byte(instance->tx_buffer, GEN4_CMD_PREFIX);
@@ -50,33 +44,29 @@ gen4_poller_get_config(Gen4Poller *instance, uint32_t password, uint8_t *config_
         Iso14443_3aError error = iso14443_3a_poller_send_standard_frame(
             instance->iso3_poller, instance->tx_buffer, instance->rx_buffer, GEN4_POLLER_MAX_FWT);
 
-        if (error != Iso14443_3aErrorNone)
-        {
+        if(error != Iso14443_3aErrorNone) {
             ret = gen4_poller_process_error(error);
             break;
         }
 
         size_t rx_bytes = bit_buffer_get_size_bytes(instance->rx_buffer);
 
-        if (rx_bytes != CONFIG_SIZE)
-        {
+        if(rx_bytes != CONFIG_SIZE) {
             ret = Gen4PollerErrorProtocol;
             break;
         }
         bit_buffer_write_bytes(instance->rx_buffer, config_result, CONFIG_SIZE);
-    } while (false);
+    } while(false);
 
     return ret;
 }
 
 Gen4PollerError
-gen4_poller_get_revision(Gen4Poller *instance, uint32_t password, uint8_t *revision_result)
-{
+    gen4_poller_get_revision(Gen4Poller* instance, uint32_t password, uint8_t* revision_result) {
     Gen4PollerError ret = Gen4PollerErrorNone;
     bit_buffer_reset(instance->tx_buffer);
 
-    do
-    {
+    do {
         uint8_t password_arr[4] = {};
         bit_lib_num_to_bytes_be(password, COUNT_OF(password_arr), password_arr);
         bit_buffer_append_byte(instance->tx_buffer, GEN4_CMD_PREFIX);
@@ -86,36 +76,32 @@ gen4_poller_get_revision(Gen4Poller *instance, uint32_t password, uint8_t *revis
         Iso14443_3aError error = iso14443_3a_poller_send_standard_frame(
             instance->iso3_poller, instance->tx_buffer, instance->rx_buffer, GEN4_POLLER_MAX_FWT);
 
-        if (error != Iso14443_3aErrorNone)
-        {
+        if(error != Iso14443_3aErrorNone) {
             ret = gen4_poller_process_error(error);
             break;
         }
 
         size_t rx_bytes = bit_buffer_get_size_bytes(instance->rx_buffer);
-        if (rx_bytes != 5)
-        {
+        if(rx_bytes != 5) {
             ret = Gen4PollerErrorProtocol;
             break;
         }
         bit_buffer_write_bytes(instance->rx_buffer, revision_result, REVISION_SIZE);
-    } while (false);
+    } while(false);
 
     return ret;
 }
 
 Gen4PollerError gen4_poller_set_config(
-    Gen4Poller *instance,
+    Gen4Poller* instance,
     uint32_t password,
-    const uint8_t *config,
+    const uint8_t* config,
     size_t config_size,
-    bool fuse)
-{
+    bool fuse) {
     Gen4PollerError ret = Gen4PollerErrorNone;
     bit_buffer_reset(instance->tx_buffer);
 
-    do
-    {
+    do {
         uint8_t password_arr[4] = {};
         bit_lib_num_to_bytes_be(password, COUNT_OF(password_arr), password_arr);
         bit_buffer_append_byte(instance->tx_buffer, GEN4_CMD_PREFIX);
@@ -127,34 +113,30 @@ Gen4PollerError gen4_poller_set_config(
         Iso14443_3aError error = iso14443_3a_poller_send_standard_frame(
             instance->iso3_poller, instance->tx_buffer, instance->rx_buffer, GEN4_POLLER_MAX_FWT);
 
-        if (error != Iso14443_3aErrorNone)
-        {
+        if(error != Iso14443_3aErrorNone) {
             ret = gen4_poller_process_error(error);
             break;
         }
 
         size_t rx_bytes = bit_buffer_get_size_bytes(instance->rx_buffer);
-        if (rx_bytes != 2)
-        {
+        if(rx_bytes != 2) {
             ret = Gen4PollerErrorProtocol;
             break;
         }
-    } while (false);
+    } while(false);
 
     return ret;
 }
 
 Gen4PollerError gen4_poller_write_block(
-    Gen4Poller *instance,
+    Gen4Poller* instance,
     uint32_t password,
     uint8_t block_num,
-    const uint8_t *data)
-{
+    const uint8_t* data) {
     Gen4PollerError ret = Gen4PollerErrorNone;
     bit_buffer_reset(instance->tx_buffer);
 
-    do
-    {
+    do {
         uint8_t password_arr[4] = {};
         bit_lib_num_to_bytes_be(password, COUNT_OF(password_arr), password_arr);
         bit_buffer_append_byte(instance->tx_buffer, GEN4_CMD_PREFIX);
@@ -166,31 +148,27 @@ Gen4PollerError gen4_poller_write_block(
         Iso14443_3aError error = iso14443_3a_poller_send_standard_frame(
             instance->iso3_poller, instance->tx_buffer, instance->rx_buffer, GEN4_POLLER_MAX_FWT);
 
-        if (error != Iso14443_3aErrorNone)
-        {
+        if(error != Iso14443_3aErrorNone) {
             ret = gen4_poller_process_error(error);
             break;
         }
 
         size_t rx_bytes = bit_buffer_get_size_bytes(instance->rx_buffer);
-        if (rx_bytes != 2)
-        {
+        if(rx_bytes != 2) {
             ret = Gen4PollerErrorProtocol;
             break;
         }
-    } while (false);
+    } while(false);
 
     return ret;
 }
 
 Gen4PollerError
-gen4_poller_change_password(Gen4Poller *instance, uint32_t pwd_current, uint32_t pwd_new)
-{
+    gen4_poller_change_password(Gen4Poller* instance, uint32_t pwd_current, uint32_t pwd_new) {
     Gen4PollerError ret = Gen4PollerErrorNone;
     bit_buffer_reset(instance->tx_buffer);
 
-    do
-    {
+    do {
         uint8_t password_arr[4] = {};
         bit_lib_num_to_bytes_be(pwd_current, COUNT_OF(password_arr), password_arr);
         bit_buffer_append_byte(instance->tx_buffer, GEN4_CMD_PREFIX);
@@ -203,19 +181,17 @@ gen4_poller_change_password(Gen4Poller *instance, uint32_t pwd_current, uint32_t
         Iso14443_3aError error = iso14443_3a_poller_send_standard_frame(
             instance->iso3_poller, instance->tx_buffer, instance->rx_buffer, GEN4_POLLER_MAX_FWT);
 
-        if (error != Iso14443_3aErrorNone)
-        {
+        if(error != Iso14443_3aErrorNone) {
             ret = gen4_poller_process_error(error);
             break;
         }
 
         size_t rx_bytes = bit_buffer_get_size_bytes(instance->rx_buffer);
-        if (rx_bytes != 2)
-        {
+        if(rx_bytes != 2) {
             ret = Gen4PollerErrorProtocol;
             break;
         }
-    } while (false);
+    } while(false);
 
     return ret;
 }

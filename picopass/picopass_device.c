@@ -245,10 +245,10 @@ bool picopass_device_save(PicopassDevice* dev, const char* dev_name) {
         return picopass_device_save_file(
             dev, dev_name, STORAGE_APP_DATA_PATH_PREFIX, PICOPASS_APP_EXTENSION, true);
     } else if(dev->format == PicopassDeviceSaveFormatLF) {
-        return picopass_device_save_file(dev, dev_name, ANY_PATH("lfrfid"), ".rfid", true);
+        return picopass_device_save_file(dev, dev_name, ANY_PATH("lfrfid"), ".rfid", false);
     } else if(dev->format == PicopassDeviceSaveFormatSeader) {
         return picopass_device_save_file(
-            dev, dev_name, EXT_PATH("apps_data/seader"), ".credential", true);
+            dev, dev_name, EXT_PATH("apps_data/seader"), ".credential", false);
     } else if(dev->format == PicopassDeviceSaveFormatPartial) {
         return picopass_device_save_file(
             dev, dev_name, STORAGE_APP_DATA_PATH_PREFIX, PICOPASS_APP_EXTENSION, true);
@@ -433,6 +433,10 @@ void picopass_device_data_clear(PicopassDeviceData* dev_data) {
 
 bool picopass_device_delete(PicopassDevice* dev, bool use_load_path) {
     furi_assert(dev);
+    if(dev->format != PicopassDeviceSaveFormatHF) {
+        // Never delete other formats (LF, Seader, etc)
+        return false;
+    }
 
     bool deleted = false;
     FuriString* file_path;

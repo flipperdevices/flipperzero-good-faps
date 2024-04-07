@@ -371,10 +371,14 @@ void picopass_device_data_clear(PicopassDeviceData* dev_data) {
         memset(dev_data->card_data[i].data, 0, sizeof(dev_data->card_data[i].data));
         dev_data->card_data[i].valid = false;
     }
+
+    memset(dev_data->pacs.credential, 0, sizeof(dev_data->pacs.credential));
     dev_data->pacs.legacy = false;
     dev_data->pacs.se_enabled = false;
     dev_data->pacs.elite_kdf = false;
+    dev_data->pacs.sio = false;
     dev_data->pacs.pin_length = 0;
+    dev_data->pacs.bitLength = 0;
 }
 
 bool picopass_device_delete(PicopassDevice* dev, bool use_load_path) {

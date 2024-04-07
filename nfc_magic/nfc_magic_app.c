@@ -1,5 +1,5 @@
 #include "nfc_magic_app_i.h"
-#include "protocols/gen4/gen4.h"
+#include "magic/protocols/gen4/gen4.h"
 
 bool nfc_magic_app_custom_event_callback(void* context, uint32_t event) {
     furi_assert(context);
@@ -108,7 +108,7 @@ NfcMagicApp* nfc_magic_app_alloc() {
         instance->view_dispatcher, NfcMagicAppViewWidget, widget_get_view(instance->widget));
 
     instance->gen4_data = gen4_alloc();
-    
+
     // Dict attack
     instance->dict_attack = dict_attack_alloc();
     view_dispatcher_add_view(

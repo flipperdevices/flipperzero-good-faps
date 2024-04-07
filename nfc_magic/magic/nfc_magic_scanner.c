@@ -77,23 +77,23 @@ static int32_t nfc_magic_scanner_worker(void* context) {
                 if(instance->magic_protocol_detected) {
                     break;
                 }
-            } else if (instance->current_protocol == NfcMagicProtocolGen4) {
+            } else if(instance->current_protocol == NfcMagicProtocolGen4) {
                 gen4_reset(instance->gen4_data);
                 Gen4 gen4_data;
-                Gen4PollerError error = gen4_poller_detect(
-                    instance->nfc, instance->gen4_password, &gen4_data);
+                Gen4PollerError error =
+                    gen4_poller_detect(instance->nfc, instance->gen4_password, &gen4_data);
                 instance->magic_protocol_detected = (error == Gen4PollerErrorNone);
                 if(instance->magic_protocol_detected) {
                     gen4_copy(instance->gen4_data, &gen4_data);
                     break;
                 }
-            } else if (instance->current_protocol == NfcMagicProtocolGen2) {
+            } else if(instance->current_protocol == NfcMagicProtocolGen2) {
                 Gen2PollerError error = gen2_poller_detect(instance->nfc);
                 instance->magic_protocol_detected = (error == Gen2PollerErrorNone);
                 if(instance->magic_protocol_detected) {
                     break;
                 }
-            } else if (instance->current_protocol == NfcMagicProtocolClassic) {
+            } else if(instance->current_protocol == NfcMagicProtocolClassic) {
                 NfcPoller* poller = nfc_poller_alloc(instance->nfc, NfcProtocolMfClassic);
                 instance->magic_protocol_detected = nfc_poller_detect(poller);
                 nfc_poller_free(poller);
@@ -172,7 +172,7 @@ void nfc_magic_scanner_stop(NfcMagicScanner* instance) {
     instance->context = NULL;
 }
 
-Gen4* nfc_magic_scanner_get_gen4_data(NfcMagicScanner* instance) {
+const Gen4* nfc_magic_scanner_get_gen4_data(NfcMagicScanner* instance) {
     furi_assert(instance);
 
     return instance->gen4_data;

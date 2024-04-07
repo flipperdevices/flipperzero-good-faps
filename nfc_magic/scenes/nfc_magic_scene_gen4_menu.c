@@ -1,6 +1,4 @@
 #include "../nfc_magic_app_i.h"
-#include "gui/scene_manager.h"
-#include "protocols/gen4/gen4.h"
 
 enum SubmenuIndex {
     SubmenuIndexWrite,

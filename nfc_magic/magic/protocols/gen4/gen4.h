@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/common_defines.h"
 #include <stdint.h>
 
 #define GEN4_CONFIG_SIZE (32)
@@ -57,7 +58,6 @@ typedef enum {
 
 typedef union {
     uint8_t data_raw[GEN4_CONFIG_SIZE];
-#pragma pack(push, 1)
     struct {
         Gen4Protocol protocol;
         Gen4UIDLength uid_len_code;
@@ -71,8 +71,7 @@ typedef union {
         uint8_t total_blocks;
         Gen4DirectWriteBlock0Mode direct_write_mode;
         uint8_t crc[GEN4_CRC_LEN];
-    } data_parsed;
-#pragma pack(pop)
+    } FURI_PACKED data_parsed;
 } Gen4Config;
 
 typedef struct {
@@ -92,10 +91,10 @@ void gen4_reset(Gen4* instance);
 
 void gen4_copy(Gen4* dest, const Gen4* source);
 
-char* gen4_get_shadow_mode_name(Gen4ShadowMode mode);
+const char* gen4_get_shadow_mode_name(Gen4ShadowMode mode);
 
-char* gen4_get_direct_write_mode_name(Gen4DirectWriteBlock0Mode mode);
+const char* gen4_get_direct_write_mode_name(Gen4DirectWriteBlock0Mode mode);
 
-char* gen4_get_uid_len_num(Gen4UIDLength code);
+const char* gen4_get_uid_len_num(Gen4UIDLength code);
 
-char* gen4_get_configuration_name(const Gen4Config* config);
+const char* gen4_get_configuration_name(const Gen4Config* config);

@@ -1,8 +1,7 @@
 #include "gen4_poller_i.h"
 
 #include "bit_buffer.h"
-#include "protocols/gen4/gen4.h"
-#include "protocols/gen4/gen4_poller.h"
+#include "magic/protocols/gen4/gen4_poller.h"
 #include <nfc/protocols/iso14443_3a/iso14443_3a_poller.h>
 
 #define GEN4_CMD_PREFIX (0xCF)

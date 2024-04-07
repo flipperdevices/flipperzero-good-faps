@@ -1,9 +1,5 @@
 #include "../nfc_magic_app_i.h"
-#include "core/string.h"
-#include "gui/canvas.h"
-#include "gui/modules/widget.h"
-#include "lib/magic/nfc_magic_scanner.h"
-#include "protocols/gen4/gen4.h"
+#include "magic/nfc_magic_scanner.h"
 
 void nfc_magic_scene_magic_info_widget_callback(
     GuiButtonType result,
@@ -37,7 +33,7 @@ void nfc_magic_scene_magic_info_on_enter(void* context) {
     widget_add_text_box_element(
         widget, 0, 10, 128, 54, AlignLeft, AlignTop, furi_string_get_cstr(message), false);
 
-    if (instance->protocol == NfcMagicProtocolGen4){
+    if(instance->protocol == NfcMagicProtocolGen4) {
         gen4_copy(instance->gen4_data, nfc_magic_scanner_get_gen4_data(instance->scanner));
 
         furi_string_printf(
@@ -47,7 +43,7 @@ void nfc_magic_scene_magic_info_on_enter(void* context) {
             instance->gen4_data->revision.data[4]);
 
         widget_add_string_element(
-            widget, 3, 27, AlignLeft, AlignTop, FontSecondary, furi_string_get_cstr(message));
+            widget, 0, 20, AlignLeft, AlignTop, FontSecondary, furi_string_get_cstr(message));
 
         furi_string_printf(
             message,
@@ -55,12 +51,11 @@ void nfc_magic_scene_magic_info_on_enter(void* context) {
             gen4_get_configuration_name(&instance->gen4_data->config));
 
         widget_add_string_multiline_element(
-            widget, 3, 37, AlignLeft, AlignTop, FontSecondary, furi_string_get_cstr(message));
+            widget, 0, 30, AlignLeft, AlignTop, FontSecondary, furi_string_get_cstr(message));
     }
 
-    widget_add_button_element(widget, GuiButtonTypeLeft, "Retry",
-                              nfc_magic_scene_magic_info_widget_callback,
-                              instance);
+    widget_add_button_element(
+        widget, GuiButtonTypeLeft, "Retry", nfc_magic_scene_magic_info_widget_callback, instance);
     widget_add_button_element(
         widget, GuiButtonTypeRight, "More", nfc_magic_scene_magic_info_widget_callback, instance);
 

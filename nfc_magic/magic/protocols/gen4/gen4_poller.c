@@ -1,7 +1,8 @@
 #include "bit_buffer.h"
+#include "core/check.h"
 #include "gen4_poller_i.h"
-#include "protocols/gen4/gen4.h"
-#include "protocols/gen4/gen4_poller.h"
+#include "magic/protocols/gen4/gen4.h"
+#include "magic/protocols/gen4/gen4_poller.h"
 #include <nfc/protocols/iso14443_3a/iso14443_3a.h>
 #include <nfc/protocols/iso14443_3a/iso14443_3a_poller.h>
 #include <nfc/nfc_poller.h>
@@ -202,8 +203,7 @@ NfcCommand gen4_poller_idle_handler(Gen4Poller* instance) {
     NfcCommand command = NfcCommandContinue;
 
     instance->current_block = 0;
-    //TODO: FOR WHAT?
-    //memset(instance->config, 0, sizeof(instance->config));
+
     instance->gen4_event.type = Gen4PollerEventTypeCardDetected;
     command = instance->callback(instance->gen4_event, instance->context);
     instance->state = Gen4PollerStateRequestMode;
@@ -729,4 +729,21 @@ void gen4_poller_stop(Gen4Poller* instance) {
     furi_assert(instance);
 
     nfc_poller_stop(instance->poller);
+}
+
+const Gen4* gen4_poller_get_gen4_data(const Gen4Poller* instance) {
+    furi_assert(instance);
+    return instance->gen4_data;
+}
+
+void gen4_poller_struct_set_direct_write_block_0_mode(
+    Gen4Poller* instance,
+    Gen4DirectWriteBlock0Mode mode) {
+    furi_assert(instance);
+    instance->direct_write_block_0_mode = mode;
+}
+
+void gen4_poller_struct_set_shadow_mode(Gen4Poller* instance, Gen4ShadowMode mode) {
+    furi_assert(instance);
+    instance->shadow_mode = mode;
 }

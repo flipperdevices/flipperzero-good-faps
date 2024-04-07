@@ -296,7 +296,7 @@ static bool picopass_device_load_data(PicopassDevice* dev, FuriString* path, boo
         if(!block_read) break;
 
         picopass_device_parse_credential(card_data, pacs);
-        picopass_device_parse_wiegand(pacs->credential, pacs);
+        picopass_device_parse_wiegand(pacs);
 
         parsed = true;
     } while(false);
@@ -454,7 +454,8 @@ void picopass_device_parse_credential(PicopassBlock* card_data, PicopassPacs* pa
     pacs->sio = (card_data[10].data[0] == 0x30); // rough check
 }
 
-void picopass_device_parse_wiegand(uint8_t* credential, PicopassPacs* pacs) {
+void picopass_device_parse_wiegand(PicopassPacs* pacs) {
+    uint8_t* credential = pacs->credential;
     uint32_t* halves = (uint32_t*)credential;
     if(halves[0] == 0) {
         uint8_t leading0s = __builtin_clz(REVERSE_BYTES_U32(halves[1]));

@@ -141,6 +141,7 @@ static bool picopass_device_save_file_lfrfid(PicopassDevice* dev, FuriString* fi
     FURI_LOG_D(TAG, "LFRFID Brief: %s", furi_string_get_cstr(briefStr));
     furi_string_free(briefStr);
 
+    storage_simply_mkdir(dev->storage, EXT_PATH("lfrfid"));
     result = lfrfid_dict_file_save(dict, protocol, furi_string_get_cstr(file_path));
     if(result) {
         FURI_LOG_D(TAG, "Written: %d", result);

@@ -253,14 +253,15 @@ Gen4PollerError gen4_poller_change_password(
 
         size_t response = bit_buffer_get_size_bytes(instance->rx_buffer);
 
-        FURI_LOG_D(
-            TAG,
-            "Trying to change password from 0x%08lX to 0x%08lX. Card response: 0x%02X",
-            pwd_current.value,
-            pwd_new.value,
-            response);
+        FURI_LOG_D(TAG,
+                   "Trying to change password from 0x%02X %02X %02X %02X to "
+                   "0x%02X %02X %02X %02X. Card response: 0x%02X",
+                   pwd_current.bytes[0], pwd_current.bytes[1],
+                   pwd_current.bytes[2], pwd_current.bytes[3], pwd_new.bytes[0],
+                   pwd_new.bytes[1], pwd_new.bytes[2], pwd_new.bytes[3],
+                   response);
 
-        if(response != GEN4_RESPONSE_SUCCESS) {
+        if (response != GEN4_RESPONSE_SUCCESS) {
             ret = Gen4PollerErrorProtocol;
             break;
         }

@@ -23,6 +23,18 @@ void gen4_copy(Gen4* dest, const Gen4* source) {
     memcpy(dest, source, sizeof(Gen4));
 }
 
+bool gen4_password_is_set (const Gen4Password* instance){
+    return (instance->bytes[0] || instance->bytes[1] || instance->bytes[2] || instance->bytes[3]);
+}
+
+void gen4_password_reset (Gen4Password* instance){
+    memset(instance->bytes, 0, GEN4_PASSWORD_LEN);
+}
+
+void gen4_password_copy (Gen4Password* dest, const Gen4Password* source){
+    memcpy(dest->bytes, source->bytes, GEN4_PASSWORD_LEN);
+}
+
 const char* gen4_get_shadow_mode_name(Gen4ShadowMode mode) {
     switch(mode) {
     case Gen4ShadowModePreWrite:

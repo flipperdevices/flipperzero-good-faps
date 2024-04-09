@@ -16,8 +16,7 @@ typedef enum {
     Gen4ProtocolMfUltralight = 0x01,
 } Gen4Protocol;
 
-typedef union {
-    uint32_t value;
+typedef struct {
     uint8_t bytes[GEN4_PASSWORD_LEN];
 } Gen4Password;
 
@@ -90,6 +89,12 @@ void gen4_free(Gen4* instance);
 void gen4_reset(Gen4* instance);
 
 void gen4_copy(Gen4* dest, const Gen4* source);
+
+bool gen4_password_is_set (const Gen4Password* instance);
+
+void gen4_password_reset (Gen4Password* instance);
+
+void gen4_password_copy (Gen4Password* dest, const Gen4Password* source);
 
 const char* gen4_get_shadow_mode_name(Gen4ShadowMode mode);
 

@@ -159,7 +159,7 @@ static bool picopass_device_save_file(
     const char* extension,
     bool use_load_path) {
     furi_assert(dev);
-    FURI_LOG_D(TAG, "Save File");
+    FURI_LOG_D(TAG, "Save File %s %s %s", folder, dev_name, extension);
 
     bool saved = false;
     FlipperFormat* file = flipper_format_file_alloc(dev->storage);

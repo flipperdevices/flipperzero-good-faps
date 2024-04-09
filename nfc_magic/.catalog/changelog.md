@@ -1,4 +1,4 @@
-## 1.8
+## 1.9
  - Get revision, get config moved into main Gen4 menu
  - New function: Set Gen4 card shadow mode
  - New function: Set Gen4 card direct write to block 0 mode
@@ -6,7 +6,10 @@
  - Gen4 protocol refactor
  - Gen4 UI refactor
 
- ## 1.7
+## 1.8
+ - Ultralight Various fixes and improvements
+
+## 1.7
  - Gen2/CUID write support
 
 ## 1.6

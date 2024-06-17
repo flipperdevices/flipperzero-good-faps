@@ -24,4 +24,5 @@ App(
     entry_point="init_plugin_ep",
     requires=["mfkey"],
     sources=["init_plugin.c"],
+    fal_embedded=True,
 )

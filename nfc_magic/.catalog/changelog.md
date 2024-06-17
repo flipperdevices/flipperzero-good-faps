@@ -1,3 +1,6 @@
+## 1.11
+ - Fixed Mifare Ultralight types with latest API update
+
 ## 1.10
  - Fixed the user dictionary dictionary attack results being discarded
 

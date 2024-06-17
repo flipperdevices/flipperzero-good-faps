@@ -1,3 +1,5 @@
+## 2.4
+ - Update API for app rename
 ## 2.3
  - Update API v65.0
 ## 2.0

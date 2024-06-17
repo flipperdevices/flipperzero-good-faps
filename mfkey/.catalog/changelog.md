@@ -1,3 +1,5 @@
+## 2.5
+ - Plugin path fixed
 ## 2.4
  - Update API for app rename
 ## 2.3

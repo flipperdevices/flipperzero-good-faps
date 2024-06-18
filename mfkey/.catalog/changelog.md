@@ -1,3 +1,5 @@
+## 2.6
+ - Version bump for catalog build system
 ## 2.5
  - Plugin path fixed
 ## 2.4

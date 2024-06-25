@@ -252,9 +252,6 @@ NfcCommand gen1a_poller_dump_handler(Gen1aPoller* instance) {
     uint16_t total_block_num =
         mf_classic_get_total_block_num(MfClassicType1k); // Gen1 can only be 1k
 
-    uint64_t key_a;
-    uint64_t key_b;
-
     while(instance->current_block < total_block_num) {
         if(instance->current_block == 0) {
             error = gen1a_poller_data_access(instance);
@@ -271,19 +268,10 @@ NfcCommand gen1a_poller_dump_handler(Gen1aPoller* instance) {
             break;
         } else {
             mf_classic_set_block_read(mfc_data, instance->current_block, &block);
+
             if(mf_classic_is_sector_trailer(instance->current_block)) {
-                memcpy(&key_a, &block.data[0], 6);
-                memcpy(&key_b, &block.data[10], 6);
-                mf_classic_set_key_found(
-                    mfc_data,
-                    mf_classic_get_sector_by_block(instance->current_block),
-                    MfClassicKeyTypeA,
-                    key_a);
-                mf_classic_set_key_found(
-                    mfc_data,
-                    mf_classic_get_sector_by_block(instance->current_block),
-                    MfClassicKeyTypeB,
-                    key_b);
+                mf_classic_set_sector_trailer_read(
+                    mfc_data, instance->current_block, (MfClassicSectorTrailer*)&block);
             }
         }
 

@@ -1,3 +1,5 @@
+## 1.3
+ - Сhange GUI
 ## 1.2
  - Rework application with new NFC API
 ## 1.1

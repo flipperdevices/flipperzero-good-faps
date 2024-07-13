@@ -1,30 +1,5 @@
 #include <furi.h>
 #include "flip_tdi_app_i.h"
-//#include <dialogs/dialogs.h>
-//#include "helpers/ftdi_usb.h"
-
-// int32_t flip_tdi_app(void* p) {
-//     UNUSED(p);
-
-//     FtdiUsb* ftdi = ftdi_usb_start();
-
-//     if(ftdi) {
-//         DialogsApp* dialogs = furi_record_open(RECORD_DIALOGS);
-//         DialogMessage* message = dialog_message_alloc();
-
-//         dialog_message_set_header(message, "Hello, world!", 64, 0, AlignCenter, AlignTop);
-//         dialog_message_set_text(message, "", 0, 63, AlignLeft, AlignBottom);
-//         dialog_message_show(dialogs, message);
-
-//         dialog_message_free(message);
-
-//         ftdi_usb_stop(ftdi);
-//     }
-
-//     return 0;
-// }
-
-
 
 static bool flip_tdi_app_custom_event_callback(void* context, uint32_t event) {
     furi_assert(context);

@@ -2,6 +2,8 @@
 #include "furi.h"
 #include <furi_hal.h>
 
+#include <stm32wbxx_ll_lpuart.h>
+
 #define TAG "FTDI_UART"
 #define FTDI_UART_MAX_TXRX_SIZE (64UL)
 
@@ -141,4 +143,63 @@ void ftdi_uart_tx(FtdiUart* ftdi_uart) {
 void ftdi_uart_set_baudrate(FtdiUart* ftdi_uart, uint32_t baudrate) {
     ftdi_uart->baudrate = baudrate;
     furi_hal_serial_set_br(ftdi_uart->serial_handle, baudrate);
+}
+
+void ftdi_uart_set_data_config(FtdiUart* ftdi_uart, FtdiDataConfig* data_config) {
+    furi_assert(data_config);
+    UNUSED(ftdi_uart);
+
+    bool is_uart_enabled = LL_LPUART_IsEnabled(LPUART1);
+
+    if(is_uart_enabled) {
+        LL_LPUART_Disable(LPUART1);
+    }
+
+    uint32_t data_width = LL_LPUART_DATAWIDTH_8B;
+    uint32_t parity_mode = LL_LPUART_PARITY_NONE;
+    uint32_t stop_bits_mode = LL_LPUART_STOPBITS_2;
+
+    switch(data_config->BITS) {
+    case FtdiBits7:
+        data_width = LL_LPUART_DATAWIDTH_7B;
+        break;
+    case FtdiBits8:
+        data_width = LL_LPUART_DATAWIDTH_8B;
+        break;
+    default:
+        break;
+    }
+
+    switch(data_config->PARITY) {
+    case FtdiParityNone:
+        parity_mode = LL_LPUART_PARITY_NONE;
+        break;
+    case FtdiParityOdd:
+        parity_mode = LL_LPUART_PARITY_ODD;
+        break;
+    case FtdiParityEven:
+    case FtdiParityMark:
+    case FtdiParitySpace:
+        parity_mode = LL_LPUART_PARITY_EVEN;
+        break;
+    default:
+        break;
+    }
+
+    switch(data_config->STOP_BITS) {
+    case FtdiStopBits1:
+        stop_bits_mode = LL_LPUART_STOPBITS_1;
+        break;
+    case FtdiStopBits15:
+    case FtdiStopBits2:
+        stop_bits_mode = LL_LPUART_STOPBITS_2;
+        break;
+    default:
+        break;
+    }
+
+    LL_LPUART_ConfigCharacter(LPUART1, data_width, parity_mode, stop_bits_mode);
+    if(is_uart_enabled) {
+        LL_LPUART_Enable(LPUART1);
+    }
 }

@@ -210,9 +210,8 @@ typedef enum {
 typedef struct {
     uint8_t BITS : 4; /*Cound data bits*/
     uint8_t RESERVED : 4; /*Reserved0*/
-    uint8_t PARITY : 2; /*Parity*/
+    uint8_t PARITY : 3; /*Parity*/
     uint8_t STOP_BITS : 2; /*Number of stop bits*/
-    uint8_t RESERVED1 : 1; /*Reserved1*/
     uint8_t BREAK: 1; /*Break type*/
 } FtdiDataConfig; 
 

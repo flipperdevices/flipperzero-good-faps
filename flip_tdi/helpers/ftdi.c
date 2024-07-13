@@ -35,10 +35,7 @@ Ftdi* ftdi_alloc(void) {
         furi_stream_buffer_alloc(sizeof(uint8_t) * FTDI_TX_RX_BUF_SIZE, sizeof(uint8_t));
     ftdi->baudrate = 115200;
 
-
-
     ftdi->ftdi_uart = ftdi_uart_alloc(ftdi);
-
 
     return ftdi;
 }
@@ -185,6 +182,7 @@ void ftdi_set_data_config(Ftdi* ftdi, uint16_t value, uint16_t index) {
         return;
     }
     ftdi->data_config = *((FtdiDataConfig*)&value);
+    ftdi_uart_set_data_config(ftdi->ftdi_uart, &ftdi->data_config);
 }
 
 void ftdi_set_flow_ctrl(Ftdi* ftdi, uint16_t index) {
@@ -251,9 +249,6 @@ void ftdi_get_modem_status(uint16_t* status) {
 
     *status = *((uint16_t*)&modem_status);
 }
-
-
-
 
 void ftdi_start_uart_tx(Ftdi* ftdi) {
     ftdi_uart_tx(ftdi->ftdi_uart);

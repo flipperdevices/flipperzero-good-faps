@@ -22,8 +22,10 @@ void ftdi_set_bitmode(Ftdi* ftdi, uint16_t value, uint16_t index);
 void ftdi_set_latency_timer(Ftdi* ftdi, uint16_t value, uint16_t index);
 uint8_t ftdi_get_latency_timer(Ftdi* ftdi);
 
-void ftdi_get_modem_status(uint16_t *status);
+//void ftdi_get_modem_status(uint16_t *status);
 
+uint16_t* ftdi_get_modem_status_uint16_t(Ftdi* ftdi);
+FtdiModemStatus ftdi_get_modem_status(Ftdi* ftdi);
+void ftdi_set_modem_status(Ftdi* ftdi, FtdiModemStatus status);
 
 void ftdi_start_uart_tx(Ftdi* ftdi);
-

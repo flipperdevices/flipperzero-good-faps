@@ -69,9 +69,11 @@ static int32_t ftdi_thread_worker(void* context) {
 
     uint32_t len_data = 0;
     FtdiTxData tx_data = {0};
-    uint16_t status = 0;
-    ftdi_get_modem_status(&status);
-    tx_data.status = status;
+    // uint16_t *status = 0;
+    // ftdi_get_modem_status(&status);
+    uint16_t *status = ftdi_get_modem_status_uint16_t(ftdi_usb->ftdi);
+
+    tx_data.status = status[0];
     ftdi_usb_send(dev, (uint8_t*)&tx_data, FTDI_USB_MODEM_STATUS_SIZE);
 
     while(true) {
@@ -106,7 +108,7 @@ static int32_t ftdi_thread_worker(void* context) {
                 flags |= EventTx;
             }
             if(flags & EventTx) {
-                tx_data.status = status;
+                tx_data.status = status[0];
                 len_data = ftdi_available_tx_buf(ftdi_usb->ftdi);
 
                 if(len_data > 0) {

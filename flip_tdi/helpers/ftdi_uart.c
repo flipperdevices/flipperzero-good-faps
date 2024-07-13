@@ -3,15 +3,20 @@
 #include <furi_hal.h>
 
 #include <stm32wbxx_ll_lpuart.h>
+#include <stm32wbxx_ll_dma.h>
 
 #define TAG "FTDI_UART"
-#define FTDI_UART_MAX_TXRX_SIZE (64UL)
+#define FTDI_UART_MAX_TXRX_SIZE (256UL)
+
+#define FTDI_UART_LPUART_DMA_INSTANCE (DMA2)
+#define FTDI_UART_LPUART_DMA_CHANNEL (LL_DMA_CHANNEL_1)
 
 struct FtdiUart {
     FuriThread* worker_thread;
     FuriHalSerialHandle* serial_handle;
     uint32_t baudrate;
     Ftdi* ftdi;
+    uint8_t* buffer_tx_ptr;
 };
 
 typedef enum {
@@ -23,11 +28,17 @@ typedef enum {
     WorkerEventRxFramingError = (1 << 5),
     WorkerEventRxNoiseError = (1 << 6),
     WorkerEventTXData = (1 << 7),
+    WorkerEventTXDataDmaEnd = (1 << 8),
 } WorkerEvent;
 
 #define WORKER_EVENTS_MASK                                                                 \
     (WorkerEventStop | WorkerEventRxData | WorkerEventRxIdle | WorkerEventRxOverrunError | \
-     WorkerEventRxFramingError | WorkerEventRxNoiseError | WorkerEventTXData)
+     WorkerEventRxFramingError | WorkerEventRxNoiseError | WorkerEventTXData |             \
+     WorkerEventTXDataDmaEnd)
+
+static void ftdi_uart_tx_dma_init(FtdiUart* ftdi_uart);
+static void ftdi_uart_tx_dma_deinit(FtdiUart* ftdi_uart);
+static void ftdi_uart_tx_dma(FtdiUart* ftdi_uart, uint8_t* data, size_t size);
 
 static void ftdi_uart_irq_cb(
     FuriHalSerialHandle* handle,
@@ -56,6 +67,9 @@ static int32_t uart_echo_worker(void* context) {
 
     FURI_LOG_I(TAG, "Worker started");
 
+    ftdi_uart_tx_dma_init(ftdi_uart);
+    bool is_dma_tx = false;
+
     while(1) {
         uint32_t events =
             furi_thread_flags_wait(WORKER_EVENTS_MASK, FuriFlagWaitAny, FuriWaitForever);
@@ -64,14 +78,35 @@ static int32_t uart_echo_worker(void* context) {
         if(events & WorkerEventStop) break;
 
         if(events & WorkerEventTXData) {
+            if(!is_dma_tx) {
+                // FtdiModemStatus status = ftdi_get_modem_status(ftdi_uart->ftdi);
+                // status.TEMT = 0;
+                // ftdi_set_modem_status(ftdi_uart->ftdi, status);
+                is_dma_tx = true;
+                events |= WorkerEventTXDataDmaEnd;
+            }
+        }
+
+        if(events & WorkerEventTXDataDmaEnd) {
             size_t length = 0;
-            uint8_t data[FTDI_UART_MAX_TXRX_SIZE];
-            do {
-                length = ftdi_get_rx_buf(ftdi_uart->ftdi, data, FTDI_UART_MAX_TXRX_SIZE);
-                if(length > 0) {
-                    furi_hal_serial_tx(ftdi_uart->serial_handle, data, length);
-                }
-            } while(length > 0);
+
+            // if(ftdi_available_rx_buf(ftdi_uart->ftdi) > 2048) {
+            //     FtdiModemStatus status = ftdi_get_modem_status(ftdi_uart->ftdi);
+            //     status.THRE = 0;
+            //     ftdi_set_modem_status(ftdi_uart->ftdi, status);
+            // }
+
+            length = ftdi_get_rx_buf(
+                ftdi_uart->ftdi, ftdi_uart->buffer_tx_ptr, FTDI_UART_MAX_TXRX_SIZE);
+            if(length > 0) {
+                //furi_hal_serial_tx(ftdi_uart->serial_handle, data, length);
+                ftdi_uart_tx_dma(ftdi_uart, ftdi_uart->buffer_tx_ptr, length);
+            } else {
+                is_dma_tx = false;
+                // FtdiModemStatus status = ftdi_get_modem_status(ftdi_uart->ftdi);
+                // status.TEMT = 1;
+                // ftdi_set_modem_status(ftdi_uart->ftdi, status);
+            }
         }
 
         // if(events & WorkerEventRxData) {
@@ -103,6 +138,7 @@ static int32_t uart_echo_worker(void* context) {
         //     }
         // }
     }
+    ftdi_uart_tx_dma_deinit(ftdi_uart);
     FURI_LOG_I(TAG, "Worker stopped");
     return 0;
 }
@@ -119,6 +155,7 @@ FtdiUart* ftdi_uart_alloc(Ftdi* ftdi) {
     furi_hal_serial_dma_rx_start(ftdi_uart->serial_handle, ftdi_uart_irq_cb, ftdi_uart, false);
     ftdi_uart->ftdi = ftdi;
 
+    //do not change LPUART, functions that directly work with peripherals are used
     ftdi_uart->worker_thread = furi_thread_alloc_ex(TAG, 1024, uart_echo_worker, ftdi_uart);
     furi_thread_start(ftdi_uart->worker_thread);
 
@@ -202,4 +239,74 @@ void ftdi_uart_set_data_config(FtdiUart* ftdi_uart, FtdiDataConfig* data_config)
     if(is_uart_enabled) {
         LL_LPUART_Enable(LPUART1);
     }
+}
+
+static void ftdi_uart_dma_tx_isr(void* context) {
+#if FTDI_UART_LPUART_DMA_CHANNEL == LL_DMA_CHANNEL_1
+    FtdiUart* ftdi_uart = context;
+
+    if(LL_DMA_IsActiveFlag_TC1(FTDI_UART_LPUART_DMA_INSTANCE)) {
+        LL_DMA_ClearFlag_TC1(FTDI_UART_LPUART_DMA_INSTANCE);
+        LL_DMA_DisableChannel(FTDI_UART_LPUART_DMA_INSTANCE, FTDI_UART_LPUART_DMA_CHANNEL);
+        //Todo It's a bad idea to wait for the end of the transfer in an interrupt...
+        while(!LL_LPUART_IsActiveFlag_TC(LPUART1))
+            ;
+        furi_thread_flags_set(
+            furi_thread_get_id(ftdi_uart->worker_thread), WorkerEventTXDataDmaEnd);
+    }
+
+#else
+#error Update this code. Would you kindly?
+#endif
+}
+
+static void ftdi_uart_tx_dma_init(FtdiUart* ftdi_uart) {
+    ftdi_uart->buffer_tx_ptr = malloc(FTDI_UART_MAX_TXRX_SIZE);
+
+    LL_DMA_SetPeriphAddress(
+        FTDI_UART_LPUART_DMA_INSTANCE, FTDI_UART_LPUART_DMA_CHANNEL, (uint32_t) & (LPUART1->TDR));
+
+    LL_DMA_ConfigTransfer(
+        FTDI_UART_LPUART_DMA_INSTANCE,
+        FTDI_UART_LPUART_DMA_CHANNEL,
+        LL_DMA_DIRECTION_MEMORY_TO_PERIPH | LL_DMA_MODE_NORMAL | LL_DMA_PERIPH_NOINCREMENT |
+            LL_DMA_MEMORY_INCREMENT | LL_DMA_PDATAALIGN_BYTE | LL_DMA_MDATAALIGN_BYTE |
+            LL_DMA_PRIORITY_HIGH);
+    LL_DMA_SetPeriphRequest(
+        FTDI_UART_LPUART_DMA_INSTANCE, FTDI_UART_LPUART_DMA_CHANNEL, LL_DMAMUX_REQ_LPUART1_TX);
+
+    furi_hal_interrupt_set_isr(FuriHalInterruptIdDma2Ch1, ftdi_uart_dma_tx_isr, ftdi_uart);
+
+#if FTDI_UART_LPUART_DMA_CHANNEL == LL_DMA_CHANNEL_1
+    if(LL_DMA_IsActiveFlag_HT1(FTDI_UART_LPUART_DMA_INSTANCE))
+        LL_DMA_ClearFlag_HT1(FTDI_UART_LPUART_DMA_INSTANCE);
+    if(LL_DMA_IsActiveFlag_TC1(FTDI_UART_LPUART_DMA_INSTANCE))
+        LL_DMA_ClearFlag_TC1(FTDI_UART_LPUART_DMA_INSTANCE);
+    if(LL_DMA_IsActiveFlag_TE1(FTDI_UART_LPUART_DMA_INSTANCE))
+        LL_DMA_ClearFlag_TE1(FTDI_UART_LPUART_DMA_INSTANCE);
+#else
+#error Update this code. Would you kindly?
+#endif
+
+    LL_DMA_EnableIT_TC(FTDI_UART_LPUART_DMA_INSTANCE, FTDI_UART_LPUART_DMA_CHANNEL);
+    LL_DMA_ClearFlag_TC1(FTDI_UART_LPUART_DMA_INSTANCE);
+    LL_LPUART_EnableDMAReq_TX(LPUART1);
+}
+
+static void ftdi_uart_tx_dma_deinit(FtdiUart* ftdi_uart) {
+    LL_DMA_DisableChannel(FTDI_UART_LPUART_DMA_INSTANCE, FTDI_UART_LPUART_DMA_CHANNEL);
+    LL_LPUART_DisableDMAReq_TX(LPUART1);
+    LL_DMA_DisableIT_TC(FTDI_UART_LPUART_DMA_INSTANCE, FTDI_UART_LPUART_DMA_CHANNEL);
+    LL_DMA_ClearFlag_TC1(FTDI_UART_LPUART_DMA_INSTANCE);
+    furi_hal_interrupt_set_isr(FuriHalInterruptIdDma2Ch1, NULL, NULL);
+    free(ftdi_uart->buffer_tx_ptr);
+}
+
+static void ftdi_uart_tx_dma(FtdiUart* ftdi_uart, uint8_t* data, size_t size) {
+    UNUSED(ftdi_uart);
+    LL_DMA_SetMemoryAddress(
+        FTDI_UART_LPUART_DMA_INSTANCE, FTDI_UART_LPUART_DMA_CHANNEL, (uint32_t)data);
+    LL_DMA_SetDataLength(FTDI_UART_LPUART_DMA_INSTANCE, FTDI_UART_LPUART_DMA_CHANNEL, size);
+
+    LL_DMA_EnableChannel(FTDI_UART_LPUART_DMA_INSTANCE, FTDI_UART_LPUART_DMA_CHANNEL);
 }

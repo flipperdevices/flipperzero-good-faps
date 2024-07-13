@@ -35,6 +35,12 @@ Ftdi* ftdi_alloc(void) {
         furi_stream_buffer_alloc(sizeof(uint8_t) * FTDI_TX_RX_BUF_SIZE, sizeof(uint8_t));
     ftdi->baudrate = 115200;
 
+    FtdiModemStatus status = {0};
+    ftdi->status = status;
+    ftdi->status.RESERVED1 = 1;
+    ftdi->status.TEMT = 1;
+    ftdi->status.THRE = 1;
+
     ftdi->ftdi_uart = ftdi_uart_alloc(ftdi);
 
     return ftdi;
@@ -241,13 +247,26 @@ uint8_t ftdi_get_latency_timer(Ftdi* ftdi) {
 //     - B5       Transmitter holding register (THRE)
 //     - B6       Transmitter empty (TEMT)
 //     - B7       Error in RCVR FIFO
-void ftdi_get_modem_status(uint16_t* status) {
-    FtdiModemStatus modem_status = {0};
-    modem_status.RESERVED1 = 1;
-    modem_status.TEMT = 1;
-    modem_status.THRE = 1;
 
-    *status = *((uint16_t*)&modem_status);
+// void ftdi_get_modem_status(uint16_t* status) {
+//     FtdiModemStatus modem_status = {0};
+//     modem_status.RESERVED1 = 1;
+//     modem_status.TEMT = 1;
+//     modem_status.THRE = 1;
+
+//     *status = *((uint16_t*)&modem_status);
+// }
+
+uint16_t* ftdi_get_modem_status_uint16_t(Ftdi* ftdi) {
+    return (uint16_t*)&ftdi->status;
+}
+
+FtdiModemStatus ftdi_get_modem_status(Ftdi* ftdi) {
+    return ftdi->status;
+}
+
+void ftdi_set_modem_status(Ftdi* ftdi, FtdiModemStatus status) {
+    ftdi->status = status;
 }
 
 void ftdi_start_uart_tx(Ftdi* ftdi) {

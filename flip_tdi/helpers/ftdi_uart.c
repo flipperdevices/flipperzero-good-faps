@@ -17,6 +17,7 @@ struct FtdiUart {
     uint32_t baudrate;
     Ftdi* ftdi;
     uint8_t* buffer_tx_ptr;
+    bool enable;
 };
 
 typedef enum {
@@ -57,11 +58,10 @@ static void ftdi_uart_irq_cb(
             ftdi_set_tx_buf(ftdi_uart->ftdi, data, ret);
             size -= ret;
         };
-        //furi_thread_flags_set(furi_thread_get_id(usb_uart->worker_thread), WorkerEventRxData);
     }
 }
 
-static int32_t uart_echo_worker(void* context) {
+static int32_t ftdi_uart_echo_worker(void* context) {
     furi_assert(context);
     FtdiUart* ftdi_uart = context;
 
@@ -79,9 +79,6 @@ static int32_t uart_echo_worker(void* context) {
 
         if(events & WorkerEventTXData) {
             if(!is_dma_tx) {
-                // FtdiModemStatus status = ftdi_get_modem_status(ftdi_uart->ftdi);
-                // status.TEMT = 0;
-                // ftdi_set_modem_status(ftdi_uart->ftdi, status);
                 is_dma_tx = true;
                 events |= WorkerEventTXDataDmaEnd;
             }
@@ -89,41 +86,18 @@ static int32_t uart_echo_worker(void* context) {
 
         if(events & WorkerEventTXDataDmaEnd) {
             size_t length = 0;
-
-            // if(ftdi_available_rx_buf(ftdi_uart->ftdi) > 2048) {
-            //     FtdiModemStatus status = ftdi_get_modem_status(ftdi_uart->ftdi);
-            //     status.THRE = 0;
-            //     ftdi_set_modem_status(ftdi_uart->ftdi, status);
-            // }
-
             length = ftdi_get_rx_buf(
                 ftdi_uart->ftdi, ftdi_uart->buffer_tx_ptr, FTDI_UART_MAX_TXRX_SIZE);
             if(length > 0) {
-                //furi_hal_serial_tx(ftdi_uart->serial_handle, data, length);
                 ftdi_uart_tx_dma(ftdi_uart, ftdi_uart->buffer_tx_ptr, length);
             } else {
                 is_dma_tx = false;
-                // FtdiModemStatus status = ftdi_get_modem_status(ftdi_uart->ftdi);
-                // status.TEMT = 1;
-                // ftdi_set_modem_status(ftdi_uart->ftdi, status);
             }
         }
 
-        // if(events & WorkerEventRxData) {
-        //     size_t length = 0;
-        //     do {
-        //         uint8_t data[FTDI_UART_MAX_TXRX_SIZE];
-        //         //length = ftdi_get_rx_buf(ftdi_uart->ftdi, data, FTDI_UART_MAX_TXRX_SIZE);
-
-        //         if(length > 0) {
-        //             ftdi_set_tx_buf(ftdi_uart->ftdi, data, length);
-        //         }
-        //     } while(length > 0);
+        // if(events & WorkerEventRxIdle) {
+        //     //furi_hal_serial_tx(ftdi_uart->serial_handle, (uint8_t*)"\r\nDetect IDLE\r\n", 15);
         // }
-
-        if(events & WorkerEventRxIdle) {
-            //furi_hal_serial_tx(ftdi_uart->serial_handle, (uint8_t*)"\r\nDetect IDLE\r\n", 15);
-        }
 
         // if(events &
         //    (WorkerEventRxOverrunError | WorkerEventRxFramingError | WorkerEventRxNoiseError)) {
@@ -156,13 +130,16 @@ FtdiUart* ftdi_uart_alloc(Ftdi* ftdi) {
     ftdi_uart->ftdi = ftdi;
 
     //do not change LPUART, functions that directly work with peripherals are used
-    ftdi_uart->worker_thread = furi_thread_alloc_ex(TAG, 1024, uart_echo_worker, ftdi_uart);
+    ftdi_uart->worker_thread = furi_thread_alloc_ex(TAG, 1024, ftdi_uart_echo_worker, ftdi_uart);
+    ftdi_uart->enable = true;
+
     furi_thread_start(ftdi_uart->worker_thread);
 
     return ftdi_uart;
 }
 
 void ftdi_uart_free(FtdiUart* ftdi_uart) {
+    ftdi_uart->enable = false;
     furi_thread_flags_set(furi_thread_get_id(ftdi_uart->worker_thread), WorkerEventStop);
     furi_thread_join(ftdi_uart->worker_thread);
     furi_thread_free(ftdi_uart->worker_thread);
@@ -174,12 +151,30 @@ void ftdi_uart_free(FtdiUart* ftdi_uart) {
 }
 
 void ftdi_uart_tx(FtdiUart* ftdi_uart) {
-    furi_thread_flags_set(furi_thread_get_id(ftdi_uart->worker_thread), WorkerEventTXData);
+    if(ftdi_uart->enable) {
+        furi_thread_flags_set(furi_thread_get_id(ftdi_uart->worker_thread), WorkerEventTXData);
+    }
 }
 
 void ftdi_uart_set_baudrate(FtdiUart* ftdi_uart, uint32_t baudrate) {
     ftdi_uart->baudrate = baudrate;
     furi_hal_serial_set_br(ftdi_uart->serial_handle, baudrate);
+}
+
+void ftdi_uart_enable(FtdiUart* ftdi_uart, bool enable) {
+    if(enable) {
+        ftdi_uart->enable = true;
+        furi_hal_serial_resume(ftdi_uart->serial_handle);
+        furi_hal_serial_enable_direction(ftdi_uart->serial_handle, FuriHalSerialDirectionRx);
+        furi_hal_serial_enable_direction(ftdi_uart->serial_handle, FuriHalSerialDirectionTx);
+        ftdi_reset_purge_rx(ftdi_uart->ftdi);
+        ftdi_reset_purge_tx(ftdi_uart->ftdi);
+    } else {
+        ftdi_uart->enable = false;
+        furi_hal_serial_suspend(ftdi_uart->serial_handle);
+        furi_hal_serial_disable_direction(ftdi_uart->serial_handle, FuriHalSerialDirectionRx);
+        furi_hal_serial_disable_direction(ftdi_uart->serial_handle, FuriHalSerialDirectionTx);
+    }
 }
 
 void ftdi_uart_set_data_config(FtdiUart* ftdi_uart, FtdiDataConfig* data_config) {

@@ -71,7 +71,7 @@ static int32_t ftdi_thread_worker(void* context) {
     FtdiTxData tx_data = {0};
     // uint16_t *status = 0;
     // ftdi_get_modem_status(&status);
-    uint16_t *status = ftdi_get_modem_status_uint16_t(ftdi_usb->ftdi);
+    uint16_t* status = ftdi_get_modem_status_uint16_t(ftdi_usb->ftdi);
 
     tx_data.status = status[0];
     ftdi_usb_send(dev, (uint8_t*)&tx_data, FTDI_USB_MODEM_STATUS_SIZE);
@@ -79,7 +79,7 @@ static int32_t ftdi_thread_worker(void* context) {
     while(true) {
         uint32_t flags = furi_thread_flags_wait(EventAll, FuriFlagWaitAny, FuriWaitForever);
 
-        furi_hal_gpio_write(&gpio_ext_pa7, 1);
+        //furi_hal_gpio_write(&gpio_ext_pa7, 1);
 
         if(flags & EventRx) { //fast flag
             uint8_t buf[FTDI_USB_RX_MAX_SIZE];
@@ -135,7 +135,7 @@ static int32_t ftdi_thread_worker(void* context) {
             }
         }
 
-        furi_hal_gpio_write(&gpio_ext_pa7, 0);
+        // furi_hal_gpio_write(&gpio_ext_pa7, 0);
     }
 
     return 0;
@@ -163,8 +163,8 @@ static void ftdi_usb_init(usbd_device* dev, FuriHalUsbInterface* intf, void* ctx
 
     ftdi_usb->ftdi = ftdi_alloc();
 
-    furi_hal_gpio_init(&gpio_ext_pa7, GpioModeOutputPushPull, GpioPullDown, GpioSpeedVeryHigh);
-    furi_hal_gpio_init(&gpio_ext_pa6, GpioModeOutputPushPull, GpioPullDown, GpioSpeedVeryHigh);
+    // furi_hal_gpio_init(&gpio_ext_pa7, GpioModeOutputPushPull, GpioPullDown, GpioSpeedVeryHigh);
+    // furi_hal_gpio_init(&gpio_ext_pa6, GpioModeOutputPushPull, GpioPullDown, GpioSpeedVeryHigh);
 
     furi_thread_start(ftdi_usb->thread);
 }
@@ -187,8 +187,8 @@ static void ftdi_usb_deinit(usbd_device* dev) {
 
     ftdi_free(ftdi_usb->ftdi);
 
-    furi_hal_gpio_init(&gpio_ext_pa7, GpioModeAnalog, GpioPullNo, GpioSpeedLow);
-    furi_hal_gpio_init(&gpio_ext_pa6, GpioModeAnalog, GpioPullNo, GpioSpeedLow);
+    //furi_hal_gpio_init(&gpio_ext_pa7, GpioModeAnalog, GpioPullNo, GpioSpeedLow);
+    //furi_hal_gpio_init(&gpio_ext_pa6, GpioModeAnalog, GpioPullNo, GpioSpeedLow);
 
     free(ftdi_usb->usb.str_prod_descr);
     ftdi_usb->usb.str_prod_descr = NULL;
@@ -229,7 +229,7 @@ static void ftdi_usb_rx_ep_callback(usbd_device* dev, uint8_t event, uint8_t ep)
     UNUSED(event);
     UNUSED(ep);
     FtdiUsb* ftdi_usb = ftdi_cur;
-    furi_hal_gpio_write(&gpio_ext_pa6, 1);
+    //furi_hal_gpio_write(&gpio_ext_pa6, 1);
     furi_thread_flags_set(furi_thread_get_id(ftdi_usb->thread), EventRx);
 
     // uint8_t buf[FTDI_USB_RX_MAX_SIZE];
@@ -238,7 +238,7 @@ static void ftdi_usb_rx_ep_callback(usbd_device* dev, uint8_t event, uint8_t ep)
     //     ftdi_set_rx_buf(ftdi_usb->ftdi, buf, len_data);
     //     // ftdi_loopback(ftdi_usb->ftdi);
     // }
-    furi_hal_gpio_write(&gpio_ext_pa6, 0);
+    //furi_hal_gpio_write(&gpio_ext_pa6, 0);
 }
 
 static void ftdi_usb_tx_ep_callback(usbd_device* dev, uint8_t event, uint8_t ep) {
@@ -392,6 +392,24 @@ static usbd_respond
             ftdi_usb->dev->status.data_ptr = ftdi_usb->data_recvest;
             ftdi_usb->dev->status.data_count = ftdi_usb->data_recvest_len;
             // furi_thread_flags_set(furi_thread_get_id(ftdi_usb->thread), EventSetLatencyTimer);
+            return usbd_ack;
+            break;
+
+        case FtdiRequestsSiOReqPollModemStatus:
+            furi_log_puts("FtdiRequestsSiOReqPollModemStatus\r\n");
+            uint16_t* status = ftdi_get_modem_status_uint16_t(ftdi_usb->ftdi);
+            memcpy(ftdi_usb->data_recvest, status, sizeof(uint16_t));
+            ftdi_usb->data_recvest_len = req->wLength;
+            ftdi_usb->dev->status.data_ptr = ftdi_usb->data_recvest;
+            ftdi_usb->dev->status.data_count = ftdi_usb->data_recvest_len;
+            return usbd_ack;
+            break;
+        case FtdiRequestsSiOReqReadPins:
+            furi_log_puts("FtdiRequestsSiOReqReadPins\r\n");
+            ftdi_usb->data_recvest[0] = ftdi_get_bitbang_gpio(ftdi_usb->ftdi);
+            ftdi_usb->data_recvest_len = 1;
+            ftdi_usb->dev->status.data_ptr = ftdi_usb->data_recvest;
+            ftdi_usb->dev->status.data_count = ftdi_usb->data_recvest_len;
             return usbd_ack;
             break;
         default:

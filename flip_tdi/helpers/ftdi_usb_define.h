@@ -221,7 +221,7 @@ typedef struct {
     uint8_t RESERVED2 : 1; /*Reserved2*/
     uint8_t RESERVED3 : 1; /*Reserved3*/
     uint8_t CTS : 1; /*Clear to send (CTS)*/
-    uint8_t DTS : 1; /*Data set ready (DTS)*/
+    uint8_t DTR : 1; /*Data set ready (DTR)*/
     uint8_t RI : 1; /*Ring indicator (RI)*/
     uint8_t RLSD : 1; /*Receive line signal detect (RLSD)*/
     uint8_t DR : 1; /*Data ready (DR)*/

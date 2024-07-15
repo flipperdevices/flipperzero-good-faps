@@ -29,3 +29,4 @@ FtdiModemStatus ftdi_get_modem_status(Ftdi* ftdi);
 void ftdi_set_modem_status(Ftdi* ftdi, FtdiModemStatus status);
 
 void ftdi_start_uart_tx(Ftdi* ftdi);
+uint8_t ftdi_get_bitbang_gpio(Ftdi* ftdi);

@@ -220,7 +220,7 @@ void ftdi_set_data_config(Ftdi* ftdi, uint16_t value, uint16_t index) {
     if(!ftdi_check_interface(ftdi, index)) {
         return;
     }
-    ftdi->data_config = *((FtdiDataConfig*)&value);
+    memcpy(&ftdi->data_config, &value, sizeof(ftdi->data_config));
     ftdi_uart_set_data_config(ftdi->ftdi_uart, &ftdi->data_config);
 }
 
@@ -318,7 +318,7 @@ void ftdi_set_bitmode(Ftdi* ftdi, uint16_t value, uint16_t index) {
     //todo no use mask value&0xFF
     ftdi->bit_mode_mask = value & 0xFF;
     uint8_t bit_mode = value >> 8;
-    ftdi->bit_mode = *((FtdiBitMode*)&(bit_mode));
+    memcpy(&ftdi->bit_mode, &bit_mode, sizeof(ftdi->bit_mode));
 
     // ftdi_bitbang_set_gpio(ftdi->ftdi_bitbang, 0);
 

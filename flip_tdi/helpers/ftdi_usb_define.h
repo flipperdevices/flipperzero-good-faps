@@ -1,6 +1,7 @@
 #pragma once
 #include <stdbool.h>
 #include <stdint.h>
+#include <assert.h>
 
 // # Clocks and baudrates
 #define FTDIBUS_CLOCK_BASE 6000000UL
@@ -92,7 +93,7 @@ typedef struct {
     uint8_t SYNCFF : 1; /*Single Channel Synchronous FIFO mode, available on 2232H chips*/
     uint8_t FT1284 : 1; /*FT1284 mode, available on 232H chips*/
 } FtdiBitMode;
-
+static_assert(sizeof(FtdiBitMode) == sizeof(uint8_t), "Wrong FtdiBitMode");
 /* FTDI MPSSE commands */
 typedef enum {
 
@@ -213,6 +214,7 @@ typedef struct {
     uint8_t STOP_BITS : 2; /*Number of stop bits*/
     uint8_t BREAK : 1; /*Break type*/
 } FtdiDataConfig;
+static_assert(sizeof(FtdiDataConfig) == sizeof(uint16_t), "Wrong FtdiDataConfig");
 
 typedef struct {
     uint8_t RESERVED0 : 1; /*Reserved0*/
@@ -232,3 +234,4 @@ typedef struct {
     uint8_t TEMT : 1; /*Transmitter empty (TEMT)*/
     uint8_t RCVR_FIFO : 1; /*Error in RCVR FIFO*/
 } FtdiModemStatus;
+static_assert(sizeof(FtdiModemStatus) == sizeof(uint16_t), "Wrong FtdiModemStatus");

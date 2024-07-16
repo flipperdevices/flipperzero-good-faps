@@ -3,8 +3,11 @@
 
 typedef struct Ftdi Ftdi;
 
+typedef void (*FtdiCallbackLatencyTimer)(void* context);
+
 Ftdi* ftdi_alloc(void);
 void ftdi_free(Ftdi* ftdi);
+void ftdi_set_callback_latency_timer(Ftdi* ftdi, FtdiCallbackLatencyTimer callback, void* context);
 void ftdi_reset_purge_rx(Ftdi* ftdi);
 void ftdi_reset_purge_tx(Ftdi* ftdi);
 void ftdi_reset_sio(Ftdi* ftdi);
@@ -21,6 +24,7 @@ void ftdi_set_flow_ctrl(Ftdi* ftdi, uint16_t index);
 void ftdi_set_bitmode(Ftdi* ftdi, uint16_t value, uint16_t index);
 void ftdi_set_latency_timer(Ftdi* ftdi, uint16_t value, uint16_t index);
 uint8_t ftdi_get_latency_timer(Ftdi* ftdi);
+void ftdi_reset_latency_timer(Ftdi* ftdi);
 
 //void ftdi_get_modem_status(uint16_t *status);
 

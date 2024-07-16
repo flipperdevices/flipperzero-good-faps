@@ -44,11 +44,12 @@ typedef enum {
     EventSetBaudrate = (1 << 12),
     EventSetData = (1 << 13),
     EventSetFlowCtrl = (1 << 14),
+    EventLatencyTimerUp = (1 << 15),
 
     EventAll = EventExit | EventReset | EventRx | EventTx | EventTxComplete | EventResetSio |
                EventResetPurgeRx | EventResetPurgeTx | EventSetBitmode | EventSetLatencyTimer |
                EventSetEventChar | EventSetErrorChar | EventSetBaudrate | EventSetData |
-               EventSetFlowCtrl,
+               EventSetFlowCtrl | EventLatencyTimerUp,
 } FtdiEvent;
 
 struct FtdiUsb {
@@ -60,6 +61,9 @@ struct FtdiUsb {
     Ftdi* ftdi;
     uint8_t data_recvest[8];
     uint16_t data_recvest_len;
+
+    bool tx_complete;
+    bool latency_timer_up;
 };
 
 static int32_t ftdi_thread_worker(void* context) {
@@ -105,9 +109,25 @@ static int32_t ftdi_thread_worker(void* context) {
                 ftdi_usb_send(dev, (uint8_t*)&tx_data, FTDI_USB_MODEM_STATUS_SIZE);
             }
             if(flags & EventTxComplete) {
-                flags |= EventTx;
+                ftdi_usb->tx_complete = true;
+                if((ftdi_usb->latency_timer_up) ||
+                   (ftdi_available_tx_buf(ftdi_usb->ftdi) >= FTDI_USB_TX_MAX_SIZE)) {
+                    ftdi_reset_latency_timer(ftdi_usb->ftdi);
+                    flags |= EventTx;
+                }
             }
+
+            if(flags & EventLatencyTimerUp) {
+                ftdi_usb->latency_timer_up = true;
+                if(ftdi_usb->tx_complete) {
+                    flags |= EventTx;
+                }
+            }
+
             if(flags & EventTx) {
+                ftdi_usb->tx_complete = false;
+                ftdi_usb->latency_timer_up = false;
+
                 tx_data.status = status[0];
                 len_data = ftdi_available_tx_buf(ftdi_usb->ftdi);
 
@@ -145,6 +165,11 @@ static int32_t ftdi_thread_worker(void* context) {
 // where if_ctx isn't passed
 static FtdiUsb* ftdi_cur = NULL;
 
+static void ftdi_usb_callback_latency_timer(void* context) {
+    FtdiUsb* ftdi_usb = context;
+    furi_thread_flags_set(furi_thread_get_id(ftdi_usb->thread), EventLatencyTimerUp);
+}
+
 static void ftdi_usb_init(usbd_device* dev, FuriHalUsbInterface* intf, void* ctx) {
     UNUSED(intf);
     FtdiUsb* ftdi_usb = ctx;
@@ -162,7 +187,7 @@ static void ftdi_usb_init(usbd_device* dev, FuriHalUsbInterface* intf, void* ctx
     furi_thread_set_callback(ftdi_usb->thread, ftdi_thread_worker);
 
     ftdi_usb->ftdi = ftdi_alloc();
-
+    ftdi_set_callback_latency_timer(ftdi_usb->ftdi, ftdi_usb_callback_latency_timer, ftdi_usb);
     // furi_hal_gpio_init(&gpio_ext_pa7, GpioModeOutputPushPull, GpioPullDown, GpioSpeedVeryHigh);
     // furi_hal_gpio_init(&gpio_ext_pa6, GpioModeOutputPushPull, GpioPullDown, GpioSpeedVeryHigh);
 

@@ -80,7 +80,6 @@ typedef enum {
 //     FtdiBitModeFt1284 = 0x80, /**< FT1284 mode, available on 232H chips */
 // } FtdiBitMode;
 
-
 //if(FtdiBitMode&0xff00==0) FtdiBitModeReset switch off bitbang mode, back to regular serial/FIFO
 typedef struct {
     //uint8_t MASK : 8; /*Mask*/
@@ -92,7 +91,7 @@ typedef struct {
     uint8_t CBUS : 1; /*Bitbang on CBUS pins of R-type chips, configure in EEPROM before*/
     uint8_t SYNCFF : 1; /*Single Channel Synchronous FIFO mode, available on 2232H chips*/
     uint8_t FT1284 : 1; /*FT1284 mode, available on 232H chips*/
-} FtdiBitMode; 
+} FtdiBitMode;
 
 /* FTDI MPSSE commands */
 typedef enum {
@@ -212,8 +211,8 @@ typedef struct {
     uint8_t RESERVED : 4; /*Reserved0*/
     uint8_t PARITY : 3; /*Parity*/
     uint8_t STOP_BITS : 2; /*Number of stop bits*/
-    uint8_t BREAK: 1; /*Break type*/
-} FtdiDataConfig; 
+    uint8_t BREAK : 1; /*Break type*/
+} FtdiDataConfig;
 
 typedef struct {
     uint8_t RESERVED0 : 1; /*Reserved0*/

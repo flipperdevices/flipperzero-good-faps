@@ -2,6 +2,7 @@
 #include "furi.h"
 #include "ftdi_uart.h"
 #include "ftdi_bitbang.h"
+#include "ftdi_latency_timer.h"
 
 #define TAG "FTDI"
 
@@ -19,16 +20,26 @@ struct Ftdi {
     FtdiDataConfig data_config;
     FtdiBitMode bit_mode;
     uint8_t bit_mode_mask;
-    uint8_t latency_timer;
 
     FtdiUart* ftdi_uart;
     FtdiBitbang* ftdi_bitbang;
+    FtdiLatencyTimer* ftdi_latency_timer;
+
+    FtdiCallbackLatencyTimer callback_latency_timer;
+    void* context_latency_timer;
 };
 
 static bool ftdi_check_interface(Ftdi* ftdi, uint16_t index) {
     UNUSED(ftdi);
     uint8_t interface = index & 0xff;
     return ((interface) == FTDI_INTERFACE_A) || ((interface) == FTDI_DRIVER_INTERFACE_A);
+}
+
+static void ftdi_callback_latency_timer(void* context) {
+    Ftdi* ftdi = context;
+    if(ftdi->callback_latency_timer) {
+        ftdi->callback_latency_timer(ftdi->context_latency_timer);
+    }
 }
 
 Ftdi* ftdi_alloc(void) {
@@ -47,16 +58,23 @@ Ftdi* ftdi_alloc(void) {
 
     ftdi->ftdi_uart = ftdi_uart_alloc(ftdi);
     ftdi->ftdi_bitbang = ftdi_bitbang_alloc(ftdi);
-
+    ftdi->ftdi_latency_timer = ftdi_latency_timer_alloc();
+    ftdi_latency_timer_set_callback(ftdi->ftdi_latency_timer, ftdi_callback_latency_timer, ftdi);
     return ftdi;
 }
 
 void ftdi_free(Ftdi* ftdi) {
     ftdi_uart_free(ftdi->ftdi_uart);
     ftdi_bitbang_free(ftdi->ftdi_bitbang);
+    ftdi_latency_timer_free(ftdi->ftdi_latency_timer);
     furi_stream_buffer_free(ftdi->stream_tx);
     furi_stream_buffer_free(ftdi->stream_rx);
     free(ftdi);
+}
+
+void ftdi_set_callback_latency_timer(Ftdi* ftdi, FtdiCallbackLatencyTimer callback, void* context) {
+    ftdi->callback_latency_timer = callback;
+    ftdi->context_latency_timer = context;
 }
 
 void ftdi_reset_purge_rx(Ftdi* ftdi) {
@@ -302,7 +320,7 @@ void ftdi_set_bitmode(Ftdi* ftdi, uint16_t value, uint16_t index) {
     uint8_t bit_mode = value >> 8;
     ftdi->bit_mode = *((FtdiBitMode*)&(bit_mode));
 
-   // ftdi_bitbang_set_gpio(ftdi->ftdi_bitbang, 0);
+    // ftdi_bitbang_set_gpio(ftdi->ftdi_bitbang, 0);
 
     if(bit_mode == 0x00) { // Reset
         ftdi_uart_enable(ftdi->ftdi_uart, true); // UART mode
@@ -331,11 +349,15 @@ void ftdi_set_latency_timer(Ftdi* ftdi, uint16_t value, uint16_t index) {
     if(!ftdi_check_interface(ftdi, index)) {
         return;
     }
-    ftdi->latency_timer = value;
+    ftdi_latency_timer_set_speed(ftdi->ftdi_latency_timer, value);
 }
 
 uint8_t ftdi_get_latency_timer(Ftdi* ftdi) {
-    return ftdi->latency_timer;
+    return ftdi_latency_timer_get_speed(ftdi->ftdi_latency_timer);
+}
+
+void ftdi_reset_latency_timer(Ftdi* ftdi) {
+    ftdi_latency_timer_reset(ftdi->ftdi_latency_timer);
 }
 
 // FTDI modem status

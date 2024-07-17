@@ -230,7 +230,7 @@ void ftdi_set_flow_ctrl(Ftdi* ftdi, uint16_t index) {
     }
     uint16_t flow_ctrl = index & 0xFF00;
     if(flow_ctrl != FtdiFlowControlDisable) {
-        //ToDo: implement FtdiFlowControl
+        //ToDo: no implement FtdiFlowControl
     }
 }
 

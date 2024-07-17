@@ -97,6 +97,48 @@ static_assert(sizeof(FtdiBitMode) == sizeof(uint8_t), "Wrong FtdiBitMode");
 /* FTDI MPSSE commands */
 typedef enum {
 
+    //     /* Shifting commands IN MPSSE Mode*/
+    // #define MPSSE_WRITE_NEG 0x01   /* Write TDI/DO on negative TCK/SK edge*/
+    // #define MPSSE_BITMODE   0x02   /* Write bits, not bytes */
+    // #define MPSSE_READ_NEG  0x04   /* Sample TDO/DI on negative TCK/SK edge */
+    // #define MPSSE_LSB       0x08   /* LSB first */
+    // #define MPSSE_DO_WRITE  0x10   /* Write TDI/DO */
+    // #define MPSSE_DO_READ   0x20   /* Read TDO/DI */
+    // #define MPSSE_WRITE_TMS 0x40   /* Write TMS/CS */
+
+    /*MPSSE Commands*/
+    FtdiMpsseCommandsWriteBytesPveMsb = 0x10, /**< Write bytes with positive edge clock, MSB first */
+    FtdiMpsseCommandsWriteBytesNveMsb = 0x11, /**< Write bytes with negative edge clock, MSB first */
+    FtdiMpsseCommandsWriteBitsPveMsb = 0x12, /**< Write bits with positive edge clock, MSB first */
+    FtdiMpsseCommandsWriteBitsNveMsb = 0x13, /**< Write bits with negative edge clock, MSB first */
+    FtdiMpsseCommandsWriteBytesPveLsb = 0x18, /**< Write bytes with positive edge clock, LSB first */
+    FtdiMpsseCommandsWriteBytesNveLsb = 0x19, /**< Write bytes with negative edge clock, LSB first */
+    FtdiMpsseCommandsWriteBitsPveLsb = 0x1a, /**< Write bits with positive edge clock, LSB first */
+    FtdiMpsseCommandsWriteBitsNveLsb = 0x1b, /**< Write bits with negative edge clock, LSB first */
+    FtdiMpsseCommandsReadBytesPveMsb = 0x20, /**< Read bytes with positive edge clock, MSB first */
+    FtdiMpsseCommandsReadBytesNveMsb = 0x24, /**< Read bytes with negative edge clock, MSB first */
+    FtdiMpsseCommandsReadBitsPveMsb = 0x22, /**< Read bits with positive edge clock, MSB first */
+    FtdiMpsseCommandsReadBitsNveMsb = 0x26, /**< Read bits with negative edge clock, MSB first */
+    FtdiMpsseCommandsReadBytesPveLsb = 0x28, /**< Read bytes with positive edge clock, LSB first */
+    FtdiMpsseCommandsReadBytesNveLsb = 0x2c, /**< Read bytes with negative edge clock, LSB first */
+    FtdiMpsseCommandsReadBitsPveLsb = 0x2a, /**< Read bits with positive edge clock, LSB first */
+    FtdiMpsseCommandsReadBitsNveLsb = 0x2e, /**< Read bits with negative edge clock, LSB first */
+    FtdiMpsseCommandsRwBytesPveNveMsb = 0x31, /**< Read/Write bytes with positive edge clock, MSB first */
+    FtdiMpsseCommandsRwBytesNvePveMsb = 0x34, /**< Read/Write bytes with negative edge clock, MSB first */
+    FtdiMpsseCommandsRwBitsPveNveMsb = 0x33, /**< Read/Write bits with positive edge clock, MSB first */
+    FtdiMpsseCommandsRwBitsNvePveMsb = 0x36, /**< Read/Write bits with negative edge clock, MSB first */
+    FtdiMpsseCommandsRwBytesPveNveLsb = 0x39, /**< Read/Write bytes with positive edge clock, LSB first */
+    FtdiMpsseCommandsRwBytesNvePveLsb = 0x3c, /**< Read/Write bytes with negative edge clock, LSB first */
+    FtdiMpsseCommandsRwBitsPveNveLsb = 0x3b, /**< Read/Write bits with positive edge clock, LSB first */
+    FtdiMpsseCommandsRwBitsNvePveLsb = 0x3e, /**< Read/Write bits with negative edge clock, LSB first */
+    FtdiMpsseCommandsWriteBitsTmsPve = 0x4a, /**< Write bits with TMS, positive edge clock */
+    FtdiMpsseCommandsWriteBitsTmsNve = 0x4b, /**< Write bits with TMS, negative edge clock */
+    FtdiMpsseCommandsRwBitsTmsPvePve = 0x6a, /**< Read/Write bits with TMS, positive edge clock, MSB first */
+    FtdiMpsseCommandsRwBitsTmsPveNve = 0x6b, /**< Read/Write bits with TMS, positive edge clock, MSB first */
+    FtdiMpsseCommandsRwBitsTmsNvePve = 0x6e, /**< Read/Write bits with TMS, negative edge clock, MSB first */
+    FtdiMpsseCommandsRwBitsTmsNveNve = 0x6f, /**< Read/Write bits with TMS, negative edge clock, MSB first */
+
+
     FtdiMpsseCommandsSetBitsLow = 0x80, /**< Change LSB GPIO output */
     /*BYTE DATA*/
     /*BYTE Direction*/
@@ -123,6 +165,16 @@ typedef enum {
     FtdiMpsseCommandsClkCountWaitOnLow = 0x9d, /**< Clock byte cycles until GPIOL1 is low */
     //FT232H only
     FtdiMpsseCommandsDriveZero = 0x9e, /**< Drive-zero mode */
+    /* Commands in MPSSE and Host Emulation Mode */
+    FtdiMpsseCommandsSendImmediate = 0x87, /**< Send immediate */
+    FtdiMpsseCommandsWaitOnHigh = 0x88, /**< Wait until GPIOL1 is high */
+    FtdiMpsseCommandsWaitOnLow = 0x89, /**< Wait until GPIOL1 is low */
+    /* Commands in Host Emulation Mode */
+    FtdiMpsseCommandsReadShort = 0x90, /**< Read short */
+    FtdiMpsseCommandsReadExtended = 0x91, /**< Read extended */
+    FtdiMpsseCommandsWriteShort = 0x92, /**< Write short */
+    FtdiMpsseCommandsWriteExtended = 0x93, /**< Write extended */
+
 } FtdiMpsseCommands;
 
 /* USB control requests */

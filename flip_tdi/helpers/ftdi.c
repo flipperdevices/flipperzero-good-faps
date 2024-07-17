@@ -453,7 +453,7 @@ void ftdi_start_uart_tx(Ftdi* ftdi) {
 
 uint8_t ftdi_get_bitbang_gpio(Ftdi* ftdi) {
     ftdi_reset_purge_tx(ftdi);
-    return ftdi_bitbang_gpio_get(ftdi->ftdi_bitbang);
+    return ftdi_bitbang_get_gpio(ftdi->ftdi_bitbang);
 }
 
 /*

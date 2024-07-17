@@ -67,51 +67,11 @@ void ftdi_gpio_set_direction(uint8_t gpio_mask) {
 }
 
 void ftdi_gpio_init(uint8_t gpio_mask) {
-    // // gpio_ext_pa7
-    // LL_GPIO_SetPinSpeed(GPIOA, LL_GPIO_PIN_7, LL_GPIO_SPEED_FREQ_VERY_HIGH);
-    // LL_GPIO_SetPinOutputType(GPIOA, LL_GPIO_PIN_7, LL_GPIO_OUTPUT_PUSHPULL);
-    // LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_7, LL_GPIO_PULL_NO);
-
-    // // gpio_ext_pa6
-    // LL_GPIO_SetPinSpeed(GPIOA, LL_GPIO_PIN_6, LL_GPIO_SPEED_FREQ_VERY_HIGH);
-    // LL_GPIO_SetPinOutputType(GPIOA, LL_GPIO_PIN_6, LL_GPIO_OUTPUT_PUSHPULL);
-    // LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_6, LL_GPIO_PULL_NO);
-
-    // // gpio_ext_pa4
-    // LL_GPIO_SetPinSpeed(GPIOA, LL_GPIO_PIN_4, LL_GPIO_SPEED_FREQ_VERY_HIGH);
-    // LL_GPIO_SetPinOutputType(GPIOA, LL_GPIO_PIN_4, LL_GPIO_OUTPUT_PUSHPULL);
-    // LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_4, LL_GPIO_PULL_NO);
-
-    // // gpio_ext_pb3
-    // LL_GPIO_SetPinSpeed(GPIOB, LL_GPIO_PIN_3, LL_GPIO_SPEED_FREQ_VERY_HIGH);
-    // LL_GPIO_SetPinOutputType(GPIOB, LL_GPIO_PIN_3, LL_GPIO_OUTPUT_PUSHPULL);
-    // LL_GPIO_SetPinPull(GPIOB, LL_GPIO_PIN_3, LL_GPIO_PULL_NO);
-
-    // // gpio_ext_pb2
-    // LL_GPIO_SetPinSpeed(GPIOB, LL_GPIO_PIN_2, LL_GPIO_SPEED_FREQ_VERY_HIGH);
-    // LL_GPIO_SetPinOutputType(GPIOB, LL_GPIO_PIN_2, LL_GPIO_OUTPUT_PUSHPULL);
-    // LL_GPIO_SetPinPull(GPIOB, LL_GPIO_PIN_2, LL_GPIO_PULL_NO);
-
-    // // gpio_ext_pc3
-    // LL_GPIO_SetPinSpeed(GPIOC, LL_GPIO_PIN_3, LL_GPIO_SPEED_FREQ_VERY_HIGH);
-    // LL_GPIO_SetPinOutputType(GPIOC, LL_GPIO_PIN_3, LL_GPIO_OUTPUT_PUSHPULL);
-    // LL_GPIO_SetPinPull(GPIOC, LL_GPIO_PIN_3, LL_GPIO_PULL_NO);
-
-    // // gpio_ext_pc1
-    // LL_GPIO_SetPinSpeed(GPIOC, LL_GPIO_PIN_1, LL_GPIO_SPEED_FREQ_VERY_HIGH);
-    // LL_GPIO_SetPinOutputType(GPIOC, LL_GPIO_PIN_1, LL_GPIO_OUTPUT_PUSHPULL);
-    // LL_GPIO_SetPinPull(GPIOC, LL_GPIO_PIN_1, LL_GPIO_PULL_NO);
-
-    // // gpio_ext_pc0
-    // LL_GPIO_SetPinSpeed(GPIOC, LL_GPIO_PIN_0, LL_GPIO_SPEED_FREQ_VERY_HIGH);
-    // LL_GPIO_SetPinOutputType(GPIOC, LL_GPIO_PIN_0, LL_GPIO_OUTPUT_PUSHPULL);
-    // LL_GPIO_SetPinPull(GPIOC, LL_GPIO_PIN_0, LL_GPIO_PULL_NO);
     furi_hal_gpio_init(&gpio_b0, GpioModeInput, GpioPullNo, GpioSpeedVeryHigh);
     furi_hal_gpio_init(&gpio_b1, GpioModeInput, GpioPullNo, GpioSpeedVeryHigh);
     furi_hal_gpio_init(&gpio_b2, GpioModeInput, GpioPullNo, GpioSpeedVeryHigh);
     furi_hal_gpio_init(&gpio_b3, GpioModeInput, GpioPullNo, GpioSpeedVeryHigh);
-    //furi_hal_gpio_init(&gpio_b4, GpioModeInput, GpioPullNo, GpioSpeedVeryHigh);
-     furi_hal_gpio_init(&gpio_b4, GpioModeOutputPushPull, GpioPullNo, GpioSpeedVeryHigh);
+    furi_hal_gpio_init(&gpio_b4, GpioModeInput, GpioPullNo, GpioSpeedVeryHigh);
     furi_hal_gpio_init(&gpio_b5, GpioModeInput, GpioPullNo, GpioSpeedVeryHigh);
     furi_hal_gpio_init(&gpio_b6, GpioModeInput, GpioPullNo, GpioSpeedVeryHigh);
     furi_hal_gpio_init(&gpio_b7, GpioModeInput, GpioPullNo, GpioSpeedVeryHigh);

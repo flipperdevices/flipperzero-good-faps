@@ -9,5 +9,4 @@ void ftdi_bitbang_free(FtdiBitbang* ftdi_bitbang);
 void ftdi_bitbang_set_gpio(FtdiBitbang* ftdi_bitbang, uint8_t gpio_mask);
 void ftdi_bitbang_enable(FtdiBitbang* ftdi_bitbang, bool enable, bool async);
 void ftdi_bitbang_set_speed(FtdiBitbang* ftdi_bitbang, uint32_t speed);
-uint8_t ftdi_bitbang_gpio_get(FtdiBitbang* ftdi_bitbang);
-uint8_t ftdi_bitbang_gpio_io(FtdiBitbang* ftdi_bitbang, uint8_t gpio_data);
+uint8_t ftdi_bitbang_get_gpio(FtdiBitbang* ftdi_bitbang);

@@ -7,17 +7,27 @@
 #include <furi_hal_bus.h>
 #include <furi_hal_resources.h>
 #include "ftdi_gpio.h"
+#include "ftdi_mpsse.h"
 
 #define TAG "FTDI_BITBANG"
+
+typedef enum {
+    FtdiBitbangModeOff = (0UL),
+    FtdiBitbangModeBitbang = (1UL),
+    FtdiBitbangModeSyncbb = (2UL),
+    FtdiBitbangModeMpsse = (3UL),
+    FtdiBitbangModeReserved = (4UL),
+} FtdiBitbangMode;
 
 typedef void (*FtdiBitbangGpioIO)(uint8_t state);
 struct FtdiBitbang {
     FuriThread* worker_thread;
     Ftdi* ftdi;
+    FtdiMpsse* ftdi_mpsse;
     uint32_t speed;
-    bool enable;
+    FtdiBitbangMode mode;
+
     uint8_t gpio_mask;
-    bool async;
     FtdiBitbangGpioIO gpio_o[8];
     uint8_t gpio_data;
 };
@@ -127,17 +137,21 @@ static int32_t ftdi_bitbang_worker(void* context) {
         furi_check((events & FuriFlagError) == 0);
 
         if(events & WorkerEventTimerUpdate) {
-            size_t length = ftdi_get_rx_buf(ftdi_bitbang->ftdi, buffer, 1);
-            if(length > 0) {
-                ftdi_bitbang_gpio_set(ftdi_bitbang, buffer[0]);
-                if(!ftdi_bitbang->async) {
+            if(ftdi_bitbang->mode == FtdiBitbangModeMpsse) {
+                ftdi_mpsse_state_machine(ftdi_bitbang->ftdi_mpsse);
+            } else {
+                size_t length = ftdi_get_rx_buf(ftdi_bitbang->ftdi, buffer, 1);
+                if(length > 0) {
+                    ftdi_bitbang_gpio_set(ftdi_bitbang, buffer[0]);
+                    if(ftdi_bitbang->mode == FtdiBitbangModeSyncbb) {
+                        ftdi_bitbang->gpio_data = ftdi_bitbang_gpio_get();
+                        ftdi_set_tx_buf(ftdi_bitbang->ftdi, &ftdi_bitbang->gpio_data, 1);
+                    }
+                }
+                if(ftdi_bitbang->mode == FtdiBitbangModeBitbang) {
                     ftdi_bitbang->gpio_data = ftdi_bitbang_gpio_get();
                     ftdi_set_tx_buf(ftdi_bitbang->ftdi, &ftdi_bitbang->gpio_data, 1);
                 }
-            }
-            if(ftdi_bitbang->enable && ftdi_bitbang->async) {
-                ftdi_bitbang->gpio_data = ftdi_bitbang_gpio_get();
-                ftdi_set_tx_buf(ftdi_bitbang->ftdi, &ftdi_bitbang->gpio_data, 1);
             }
             continue;
         }
@@ -157,7 +171,9 @@ uint8_t ftdi_bitbang_get_gpio(FtdiBitbang* ftdi_bitbang) {
 FtdiBitbang* ftdi_bitbang_alloc(Ftdi* ftdi) {
     FtdiBitbang* ftdi_bitbang = malloc(sizeof(FtdiBitbang));
     ftdi_bitbang->ftdi = ftdi;
-    ftdi_bitbang->enable = false;
+    ftdi_bitbang->ftdi_mpsse = ftdi_mpsse_alloc(ftdi);
+    ftdi_bitbang->mode = FtdiBitbangModeOff;
+    ftdi_bitbang->speed = 10000;
     ftdi_bitbang->gpio_mask = 0;
     ftdi_bitbang_gpio_init(ftdi_bitbang);
     ftdi_bitbang->worker_thread =
@@ -170,7 +186,8 @@ FtdiBitbang* ftdi_bitbang_alloc(Ftdi* ftdi) {
 void ftdi_bitbang_free(FtdiBitbang* ftdi_bitbang) {
     if(!ftdi_bitbang) return;
 
-    ftdi_bitbang->enable = false;
+    ftdi_bitbang->mode = FtdiBitbangModeOff;
+    ftdi_mpsse_free(ftdi_bitbang->ftdi_mpsse);
     furi_thread_flags_set(ftdi_bitbang->worker_thread, WorkerEventStop);
     furi_thread_join(ftdi_bitbang->worker_thread);
     furi_thread_free(ftdi_bitbang->worker_thread);
@@ -186,11 +203,18 @@ void ftdi_bitbang_set_gpio(FtdiBitbang* ftdi_bitbang, uint8_t gpio_mask) {
     ftdi_bitbang_gpio_set_direction(ftdi_bitbang);
 }
 
-void ftdi_bitbang_enable(FtdiBitbang* ftdi_bitbang, bool enable, bool async) {
-    ftdi_bitbang->enable = enable;
-    ftdi_bitbang->async = async;
+void ftdi_bitbang_enable(FtdiBitbang* ftdi_bitbang, FtdiBitMode mode) {
+    if(mode.BITBANG) {
+        ftdi_bitbang->mode = FtdiBitbangModeBitbang;
+    } else if(mode.SYNCBB) {
+        ftdi_bitbang->mode = FtdiBitbangModeSyncbb;
+    } else if(mode.MPSSE) {
+        ftdi_bitbang->mode = FtdiBitbangModeMpsse;
+    } else {
+        ftdi_bitbang->mode = FtdiBitbangModeOff;
+    }
 
-    if(enable) {
+    if(ftdi_bitbang->mode != FtdiBitbangModeOff) {
         LL_TIM_SetCounter(TIM17, 0);
         LL_TIM_EnableCounter(TIM17);
     } else {

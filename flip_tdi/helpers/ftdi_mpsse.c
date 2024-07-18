@@ -1,8 +1,12 @@
 #include "ftdi_mpsse.h"
 #include "furi.h"
 #include <furi_hal.h>
+#include "ftdi_gpio.h"
+#include "ftdi_latency_timer.h"
 
 #define TAG "FTDI_MPSSE"
+
+typedef void (*FtdiMpsseGpioO)(uint8_t state);
 
 struct FtdiMpsse {
     Ftdi* ftdi;
@@ -13,7 +17,101 @@ struct FtdiMpsse {
     bool is_div5;
     bool is_clk3phase;
     bool is_adaptive;
+
+    FtdiMpsseGpioO gpio_o[8];
+    uint8_t gpio_mask_old;
+
+    FtdiCallbackLatencyTimer callback_latency_timer;
+    void* context_latency_timer;
 };
+
+void ftdi_mpsse_gpio_set_callback(
+    FtdiMpsse* ftdi_mpsse,
+    FtdiCallbackLatencyTimer callback,
+    void* context) {
+    ftdi_mpsse->callback_latency_timer = callback;
+    ftdi_mpsse->context_latency_timer = context;
+}
+
+void ftdi_mpsse_gpio_set_direction(FtdiMpsse* ftdi_mpsse) {
+    ftdi_gpio_set_direction(ftdi_mpsse->gpio_mask);
+    if(ftdi_mpsse->gpio_mask & 0b00000001) {
+        ftdi_mpsse->gpio_o[0] = ftdi_gpio_set_b0;
+    } else {
+        ftdi_mpsse->gpio_o[0] = ftdi_gpio_set_noop;
+    }
+
+    if(ftdi_mpsse->gpio_mask & 0b00000010) {
+        ftdi_mpsse->gpio_o[1] = ftdi_gpio_set_b1;
+    } else {
+        ftdi_mpsse->gpio_o[1] = ftdi_gpio_set_noop;
+    }
+
+    if(ftdi_mpsse->gpio_mask & 0b00000100) {
+        ftdi_mpsse->gpio_o[2] = ftdi_gpio_set_b2;
+    } else {
+        ftdi_mpsse->gpio_o[2] = ftdi_gpio_set_noop;
+    }
+
+    if(ftdi_mpsse->gpio_mask & 0b00001000) {
+        ftdi_mpsse->gpio_o[3] = ftdi_gpio_set_b3;
+    } else {
+        ftdi_mpsse->gpio_o[3] = ftdi_gpio_set_noop;
+    }
+
+    if(ftdi_mpsse->gpio_mask & 0b00010000) {
+        ftdi_mpsse->gpio_o[4] = ftdi_gpio_set_b4;
+    } else {
+        ftdi_mpsse->gpio_o[4] = ftdi_gpio_set_noop;
+    }
+
+    if(ftdi_mpsse->gpio_mask & 0b00100000) {
+        ftdi_mpsse->gpio_o[5] = ftdi_gpio_set_b5;
+    } else {
+        ftdi_mpsse->gpio_o[5] = ftdi_gpio_set_noop;
+    }
+
+    if(ftdi_mpsse->gpio_mask & 0b01000000) {
+        ftdi_mpsse->gpio_o[6] = ftdi_gpio_set_b6;
+    } else {
+        ftdi_mpsse->gpio_o[6] = ftdi_gpio_set_noop;
+    }
+
+    if(ftdi_mpsse->gpio_mask & 0b10000000) {
+        ftdi_mpsse->gpio_o[7] = ftdi_gpio_set_b7;
+    } else {
+        ftdi_mpsse->gpio_o[7] = ftdi_gpio_set_noop;
+    }
+}
+
+void ftdi_mpsse_gpio_init(FtdiMpsse* ftdi_mpsse) {
+    ftdi_gpio_init(ftdi_mpsse->gpio_mask);
+    ftdi_mpsse_gpio_set_direction(ftdi_mpsse);
+}
+
+static inline void ftdi_mpsse_gpio_set(FtdiMpsse* ftdi_mpsse) {
+    ftdi_mpsse->gpio_o[0](ftdi_mpsse->gpio_state & 0b00000001);
+    ftdi_mpsse->gpio_o[1](ftdi_mpsse->gpio_state & 0b00000010);
+    ftdi_mpsse->gpio_o[2](ftdi_mpsse->gpio_state & 0b00000100);
+    ftdi_mpsse->gpio_o[3](ftdi_mpsse->gpio_state & 0b00001000);
+    ftdi_mpsse->gpio_o[4](ftdi_mpsse->gpio_state & 0b00010000);
+    ftdi_mpsse->gpio_o[5](ftdi_mpsse->gpio_state & 0b00100000);
+    ftdi_mpsse->gpio_o[6](ftdi_mpsse->gpio_state & 0b01000000);
+    ftdi_mpsse->gpio_o[7](ftdi_mpsse->gpio_state & 0b10000000);
+}
+
+static inline uint8_t ftdi_mpsse_gpio_get(void) {
+    uint8_t gpio_data = 0;
+    gpio_data |= ftdi_gpio_get_b0();
+    gpio_data |= ftdi_gpio_get_b1();
+    gpio_data |= ftdi_gpio_get_b2();
+    gpio_data |= ftdi_gpio_get_b3();
+    gpio_data |= ftdi_gpio_get_b4();
+    gpio_data |= ftdi_gpio_get_b5();
+    gpio_data |= ftdi_gpio_get_b6();
+    gpio_data |= ftdi_gpio_get_b7();
+    return gpio_data;
+}
 
 FtdiMpsse* ftdi_mpsse_alloc(Ftdi* ftdi) {
     FtdiMpsse* ftdi_mpsse = malloc(sizeof(FtdiMpsse));
@@ -25,11 +123,15 @@ FtdiMpsse* ftdi_mpsse_alloc(Ftdi* ftdi) {
     ftdi_mpsse->is_div5 = false;
     ftdi_mpsse->is_clk3phase = false;
     ftdi_mpsse->is_adaptive = false;
+
+    ftdi_mpsse_gpio_init(ftdi_mpsse);
+
     return ftdi_mpsse;
 }
 
 void ftdi_mpsse_free(FtdiMpsse* ftdi_mpsse) {
     if(!ftdi_mpsse) return;
+    ftdi_gpio_deinit();
     free(ftdi_mpsse);
     ftdi_mpsse = NULL;
 }
@@ -67,10 +169,16 @@ static inline void ftdi_mpsse_skeep_data(FtdiMpsse* ftdi_mpsse) {
 
 void ftdi_mpsse_state_machine(FtdiMpsse* ftdi_mpsse) {
     uint8_t data = ftdi_mpsse_get_data_stream(ftdi_mpsse);
+    uint8_t gpio_state_io = 0xFF;
     switch(data) {
     case FtdiMpsseCommandsSetBitsLow: // 0x80  Change LSB GPIO output */
         ftdi_mpsse->gpio_state = ftdi_mpsse_get_data_stream(ftdi_mpsse);
-        ftdi_mpsse->gpio_state = ftdi_mpsse_get_data_stream(ftdi_mpsse);
+        ftdi_mpsse->gpio_mask = ftdi_mpsse_get_data_stream(ftdi_mpsse);
+        if(ftdi_mpsse->gpio_mask_old != ftdi_mpsse->gpio_mask) {
+            ftdi_mpsse_gpio_set_direction(ftdi_mpsse);
+            ftdi_mpsse->gpio_mask_old = ftdi_mpsse->gpio_mask;
+        }
+        ftdi_mpsse_gpio_set(ftdi_mpsse);
         //Write to GPIO
         break;
     case FtdiMpsseCommandsSetBitsHigh: // 0x82  Change MSB GPIO output */
@@ -82,16 +190,20 @@ void ftdi_mpsse_state_machine(FtdiMpsse* ftdi_mpsse) {
         //Read GPIO
         //add to buffer
         //read Gpio
-        ftdi_mpssse_set_data_stream(ftdi_mpsse, &ftdi_mpsse->gpio_state, 1);
+        gpio_state_io = ftdi_mpsse_gpio_get();
+        ftdi_mpssse_set_data_stream(ftdi_mpsse, &gpio_state_io, 1);
         break;
     case FtdiMpsseCommandsGetBitsHigh: // 0x83  Get MSB GPIO output */
         //Todo not supported
         //add to buffer FF
-        uint8_t gpio = 0xFF;
-        ftdi_mpssse_set_data_stream(ftdi_mpsse, &gpio, 1);
+        gpio_state_io = 0xFF;
+        ftdi_mpssse_set_data_stream(ftdi_mpsse, &gpio_state_io, 1);
         break;
     case FtdiMpsseCommandsSendImmediate: // 0x87  Send immediate */
         //tx data to host add callback
+        if(ftdi_mpsse->callback_latency_timer) {
+            ftdi_mpsse->callback_latency_timer(ftdi_mpsse->context_latency_timer);
+        }
         break;
     case FtdiMpsseCommandsWriteBytesPveMsb: // 0x10  Write bytes with positive edge clock, MSB first */
         //spi mode 1,3

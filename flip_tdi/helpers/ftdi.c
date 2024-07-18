@@ -59,6 +59,7 @@ Ftdi* ftdi_alloc(void) {
     ftdi->ftdi_uart = ftdi_uart_alloc(ftdi);
     ftdi->ftdi_bitbang = ftdi_bitbang_alloc(ftdi);
     ftdi->ftdi_latency_timer = ftdi_latency_timer_alloc();
+
     ftdi_latency_timer_set_callback(ftdi->ftdi_latency_timer, ftdi_callback_latency_timer, ftdi);
     return ftdi;
 }
@@ -321,6 +322,7 @@ void ftdi_set_bitmode(Ftdi* ftdi, uint16_t value, uint16_t index) {
     memcpy(&ftdi->bit_mode, &bit_mode, sizeof(ftdi->bit_mode));
 
     // ftdi_bitbang_set_gpio(ftdi->ftdi_bitbang, 0);
+    ftdi_latency_timer_set_callback(ftdi->ftdi_latency_timer, ftdi_callback_latency_timer, ftdi);
 
     if(bit_mode == 0x00) { // Reset
         ftdi_uart_enable(ftdi->ftdi_uart, true); // UART mode
@@ -334,14 +336,11 @@ void ftdi_set_bitmode(Ftdi* ftdi, uint16_t value, uint16_t index) {
         ftdi->status.DTR = 1;
     }
 
-    if(ftdi->bit_mode.BITBANG) {
+    if(ftdi->bit_mode.BITBANG || ftdi->bit_mode.SYNCBB || ftdi->bit_mode.MPSSE) {
         ftdi_bitbang_set_gpio(ftdi->ftdi_bitbang, ftdi->bit_mode_mask);
-        ftdi_bitbang_enable(ftdi->ftdi_bitbang, true, true);
-    } else if(ftdi->bit_mode.SYNCBB) {
-        ftdi_bitbang_set_gpio(ftdi->ftdi_bitbang, ftdi->bit_mode_mask);
-        ftdi_bitbang_enable(ftdi->ftdi_bitbang, true, false);
+        ftdi_bitbang_enable(ftdi->ftdi_bitbang, ftdi->bit_mode);
     } else {
-        ftdi_bitbang_enable(ftdi->ftdi_bitbang, false, true);
+        ftdi_bitbang_enable(ftdi->ftdi_bitbang, ftdi->bit_mode);
     }
 }
 

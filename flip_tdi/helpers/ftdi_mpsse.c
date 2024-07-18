@@ -3,12 +3,20 @@
 #include <furi_hal.h>
 #include "ftdi_gpio.h"
 #include "ftdi_latency_timer.h"
+#include "ftdi_mpsse_data.h"
 
 #define TAG "FTDI_MPSSE"
 
 typedef void (*FtdiMpsseGpioO)(uint8_t state);
 
-#define  FTDI_MPSSE_TIMEOUT 5000
+#define FTDI_MPSSE_TIMEOUT 5000
+#define FTDI_MPSSE_TX_RX_SIZE (4096UL)
+
+typedef enum {
+    FtdiMpsseErrorNone = 0,
+    FtdiMpsseErrorTimeout,
+    FtdiMpsseErrorTxOverflow,
+} FtdiMpsseError;
 
 struct FtdiMpsse {
     Ftdi* ftdi;
@@ -19,12 +27,16 @@ struct FtdiMpsse {
     bool is_div5;
     bool is_clk3phase;
     bool is_adaptive;
+    FtdiMpsseError error;
 
     FtdiMpsseGpioO gpio_o[8];
     uint8_t gpio_mask_old;
 
     FtdiMpsseCallbackImmediate callback_immediate;
     void* context_immediate;
+
+    uint8_t* data_buf;
+    uint16_t data_buf_count_byte;
 };
 
 void ftdi_mpsse_gpio_set_callback(
@@ -126,6 +138,10 @@ FtdiMpsse* ftdi_mpsse_alloc(Ftdi* ftdi) {
     ftdi_mpsse->is_clk3phase = false;
     ftdi_mpsse->is_adaptive = false;
 
+    ftdi_mpsse->error = FtdiMpsseErrorNone;
+    ftdi_mpsse->data_buf = malloc(FTDI_MPSSE_TX_RX_SIZE * sizeof(uint8_t));
+    ftdi_mpsse->data_buf_count_byte = 0;
+
     ftdi_mpsse_gpio_init(ftdi_mpsse);
 
     return ftdi_mpsse;
@@ -133,6 +149,7 @@ FtdiMpsse* ftdi_mpsse_alloc(Ftdi* ftdi) {
 
 void ftdi_mpsse_free(FtdiMpsse* ftdi_mpsse) {
     if(!ftdi_mpsse) return;
+    free(ftdi_mpsse->data_buf);
     ftdi_gpio_deinit();
     free(ftdi_mpsse);
     ftdi_mpsse = NULL;
@@ -140,8 +157,11 @@ void ftdi_mpsse_free(FtdiMpsse* ftdi_mpsse) {
 
 uint8_t ftdi_mpsse_get_data_stream(FtdiMpsse* ftdi_mpsse) {
     uint8_t data = 0;
-    ftdi_get_rx_buf(ftdi_mpsse->ftdi, &data, 1, FTDI_MPSSE_TIMEOUT);
-    //FURI_LOG_RAW_I("0x%02X ", data);
+    if(ftdi_get_rx_buf(ftdi_mpsse->ftdi, &data, 1, FTDI_MPSSE_TIMEOUT) != 1) {
+        FURI_LOG_E(TAG, "Timeout");
+        ftdi_mpsse->error = FtdiMpsseErrorTimeout;
+    }
+    FURI_LOG_RAW_I("0x%02X ", data);
     return data;
 }
 
@@ -149,24 +169,36 @@ void ftdi_mpssse_set_data_stream(FtdiMpsse* ftdi_mpsse, uint8_t* data, uint16_t 
     ftdi_set_tx_buf(ftdi_mpsse->ftdi, data, size);
 }
 
-void ftdi_mpsse_get_data(FtdiMpsse* ftdi_mpsse) {
-    //todo add support for tx buffer, data_size_max = 0xFF00
-    ftdi_mpsse->data_size++;
-    while(ftdi_mpsse->data_size--) {
-        ftdi_mpsse_get_data_stream(ftdi_mpsse);
-    }
-}
-
-static uint16_t ftdi_mpsse_get_data_size(FtdiMpsse* ftdi_mpsse) {
-    return (uint16_t)ftdi_mpsse_get_data_stream(ftdi_mpsse) << 8 |
-           ftdi_mpsse_get_data_stream(ftdi_mpsse);
-}
-
 static inline void ftdi_mpsse_skeep_data(FtdiMpsse* ftdi_mpsse) {
     ftdi_mpsse->data_size++;
     while(ftdi_mpsse->data_size--) {
+        if(ftdi_mpsse->error != FtdiMpsseErrorNone) return;
         ftdi_mpsse_get_data_stream(ftdi_mpsse);
     }
+}
+
+void ftdi_mpsse_get_data(FtdiMpsse* ftdi_mpsse) {
+    //todo add support for tx buffer, data_size_max = 0xFF00
+    ftdi_mpsse->data_size++;
+    if(ftdi_mpsse->data_size > FTDI_MPSSE_TX_RX_SIZE) {
+        ftdi_mpsse->error = FtdiMpsseErrorTxOverflow;
+        FURI_LOG_E(TAG, "Tx buffer overflow");
+        ftdi_mpsse_skeep_data(ftdi_mpsse);
+        ftdi_mpsse->data_size = 0;
+    }
+
+    if(ftdi_get_rx_buf(
+           ftdi_mpsse->ftdi, ftdi_mpsse->data_buf, ftdi_mpsse->data_size, FTDI_MPSSE_TIMEOUT) !=
+       ftdi_mpsse->data_size) {
+        FURI_LOG_E(TAG, "Timeout");
+        ftdi_mpsse->error = FtdiMpsseErrorTimeout;
+    }
+    ftdi_mpsse->data_buf_count_byte = ftdi_mpsse->data_size;
+}
+
+static uint16_t ftdi_mpsse_get_data_size(FtdiMpsse* ftdi_mpsse) {
+    return ftdi_mpsse_get_data_stream(ftdi_mpsse) |
+           (uint16_t)ftdi_mpsse_get_data_stream(ftdi_mpsse) << 8;
 }
 
 static inline void ftdi_mpsse_immediate(FtdiMpsse* ftdi_mpsse) {
@@ -175,6 +207,7 @@ static inline void ftdi_mpsse_immediate(FtdiMpsse* ftdi_mpsse) {
     }
 }
 void ftdi_mpsse_state_machine(FtdiMpsse* ftdi_mpsse) {
+    ftdi_mpsse->error = FtdiMpsseErrorNone;
     uint8_t data = ftdi_mpsse_get_data_stream(ftdi_mpsse);
     uint8_t gpio_state_io = 0xFF;
     switch(data) {
@@ -218,6 +251,7 @@ void ftdi_mpsse_state_machine(FtdiMpsse* ftdi_mpsse) {
         ftdi_mpsse->data_size = ftdi_mpsse_get_data_size(ftdi_mpsse);
         //read data
         ftdi_mpsse_get_data(ftdi_mpsse);
+        ftdi_mpsse_data_write_bytes_nve_msb(ftdi_mpsse->data_buf, ftdi_mpsse->data_buf_count_byte);
         break;
     case FtdiMpsseCommandsWriteBitsPveMsb: // 0x12  Write bits with positive edge clock, MSB first */
         //not supported
@@ -264,6 +298,19 @@ void ftdi_mpsse_state_machine(FtdiMpsse* ftdi_mpsse) {
     case FtdiMpsseCommandsReadBytesNveMsb: // 0x24  Read bytes with negative edge clock, MSB first */
         //spi mode 0,2
         ftdi_mpsse->data_size = ftdi_mpsse_get_data_size(ftdi_mpsse);
+        if(ftdi_mpsse->data_size >=FTDI_MPSSE_TX_RX_SIZE) {
+            ftdi_mpsse->error = FtdiMpsseErrorTxOverflow;
+            FURI_LOG_E(TAG, "Tx buffer overflow");
+            gpio_state_io = 0xFF;
+            do{
+                ftdi_mpssse_set_data_stream(ftdi_mpsse, &gpio_state_io, 1);
+            } while (ftdi_mpsse->data_size--);
+        } else {
+            ftdi_mpsse->data_size++;
+            ftdi_mpsse_data_read_bytes_nve_msb(ftdi_mpsse->data_buf, ftdi_mpsse->data_size);
+            ftdi_mpssse_set_data_stream(ftdi_mpsse, ftdi_mpsse->data_buf, ftdi_mpsse->data_size);
+        }
+
         //write data
         //ftdi_mpssse_set_data_stream(ftdi_mpsse, 0xFF, ftdi_mpsse->data_size);
         break;

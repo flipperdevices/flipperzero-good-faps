@@ -134,12 +134,11 @@ static int32_t ftdi_bitbang_worker(void* context) {
         uint32_t events =
             furi_thread_flags_wait(WORKER_EVENTS_MASK, FuriFlagWaitAny, FuriWaitForever);
         furi_check((events & FuriFlagError) == 0);
-
         if(events & WorkerEventTimerUpdate) {
             if(ftdi_bitbang->mode == FtdiBitbangModeMpsse) {
                 ftdi_mpsse_state_machine(ftdi_bitbang->ftdi_mpsse);
             } else {
-                size_t length = ftdi_get_rx_buf(ftdi_bitbang->ftdi, buffer, 1);
+                size_t length = ftdi_get_rx_buf(ftdi_bitbang->ftdi, buffer, 1, 0);
                 if(length > 0) {
                     ftdi_bitbang_gpio_set(ftdi_bitbang, buffer[0]);
                     if(ftdi_bitbang->mode == FtdiBitbangModeSyncbb) {

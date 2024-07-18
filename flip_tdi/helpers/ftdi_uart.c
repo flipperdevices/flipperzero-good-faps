@@ -87,7 +87,7 @@ static int32_t ftdi_uart_echo_worker(void* context) {
         if(events & WorkerEventTXDataDmaEnd) {
             size_t length = 0;
             length = ftdi_get_rx_buf(
-                ftdi_uart->ftdi, ftdi_uart->buffer_tx_ptr, FTDI_UART_MAX_TXRX_SIZE);
+                ftdi_uart->ftdi, ftdi_uart->buffer_tx_ptr, FTDI_UART_MAX_TXRX_SIZE, 0);
             if(length > 0) {
                 ftdi_uart_tx_dma(ftdi_uart, ftdi_uart->buffer_tx_ptr, length);
             } else {

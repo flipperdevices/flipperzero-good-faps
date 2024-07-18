@@ -136,8 +136,8 @@ uint32_t ftdi_set_rx_buf(Ftdi* ftdi, const uint8_t* data, uint32_t size) {
     return furi_stream_buffer_send(ftdi->stream_rx, data, size, 0);
 }
 
-uint32_t ftdi_get_rx_buf(Ftdi* ftdi, uint8_t* data, uint32_t size) {
-    return furi_stream_buffer_receive(ftdi->stream_rx, data, size, 0);
+uint32_t ftdi_get_rx_buf(Ftdi* ftdi, uint8_t* data, uint32_t size, uint32_t timeout) {
+    return furi_stream_buffer_receive(ftdi->stream_rx, data, size, timeout);
 }
 
 uint32_t ftdi_available_rx_buf(Ftdi* ftdi) {
@@ -147,7 +147,7 @@ uint32_t ftdi_available_rx_buf(Ftdi* ftdi) {
 void ftdi_loopback(Ftdi* ftdi) {
     //todo fix size
     uint8_t data[128];
-    uint32_t len = ftdi_get_rx_buf(ftdi, data, 128);
+    uint32_t len = ftdi_get_rx_buf(ftdi, data, 128, 0);
     ftdi_set_tx_buf(ftdi, data, len);
 }
 

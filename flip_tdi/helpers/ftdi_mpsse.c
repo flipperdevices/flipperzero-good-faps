@@ -8,6 +8,8 @@
 
 typedef void (*FtdiMpsseGpioO)(uint8_t state);
 
+#define  FTDI_MPSSE_TIMEOUT 5000
+
 struct FtdiMpsse {
     Ftdi* ftdi;
     uint8_t gpio_state;
@@ -138,8 +140,8 @@ void ftdi_mpsse_free(FtdiMpsse* ftdi_mpsse) {
 
 uint8_t ftdi_mpsse_get_data_stream(FtdiMpsse* ftdi_mpsse) {
     uint8_t data = 0;
-    //Todo add timeout
-    ftdi_get_rx_buf(ftdi_mpsse->ftdi, &data, 1);
+    ftdi_get_rx_buf(ftdi_mpsse->ftdi, &data, 1, FTDI_MPSSE_TIMEOUT);
+    //FURI_LOG_RAW_I("0x%02X ", data);
     return data;
 }
 
@@ -167,6 +169,11 @@ static inline void ftdi_mpsse_skeep_data(FtdiMpsse* ftdi_mpsse) {
     }
 }
 
+static inline void ftdi_mpsse_immediate(FtdiMpsse* ftdi_mpsse) {
+    if(ftdi_mpsse->callback_immediate) {
+        ftdi_mpsse->callback_immediate(ftdi_mpsse->context_immediate);
+    }
+}
 void ftdi_mpsse_state_machine(FtdiMpsse* ftdi_mpsse) {
     uint8_t data = ftdi_mpsse_get_data_stream(ftdi_mpsse);
     uint8_t gpio_state_io = 0xFF;
@@ -198,9 +205,7 @@ void ftdi_mpsse_state_machine(FtdiMpsse* ftdi_mpsse) {
         break;
     case FtdiMpsseCommandsSendImmediate: // 0x87  Send immediate */
         //tx data to host callback
-        if(ftdi_mpsse->callback_immediate) {
-            ftdi_mpsse->callback_immediate(ftdi_mpsse->context_immediate);
-        }
+        ftdi_mpsse_immediate(ftdi_mpsse);
         break;
     case FtdiMpsseCommandsWriteBytesPveMsb: // 0x10  Write bytes with positive edge clock, MSB first */
         //spi mode 1,3
@@ -374,24 +379,30 @@ void ftdi_mpsse_state_machine(FtdiMpsse* ftdi_mpsse) {
         break;
     case FtdiMpsseCommandsLoopbackStart: // 0x84  Enable loopback */
         ftdi_mpsse->is_loopback = true;
+        ftdi_mpsse_immediate(ftdi_mpsse);
         break;
     case FtdiMpsseCommandsLoopbackEnd: // 0x85  Disable loopback */
         ftdi_mpsse->is_loopback = false;
+        ftdi_mpsse_immediate(ftdi_mpsse);
         break;
     case FtdiMpsseCommandsSetTckDivisor: // 0x86  Set clock */
-
+        ftdi_mpsse_immediate(ftdi_mpsse);
         break;
     case FtdiMpsseCommandsDisDiv5: // 0x8a  Disable divide by 5 */
         ftdi_mpsse->is_div5 = false;
+        ftdi_mpsse_immediate(ftdi_mpsse);
         break;
     case FtdiMpsseCommandsEnDiv5: // 0x8b  Enable divide by 5 */
         ftdi_mpsse->is_div5 = true;
+        ftdi_mpsse_immediate(ftdi_mpsse);
         break;
     case FtdiMpsseCommandsEnableClk3Phase: // 0x8c  Enable 3-phase data clocking (I2C) */
         ftdi_mpsse->is_clk3phase = true;
+        ftdi_mpsse_immediate(ftdi_mpsse);
         break;
     case FtdiMpsseCommandsDisableClk3Phase: // 0x8d  Disable 3-phase data clocking */
         ftdi_mpsse->is_clk3phase = false;
+        ftdi_mpsse_immediate(ftdi_mpsse);
         break;
     case FtdiMpsseCommandsClkBitsNoData: // 0x8e  Allows JTAG clock to be output w/o data */
         //not supported
@@ -407,9 +418,11 @@ void ftdi_mpsse_state_machine(FtdiMpsse* ftdi_mpsse) {
         break;
     case FtdiMpsseCommandsEnableClkAdaptive: // 0x96  Enable JTAG adaptive clock for ARM */
         ftdi_mpsse->is_adaptive = true;
+        ftdi_mpsse_immediate(ftdi_mpsse);
         break;
     case FtdiMpsseCommandsDisableClkAdaptive: // 0x97  Disable JTAG adaptive clock */
         ftdi_mpsse->is_adaptive = false;
+        ftdi_mpsse_immediate(ftdi_mpsse);
         break;
     case FtdiMpsseCommandsClkCountWaitOnHigh: // 0x9c  Clock byte cycles until GPIOL1 is high */
         //not supported

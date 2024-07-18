@@ -15,7 +15,7 @@ uint32_t ftdi_set_tx_buf(Ftdi* ftdi, const uint8_t* data, uint32_t size);
 uint32_t ftdi_get_tx_buf(Ftdi* ftdi, uint8_t* data, uint32_t size);
 uint32_t ftdi_available_tx_buf(Ftdi* ftdi);
 uint32_t ftdi_set_rx_buf(Ftdi* ftdi, const uint8_t* data, uint32_t size);
-uint32_t ftdi_get_rx_buf(Ftdi* ftdi, uint8_t* data, uint32_t size);
+uint32_t ftdi_get_rx_buf(Ftdi* ftdi, uint8_t* data, uint32_t size, uint32_t timeout);
 uint32_t ftdi_available_rx_buf(Ftdi* ftdi);
 void ftdi_loopback(Ftdi* ftdi);
 void ftdi_set_baudrate(Ftdi* ftdi, uint16_t value, uint16_t index);

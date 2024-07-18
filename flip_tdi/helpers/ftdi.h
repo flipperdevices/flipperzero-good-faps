@@ -3,11 +3,11 @@
 
 typedef struct Ftdi Ftdi;
 
-typedef void (*FtdiCallbackLatencyTimer)(void* context);
+typedef void (*FtdiCallbackTxImmediate)(void* context);
 
 Ftdi* ftdi_alloc(void);
 void ftdi_free(Ftdi* ftdi);
-void ftdi_set_callback_latency_timer(Ftdi* ftdi, FtdiCallbackLatencyTimer callback, void* context);
+void ftdi_set_callback_tx_immediate(Ftdi* ftdi, FtdiCallbackTxImmediate callback, void* context);
 void ftdi_reset_purge_rx(Ftdi* ftdi);
 void ftdi_reset_purge_tx(Ftdi* ftdi);
 void ftdi_reset_sio(Ftdi* ftdi);

@@ -21,16 +21,16 @@ struct FtdiMpsse {
     FtdiMpsseGpioO gpio_o[8];
     uint8_t gpio_mask_old;
 
-    FtdiCallbackLatencyTimer callback_latency_timer;
-    void* context_latency_timer;
+    FtdiMpsseCallbackImmediate callback_immediate;
+    void* context_immediate;
 };
 
 void ftdi_mpsse_gpio_set_callback(
     FtdiMpsse* ftdi_mpsse,
-    FtdiCallbackLatencyTimer callback,
+    FtdiMpsseCallbackImmediate callback,
     void* context) {
-    ftdi_mpsse->callback_latency_timer = callback;
-    ftdi_mpsse->context_latency_timer = context;
+    ftdi_mpsse->callback_immediate = callback;
+    ftdi_mpsse->context_immediate = context;
 }
 
 void ftdi_mpsse_gpio_set_direction(FtdiMpsse* ftdi_mpsse) {
@@ -188,21 +188,18 @@ void ftdi_mpsse_state_machine(FtdiMpsse* ftdi_mpsse) {
         break;
     case FtdiMpsseCommandsGetBitsLow: // 0x81  Get LSB GPIO output */
         //Read GPIO
-        //add to buffer
-        //read Gpio
         gpio_state_io = ftdi_mpsse_gpio_get();
         ftdi_mpssse_set_data_stream(ftdi_mpsse, &gpio_state_io, 1);
         break;
     case FtdiMpsseCommandsGetBitsHigh: // 0x83  Get MSB GPIO output */
         //Todo not supported
-        //add to buffer FF
         gpio_state_io = 0xFF;
         ftdi_mpssse_set_data_stream(ftdi_mpsse, &gpio_state_io, 1);
         break;
     case FtdiMpsseCommandsSendImmediate: // 0x87  Send immediate */
-        //tx data to host add callback
-        if(ftdi_mpsse->callback_latency_timer) {
-            ftdi_mpsse->callback_latency_timer(ftdi_mpsse->context_latency_timer);
+        //tx data to host callback
+        if(ftdi_mpsse->callback_immediate) {
+            ftdi_mpsse->callback_immediate(ftdi_mpsse->context_immediate);
         }
         break;
     case FtdiMpsseCommandsWriteBytesPveMsb: // 0x10  Write bytes with positive edge clock, MSB first */

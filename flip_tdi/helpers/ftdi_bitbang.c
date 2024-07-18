@@ -7,7 +7,6 @@
 #include <furi_hal_bus.h>
 #include <furi_hal_resources.h>
 #include "ftdi_gpio.h"
-#include "ftdi_mpsse.h"
 
 #define TAG "FTDI_BITBANG"
 
@@ -196,6 +195,10 @@ void ftdi_bitbang_free(FtdiBitbang* ftdi_bitbang) {
 
     free(ftdi_bitbang);
     ftdi_bitbang = NULL;
+}
+
+FtdiMpsse* ftdi_bitbang_get_mpsse_handle(FtdiBitbang* ftdi_bitbang) {
+    return ftdi_bitbang->ftdi_mpsse;
 }
 
 void ftdi_bitbang_set_gpio(FtdiBitbang* ftdi_bitbang, uint8_t gpio_mask) {

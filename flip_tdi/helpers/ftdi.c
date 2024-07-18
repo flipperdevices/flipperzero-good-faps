@@ -25,8 +25,8 @@ struct Ftdi {
     FtdiBitbang* ftdi_bitbang;
     FtdiLatencyTimer* ftdi_latency_timer;
 
-    FtdiCallbackLatencyTimer callback_latency_timer;
-    void* context_latency_timer;
+    FtdiCallbackTxImmediate callback_tx_immediate;
+    void* context_tx_immediate;
 };
 
 static bool ftdi_check_interface(Ftdi* ftdi, uint16_t index) {
@@ -35,10 +35,10 @@ static bool ftdi_check_interface(Ftdi* ftdi, uint16_t index) {
     return ((interface) == FTDI_INTERFACE_A) || ((interface) == FTDI_DRIVER_INTERFACE_A);
 }
 
-static void ftdi_callback_latency_timer(void* context) {
+static void ftdi_callback_tx_immediate(void* context) {
     Ftdi* ftdi = context;
-    if(ftdi->callback_latency_timer) {
-        ftdi->callback_latency_timer(ftdi->context_latency_timer);
+    if(ftdi->callback_tx_immediate) {
+        ftdi->callback_tx_immediate(ftdi->context_tx_immediate);
     }
 }
 
@@ -60,7 +60,7 @@ Ftdi* ftdi_alloc(void) {
     ftdi->ftdi_bitbang = ftdi_bitbang_alloc(ftdi);
     ftdi->ftdi_latency_timer = ftdi_latency_timer_alloc();
 
-    ftdi_latency_timer_set_callback(ftdi->ftdi_latency_timer, ftdi_callback_latency_timer, ftdi);
+    ftdi_latency_timer_set_callback(ftdi->ftdi_latency_timer, ftdi_callback_tx_immediate, ftdi);
     return ftdi;
 }
 
@@ -73,9 +73,23 @@ void ftdi_free(Ftdi* ftdi) {
     free(ftdi);
 }
 
-void ftdi_set_callback_latency_timer(Ftdi* ftdi, FtdiCallbackLatencyTimer callback, void* context) {
-    ftdi->callback_latency_timer = callback;
-    ftdi->context_latency_timer = context;
+void ftdi_switch_callback_tx_immediate(Ftdi* ftdi) {
+    FtdiMpsse* mpsse_handle = ftdi_bitbang_get_mpsse_handle(ftdi->ftdi_bitbang);
+    if(ftdi->bit_mode.MPSSE) {
+        ftdi_mpsse_gpio_set_callback(mpsse_handle, ftdi_callback_tx_immediate, ftdi);
+        ftdi_latency_timer_set_callback(ftdi->ftdi_latency_timer, NULL, NULL);
+        ftdi_latency_timer_enable(ftdi->ftdi_latency_timer, false);
+    } else {
+        ftdi_mpsse_gpio_set_callback(mpsse_handle, NULL, NULL);
+        ftdi_latency_timer_enable(ftdi->ftdi_latency_timer, true);
+        ftdi_latency_timer_set_callback(
+            ftdi->ftdi_latency_timer, ftdi_callback_tx_immediate, ftdi);
+    }
+}
+
+void ftdi_set_callback_tx_immediate(Ftdi* ftdi, FtdiCallbackTxImmediate callback, void* context) {
+    ftdi->callback_tx_immediate = callback;
+    ftdi->context_tx_immediate = context;
 }
 
 void ftdi_reset_purge_rx(Ftdi* ftdi) {
@@ -322,7 +336,7 @@ void ftdi_set_bitmode(Ftdi* ftdi, uint16_t value, uint16_t index) {
     memcpy(&ftdi->bit_mode, &bit_mode, sizeof(ftdi->bit_mode));
 
     // ftdi_bitbang_set_gpio(ftdi->ftdi_bitbang, 0);
-    ftdi_latency_timer_set_callback(ftdi->ftdi_latency_timer, ftdi_callback_latency_timer, ftdi);
+    ftdi_latency_timer_set_callback(ftdi->ftdi_latency_timer, ftdi_callback_tx_immediate, ftdi);
 
     if(bit_mode == 0x00) { // Reset
         ftdi_uart_enable(ftdi->ftdi_uart, true); // UART mode
@@ -342,6 +356,8 @@ void ftdi_set_bitmode(Ftdi* ftdi, uint16_t value, uint16_t index) {
     } else {
         ftdi_bitbang_enable(ftdi->ftdi_bitbang, ftdi->bit_mode);
     }
+
+    ftdi_switch_callback_tx_immediate(ftdi);
 }
 
 void ftdi_set_latency_timer(Ftdi* ftdi, uint16_t value, uint16_t index) {

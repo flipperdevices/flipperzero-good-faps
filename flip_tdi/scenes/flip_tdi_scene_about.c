@@ -26,8 +26,10 @@ void flip_tdi_scene_about_on_enter(void* context) {
 
     furi_string_cat_printf(temp_str, "\e#%s\n", "What it can do:");
     furi_string_cat_printf(temp_str, "- Emulate FT232H VCP mode\n");
-    furi_string_cat_printf(temp_str, "- Emulate FT232H Async bitbang mode, max freq 100kHz \n");
-    furi_string_cat_printf(temp_str, "- Emulate FT232H Sync bitbang mode, max freq 100kHz \n");
+    furi_string_cat_printf(temp_str, "- Emulate FT232H Async bitbang mode, max freq 50kHz \n");
+    furi_string_cat_printf(temp_str, "- Emulate FT232H Sync bitbang mode, max freq 70kHz \n");
+    furi_string_cat_printf(temp_str, "- Emulate FT232H MPSSE mode, max freq 70kHz \n");
+    furi_string_cat_printf(temp_str, "- Emulate FT232H SPI mode, fix freq 2MHz \n");
 
     widget_add_text_box_element(
         app->widget,

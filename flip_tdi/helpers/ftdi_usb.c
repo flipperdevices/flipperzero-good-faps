@@ -111,7 +111,7 @@ static int32_t ftdi_thread_worker(void* context) {
             if(flags & EventTxComplete) {
                 ftdi_usb->tx_complete = true;
                 if((ftdi_usb->tx_immediate) ||
-                   (ftdi_available_tx_buf(ftdi_usb->ftdi) >= FTDI_USB_TX_MAX_SIZE)) {
+                   (ftdi_available_tx_buf(ftdi_usb->ftdi) != 0)) {
                     ftdi_reset_latency_timer(ftdi_usb->ftdi);
                     flags |= EventTx;
                 }

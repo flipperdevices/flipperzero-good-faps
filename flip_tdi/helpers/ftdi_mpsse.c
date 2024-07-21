@@ -245,6 +245,7 @@ void ftdi_mpsse_state_machine(FtdiMpsse* ftdi_mpsse) {
         ftdi_mpsse->data_size = ftdi_mpsse_get_data_size(ftdi_mpsse);
         //read data
         ftdi_mpsse_get_data(ftdi_mpsse);
+        ftdi_mpsse_data_write_bytes_pve_msb(ftdi_mpsse->data_buf, ftdi_mpsse->data_buf_count_byte);
         break;
     case FtdiMpsseCommandsWriteBytesNveMsb: // 0x11  Write bytes with negative edge clock, MSB first */
         //spi mode 0,2
@@ -270,12 +271,14 @@ void ftdi_mpsse_state_machine(FtdiMpsse* ftdi_mpsse) {
         ftdi_mpsse->data_size = ftdi_mpsse_get_data_size(ftdi_mpsse);
         //read data
         ftdi_mpsse_get_data(ftdi_mpsse);
+        ftdi_mpsse_data_write_bytes_pve_lsb(ftdi_mpsse->data_buf, ftdi_mpsse->data_buf_count_byte);
         break;
     case FtdiMpsseCommandsWriteBytesNveLsb: // 0x19  Write bytes with negative edge clock, LSB first */
         //spi mode 0,2
         ftdi_mpsse->data_size = ftdi_mpsse_get_data_size(ftdi_mpsse);
         //read data
         ftdi_mpsse_get_data(ftdi_mpsse);
+        ftdi_mpsse_data_write_bytes_nve_lsb(ftdi_mpsse->data_buf, ftdi_mpsse->data_buf_count_byte);
         break;
     case FtdiMpsseCommandsWriteBitsPveLsb: // 0x1a  Write bits with positive edge clock, LSB first */
         //not supported
@@ -292,23 +295,35 @@ void ftdi_mpsse_state_machine(FtdiMpsse* ftdi_mpsse) {
     case FtdiMpsseCommandsReadBytesPveMsb: // 0x20  Read bytes with positive edge clock, MSB first */
         //spi mode 1,3
         ftdi_mpsse->data_size = ftdi_mpsse_get_data_size(ftdi_mpsse);
-        //write data
-        //ftdi_mpssse_set_data_stream(ftdi_mpsse, 0xFF, ftdi_mpsse->data_size);
+        if(ftdi_mpsse->data_size >= FTDI_MPSSE_TX_RX_SIZE) {
+            ftdi_mpsse->error = FtdiMpsseErrorTxOverflow;
+            FURI_LOG_E(TAG, "Tx buffer overflow");
+            // gpio_state_io = 0xFF;
+            // do{
+            //     ftdi_mpssse_set_data_stream(ftdi_mpsse, &gpio_state_io, 1);
+            // } while (ftdi_mpsse->data_size--);
+        } else {
+            ftdi_mpsse->data_size++;
+            ftdi_mpsse_data_read_bytes_pve_msb(ftdi_mpsse->data_buf, ftdi_mpsse->data_size);
+            ftdi_mpssse_set_data_stream(ftdi_mpsse, ftdi_mpsse->data_buf, ftdi_mpsse->data_size);
+            ftdi_mpsse_immediate(ftdi_mpsse);
+        }
         break;
     case FtdiMpsseCommandsReadBytesNveMsb: // 0x24  Read bytes with negative edge clock, MSB first */
         //spi mode 0,2
         ftdi_mpsse->data_size = ftdi_mpsse_get_data_size(ftdi_mpsse);
-        if(ftdi_mpsse->data_size >=FTDI_MPSSE_TX_RX_SIZE) {
+        if(ftdi_mpsse->data_size >= FTDI_MPSSE_TX_RX_SIZE) {
             ftdi_mpsse->error = FtdiMpsseErrorTxOverflow;
             FURI_LOG_E(TAG, "Tx buffer overflow");
-            gpio_state_io = 0xFF;
-            do{
-                ftdi_mpssse_set_data_stream(ftdi_mpsse, &gpio_state_io, 1);
-            } while (ftdi_mpsse->data_size--);
+            // gpio_state_io = 0xFF;
+            // do{
+            //     ftdi_mpssse_set_data_stream(ftdi_mpsse, &gpio_state_io, 1);
+            // } while (ftdi_mpsse->data_size--);
         } else {
             ftdi_mpsse->data_size++;
             ftdi_mpsse_data_read_bytes_nve_msb(ftdi_mpsse->data_buf, ftdi_mpsse->data_size);
             ftdi_mpssse_set_data_stream(ftdi_mpsse, ftdi_mpsse->data_buf, ftdi_mpsse->data_size);
+            ftdi_mpsse_immediate(ftdi_mpsse);
         }
 
         //write data
@@ -329,14 +344,32 @@ void ftdi_mpsse_state_machine(FtdiMpsse* ftdi_mpsse) {
     case FtdiMpsseCommandsReadBytesPveLsb: // 0x28  Read bytes with positive edge clock, LSB first */
         //spi mode 1,3
         ftdi_mpsse->data_size = ftdi_mpsse_get_data_size(ftdi_mpsse);
-        //write data
-        //ftdi_mpssse_set_data_stream(ftdi_mpsse, 0xFF, ftdi_mpsse->data_size);
+        if(ftdi_mpsse->data_size >= FTDI_MPSSE_TX_RX_SIZE) {
+            ftdi_mpsse->error = FtdiMpsseErrorTxOverflow;
+            FURI_LOG_E(TAG, "Tx buffer overflow");
+            // gpio_state_io = 0xFF;
+            // do{
+            //     ftdi_mpssse_set_data_stream(ftdi_mpsse, &gpio_state_io, 1);
+            // } while (ftdi_mpsse->data_size--);
+        } else {
+            ftdi_mpsse->data_size++;
+            ftdi_mpsse_data_read_bytes_pve_lsb(ftdi_mpsse->data_buf, ftdi_mpsse->data_size);
+            ftdi_mpssse_set_data_stream(ftdi_mpsse, ftdi_mpsse->data_buf, ftdi_mpsse->data_size);
+            ftdi_mpsse_immediate(ftdi_mpsse);
+        }
         break;
     case FtdiMpsseCommandsReadBytesNveLsb: // 0x2c  Read bytes with negative edge clock, LSB first */
         //spi mode 0,2
         ftdi_mpsse->data_size = ftdi_mpsse_get_data_size(ftdi_mpsse);
-        //write data
-        //ftdi_mpssse_set_data_stream(ftdi_mpsse, 0xFF, ftdi_mpsse->data_size);
+        if(ftdi_mpsse->data_size >= FTDI_MPSSE_TX_RX_SIZE) {
+            ftdi_mpsse->error = FtdiMpsseErrorTxOverflow;
+            FURI_LOG_E(TAG, "Tx buffer overflow");
+        } else {
+            ftdi_mpsse->data_size++;
+            ftdi_mpsse_data_read_bytes_nve_lsb(ftdi_mpsse->data_buf, ftdi_mpsse->data_size);
+            ftdi_mpssse_set_data_stream(ftdi_mpsse, ftdi_mpsse->data_buf, ftdi_mpsse->data_size);
+            ftdi_mpsse_immediate(ftdi_mpsse);
+        }
         break;
     case FtdiMpsseCommandsReadBitsPveLsb: // 0x2a  Read bits with positive edge clock, LSB first */
         //not supported

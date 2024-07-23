@@ -5,10 +5,10 @@
 #include "mfkey.h"
 #include <nfc/protocols/mf_classic/mf_classic.h>
 
-#define LF_POLY_ODD (0x29CE5C)
+#define LF_POLY_ODD  (0x29CE5C)
 #define LF_POLY_EVEN (0x870804)
-#define BIT(x, n) ((x) >> (n) & 1)
-#define BEBIT(x, n) BIT(x, (n) ^ 24)
+#define BIT(x, n)    ((x) >> (n) & 1)
+#define BEBIT(x, n)  BIT(x, (n) ^ 24)
 #define SWAPENDIAN(x) \
     ((x) = ((x) >> 8 & 0xff00ff) | ((x) & 0xff00ff) << 8, (x) = (x) >> 16 | (x) << 16)
 
@@ -192,13 +192,15 @@ uint8_t napi_lfsr_rollback_bit(struct Crypto1State* s, uint32_t in, int fb) {
 uint32_t napi_lfsr_rollback_word(struct Crypto1State* s, uint32_t in, int fb) {
     int i;
     uint32_t ret = 0;
-    for(i = 31; i >= 0; --i) ret |= napi_lfsr_rollback_bit(s, BEBIT(in, i), fb) << (i ^ 24);
+    for(i = 31; i >= 0; --i)
+        ret |= napi_lfsr_rollback_bit(s, BEBIT(in, i), fb) << (i ^ 24);
     return ret;
 }
 
 static inline uint32_t prng_successor(uint32_t x, uint32_t n) {
     SWAPENDIAN(x);
-    while(n--) x = x >> 1 | (x >> 16 ^ x >> 18 ^ x >> 19 ^ x >> 21) << 31;
+    while(n--)
+        x = x >> 1 | (x >> 16 ^ x >> 18 ^ x >> 19 ^ x >> 21) << 31;
     return SWAPENDIAN(x);
 }
 

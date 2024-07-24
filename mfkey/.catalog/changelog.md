@@ -1,3 +1,5 @@
+## 2.7
+ - Mfkey32 recovery is 30% faster, fix UI and slowdown bugs
 ## 2.6
  - Version bump for catalog build system
 ## 2.5

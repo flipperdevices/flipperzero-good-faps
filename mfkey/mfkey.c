@@ -394,9 +394,6 @@ int calculate_msb_tables(
 
 void** allocate_blocks(const size_t* block_sizes, int num_blocks) {
     void** block_pointers = malloc(num_blocks * sizeof(void*));
-    if(block_pointers == NULL) {
-        return NULL;
-    }
 
     for(int i = 0; i < num_blocks; i++) {
         if(memmgr_heap_get_max_free_block() < block_sizes[i]) {
@@ -409,14 +406,6 @@ void** allocate_blocks(const size_t* block_sizes, int num_blocks) {
         }
 
         block_pointers[i] = malloc(block_sizes[i]);
-        if(block_pointers[i] == NULL) {
-            // Allocation failed, free previously allocated blocks
-            for(int j = 0; j < i; j++) {
-                free(block_pointers[j]);
-            }
-            free(block_pointers);
-            return NULL;
-        }
     }
 
     return block_pointers;
@@ -684,9 +673,10 @@ static void render_callback(Canvas* const canvas, void* ctx) {
     ProgramState* program_state = ctx;
     furi_mutex_acquire(program_state->mutex, FuriWaitForever);
     char draw_str[44] = {};
-    canvas_clear(canvas);
+
     canvas_draw_frame(canvas, 0, 0, 128, 64);
     canvas_draw_frame(canvas, 0, 15, 128, 64);
+
     canvas_set_font(canvas, FontPrimary);
     canvas_draw_str_aligned(canvas, 5, 4, AlignLeft, AlignTop, "MFKey");
     snprintf(draw_str, sizeof(draw_str), "RAM: %zub", memmgr_get_free_heap());
@@ -868,7 +858,7 @@ int32_t mfkey_main() {
     furi_thread_free(program_state->mfkeythread);
     view_port_enabled_set(view_port, false);
     gui_remove_view_port(gui, view_port);
-    furi_record_close("gui");
+    furi_record_close(RECORD_GUI);
     view_port_free(view_port);
     furi_message_queue_free(event_queue);
     furi_mutex_free(program_state->mutex);

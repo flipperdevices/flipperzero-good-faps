@@ -4,6 +4,7 @@ The Air Mouse app turns Flipper Zero with the module into a computer mouse. Cont
 
 ## Controls
 
-- Left-click: press the OK button.
-- Right-click: press the UP button.
-- Scrolling: press and hold the LEFT button and tilt your Flipper Zero.
+- Left-click: press the Left button.
+- Middle-click: press the OK button.
+- Right-click: press the Right button.
+- Scrolling: press and hold the UP button and tilt your Flipper Zero.

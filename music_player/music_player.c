@@ -28,7 +28,7 @@ typedef struct {
 
 typedef struct {
     MusicPlayerModel* model;
-    FuriMutex** model_mutex;
+    FuriMutex* model_mutex;
 
     FuriMessageQueue* input_queue;
 
@@ -322,7 +322,7 @@ int32_t music_player_app(void* p) {
 
             DialogsFileBrowserOptions browser_options;
             dialog_file_browser_set_basic_options(
-                &browser_options, MUSIC_PLAYER_APP_EXTENSION, &I_music_10px);
+                &browser_options, MUSIC_PLAYER_APP_EXTENSION, &I_music_player_icon_10px);
             browser_options.hide_ext = false;
             browser_options.base_path = STORAGE_APP_DATA_PATH_PREFIX;
 

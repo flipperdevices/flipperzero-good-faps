@@ -10,22 +10,22 @@
 #include <flipper_application/flipper_application.h>
 
 // TODO: Remove defines that are not needed
-#define KEYS_DICT_SYSTEM_PATH EXT_PATH("nfc/assets/mf_classic_dict.nfc")
-#define KEYS_DICT_USER_PATH EXT_PATH("nfc/assets/mf_classic_dict_user.nfc")
-#define MF_CLASSIC_NONCE_PATH EXT_PATH("nfc/.mfkey32.log")
+#define KEYS_DICT_SYSTEM_PATH        EXT_PATH("nfc/assets/mf_classic_dict.nfc")
+#define KEYS_DICT_USER_PATH          EXT_PATH("nfc/assets/mf_classic_dict_user.nfc")
+#define MF_CLASSIC_NONCE_PATH        EXT_PATH("nfc/.mfkey32.log")
 #define MF_CLASSIC_NESTED_NONCE_PATH EXT_PATH("nfc/.nested")
-#define TAG "MFKey"
-#define MAX_NAME_LEN 32
-#define MAX_PATH_LEN 64
+#define TAG                          "MFKey"
+#define MAX_NAME_LEN                 32
+#define MAX_PATH_LEN                 64
 
-#define LF_POLY_ODD (0x29CE5C)
+#define LF_POLY_ODD  (0x29CE5C)
 #define LF_POLY_EVEN (0x870804)
-#define CONST_M1_1 (LF_POLY_EVEN << 1 | 1)
-#define CONST_M2_1 (LF_POLY_ODD << 1)
-#define CONST_M1_2 (LF_POLY_ODD)
-#define CONST_M2_2 (LF_POLY_EVEN << 1 | 1)
-#define BIT(x, n) ((x) >> (n) & 1)
-#define BEBIT(x, n) BIT(x, (n) ^ 24)
+#define CONST_M1_1   (LF_POLY_EVEN << 1 | 1)
+#define CONST_M2_1   (LF_POLY_ODD << 1)
+#define CONST_M1_2   (LF_POLY_ODD)
+#define CONST_M2_2   (LF_POLY_EVEN << 1 | 1)
+#define BIT(x, n)    ((x) >> (n) & 1)
+#define BEBIT(x, n)  BIT(x, (n) ^ 24)
 #define SWAPENDIAN(x) \
     ((x) = ((x) >> 8 & 0xff00ff) | ((x) & 0xff00ff) << 8, (x) = (x) >> 16 | (x) << 16)
 

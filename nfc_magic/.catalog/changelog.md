@@ -1,3 +1,17 @@
+## 1.11
+ - Fixed Mifare Ultralight types with latest API update
+
+## 1.10
+ - Fixed the user dictionary dictionary attack results being discarded
+
+## 1.9
+ - Get revision, get config moved into main Gen4 menu
+ - New function: Set Gen4 card shadow mode
+ - New function: Set Gen4 card direct write to block 0 mode
+ - Fixed: back button did not allow to exit from some scenes while the card is next to the Flipper HF RFID antenna
+ - Gen4 protocol refactor
+ - Gen4 UI refactor
+
 ## 1.8
  - Ultralight Various fixes and improvements
 

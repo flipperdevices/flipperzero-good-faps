@@ -1,4 +1,5 @@
 ## 1.4
+ - Fixed UI rendering bug related to line breaks
  - Removed call to legacy SDK API
 ## 1.3
    XM25QH64C and XM25QH128A flash chip support added

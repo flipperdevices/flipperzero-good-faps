@@ -1,3 +1,5 @@
+## 1.8
+ - Removed call to legacy SDK API
 ## 1.7
  - Added external CC1101 radio modules support
 ## 1.6

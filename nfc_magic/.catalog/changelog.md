@@ -1,3 +1,6 @@
+## 1.12
+ - Removed call to legacy SDK API
+
 ## 1.11
  - Fixed Mifare Ultralight types with latest API update
 

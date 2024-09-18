@@ -6,10 +6,10 @@
 
 #define TAG "FTDI"
 
-#define FTDI_TX_RX_BUF_SIZE (4096UL)
-#define FTDI_INTERFACE_A (0x01UL)
+#define FTDI_TX_RX_BUF_SIZE     (4096UL)
+#define FTDI_INTERFACE_A        (0x01UL)
 #define FTDI_DRIVER_INTERFACE_A (0x00UL)
-#define FTDI_UART_MAX_TX_SIZE (64UL)
+#define FTDI_UART_MAX_TX_SIZE   (64UL)
 
 struct Ftdi {
     FtdiModemStatus status;
@@ -182,8 +182,8 @@ Step 2 - extract the sub-integer divisor; 16 = 1, 15 = 0, 14 = 1 => sub-integer 
 Step 3 - extract the integer divisor: 13:0 = 0035 Hex = 53 Dec
 Step 4 - combine the integer and sub-integer divisors: 53.625 Dec
 Step 5 - divide 3000000 by the divisor => 3000000/53.625 = 55944 baud
-
 */
+
 void ftdi_set_baudrate(Ftdi* ftdi, uint16_t value, uint16_t index) {
     if(!ftdi_check_interface(ftdi, index)) {
         return;
@@ -220,7 +220,7 @@ void ftdi_set_baudrate(Ftdi* ftdi, uint16_t value, uint16_t index) {
 
     ftdi_uart_set_baudrate(ftdi->ftdi_uart, baudrate);
     ftdi_bitbang_set_speed(ftdi->ftdi_bitbang, ftdi->bitband_speed);
-
+#ifdef FTDI_DEBUG
     furi_log_puts("ftdi_set_baudrate=");
     char tmp_str2[] = "4294967295";
     itoa(baudrate, tmp_str2, 10);
@@ -229,6 +229,7 @@ void ftdi_set_baudrate(Ftdi* ftdi, uint16_t value, uint16_t index) {
     itoa(ftdi->bitband_speed, tmp_str2, 10);
     furi_log_puts(tmp_str2);
     furi_log_puts("\r\n");
+#endif
 }
 
 void ftdi_set_data_config(Ftdi* ftdi, uint16_t value, uint16_t index) {
@@ -248,83 +249,6 @@ void ftdi_set_flow_ctrl(Ftdi* ftdi, uint16_t index) {
         //ToDo: no implement FtdiFlowControl
     }
 }
-
-/*
-    def control_set_bitmode(self, wValue: int, wIndex: int,
-                            data: array) -> None:
-        direction = wValue & 0xff
-        bitmode = (wValue >> 8) & 0x7F
-        mode = self.BitMode(bitmode).name
-        self.log.info('> ftdi bitmode %s: %s', mode, f'{direction:08b}')
-        self._bitmode = bitmode
-        with self._cmd_q.lock:
-            self._cmd_q.q.append((self.Command.SET_BITMODE, self._bitmode))
-            self._cmd_q.event.set()
-        # be sure to wait for the command to be popped out before resuming
-        loop = 10  # is something goes wrong, do not loop forever
-        while loop:
-            if not self._cmd_q.q:
-                # command queue has been fully processed
-                break
-            if not self._resume:
-                # if the worker threads are ending or have ended, abort
-                self.log.warning('Premature end of worker')
-                return
-            loop -= 1
-            # kepp some time for the commands to be processed
-            sleep(0.05)
-        else:
-            raise RuntimeError(f'Command {self._cmd_q.q[-1][0].name} '
-                               f'not handled')
-        if bitmode == self.BitMode.CBUS:
-            self._cbus_dir = direction >> 4
-            mask = (1 << self._parent.properties.cbuswidth) - 1
-            self._cbus_dir &= mask
-            # clear output pins
-            self._cbus &= ~self._cbus_dir & 0xF
-            # update output pins
-            output = direction & 0xF & self._cbus_dir
-            self._cbus |= output
-            self.log.info('> ftdi cbus dir %s, io %s, mask %s',
-                          f'{self._cbus_dir:04b}',
-                          f'{self._cbus:04b}',
-                          f'{mask:04b}')
-        elif bitmode == self.BitMode.RESET:
-            self._direction = ((1 << VirtFtdiPort.UART_PINS.TXD) |
-                               (1 << VirtFtdiPort.UART_PINS.RTS) |
-                               (1 << VirtFtdiPort.UART_PINS.DTR))
-            self._pins[0].set_function(VirtualFtdiPin.Function.STREAM)
-            self._pins[1].set_function(VirtualFtdiPin.Function.STREAM)
-            for pin in self._pins[2:]:
-                pin.set_function(VirtualFtdiPin.Function.GPIO)
-        else:
-            self._direction = direction
-            for pin in self._pins:
-                pin.set_function(VirtualFtdiPin.Function.GPIO)
-        if bitmode == self.BitMode.MPSSE:
-            for pin in self._pins:
-                pin.set_function(VirtualFtdiPin.Function.GPIO)
-            if not self._mpsse:
-                self._mpsse = VirtMpsseTracer(self, self._parent.version)
-*/
-
-//buf0 = 0x02  # magic constant, no idea for now
-//     if self._bitmode == self.BitMode.RESET:
-//         cts = 0x01 if self._gpio & 0x08 else 0
-//         dtr = 0x02 if self._gpio & 0x20 else 0
-//         ri = 0x04 if self._gpio & 0x80 else 0
-//         dcd = 0x08 if self._gpio & 0x40 else 0
-//         buf0 |= cts | dsr | ri | dcd
-//     else:
-//         # another magic constant
-//         buf0 |= 0x30
-//     buf1 = 0
-//     rx_fifo = self._fifos.rx
-//     with rx_fifo.lock:
-//         if not rx_fifo.q:
-//             # TX empty -> flag THRE & TEMT ("TX empty")
-//             buf1 |= 0x40 | 0x20
-//     return buf0, buf1
 
 void ftdi_set_bitmode(Ftdi* ftdi, uint16_t value, uint16_t index) {
     if(!ftdi_check_interface(ftdi, index)) {
@@ -375,81 +299,6 @@ void ftdi_reset_latency_timer(Ftdi* ftdi) {
     ftdi_latency_timer_reset(ftdi->ftdi_latency_timer);
 }
 
-// FTDI modem status
-
-// Layout of the first byte:
-//     - B0..B3 - must be 0
-//     - B4       Clear to send (CTS)
-//                  0 = inactive
-//                  1 = active
-//     - B5       Data set ready (DTR)
-//                  0 = inactive
-//                  1 = active
-//     - B6       Ring indicator (RI)
-//                  0 = inactive
-//                  1 = active
-//     - B7       Receive line signal detect (RLSD)
-//                  0 = inactive
-//                  1 = active
-
-//     Layout of the second byte:
-//     - B0       Data ready (DR)
-//     - B1       Overrun error (OE)
-//     - B2       Parity error (PE)
-//     - B3       Framing error (FE)
-//     - B4       Break interrupt (BI)
-//     - B5       Transmitter holding register (THRE)
-//     - B6       Transmitter empty (TEMT)
-//     - B7       Error in RCVR FIFO
-
-// void ftdi_get_modem_status(uint16_t* status) {
-//     FtdiModemStatus modem_status = {0};
-//     modem_status.RESERVED1 = 1;
-//     modem_status.TEMT = 1;
-//     modem_status.THRE = 1;
-
-//     *status = *((uint16_t*)&modem_status);
-// }
-
-// @property
-// def modem_status(self) -> Tuple[int, int]:
-//     # For some reason, B0 high nibble matches the LPC214x UART:UxMSR
-//     # B0.0  ?
-//     # B0.1  ?
-//     # B0.2  ?
-//     # B0.3  ?
-//     # B0.4  Clear to send (CTS)
-//     # B0.5  Data set ready (DTS)
-//     # B0.6  Ring indicator (RI)
-//     # B0.7  Receive line signal / Data carrier detect (RLSD/DCD)
-
-//     # For some reason, B1 exactly matches the LPC214x UART:UxLSR
-//     # B1.0  Data ready (DR)
-//     # B1.1  Overrun error (OE)
-//     # B1.2  Parity error (PE)
-//     # B1.3  Framing error (FE)
-//     # B1.4  Break interrupt (BI)
-//     # B1.5  Transmitter holding register (THRE)
-//     # B1.6  Transmitter empty (TEMT)
-//     # B1.7  Error in RCVR FIFO
-//     buf0 = 0x02  # magic constant, no idea for now
-//     if self._bitmode == self.BitMode.RESET:
-//         cts = 0x01 if self._gpio & 0x08 else 0
-//         dsr = 0x02 if self._gpio & 0x20 else 0
-//         ri = 0x04 if self._gpio & 0x80 else 0
-//         dcd = 0x08 if self._gpio & 0x40 else 0
-//         buf0 |= cts | dsr | ri | dcd
-//     else:
-//         # another magic constant
-//         buf0 |= 0x30
-//     buf1 = 0
-//     rx_fifo = self._fifos.rx
-//     with rx_fifo.lock:
-//         if not rx_fifo.q:
-//             # TX empty -> flag THRE & TEMT ("TX empty")
-//             buf1 |= 0x40 | 0x20
-//     return buf0, buf1
-
 uint16_t* ftdi_get_modem_status_uint16_t(Ftdi* ftdi) {
     return (uint16_t*)&ftdi->status;
 }
@@ -470,80 +319,3 @@ uint8_t ftdi_get_bitbang_gpio(Ftdi* ftdi) {
     ftdi_reset_purge_tx(ftdi);
     return ftdi_bitbang_get_gpio(ftdi->ftdi_bitbang);
 }
-
-/*
- def control_set_event_char(self, wValue: int, wIndex: int,
-                               data: array) -> None:
-        char = wValue & 0xFF
-        enable = bool(wValue >> 8)
-        self.log.info('> ftdi %sable event char: 0x%02x',
-                      'en' if enable else 'dis', char)
-
-    def control_set_error_char(self, wValue: int, wIndex: int,
-                               data: array) -> None:
-        char = wValue & 0xFF
-        enable = bool(wValue >> 8)
-        self.log.info('> ftdi %sable error char: 0x%02x',
-                      'en' if enable else 'dis', char)
-
-
-elif self._bitmode == self.BitMode.BITBANG:
-                    for byte in data:
-                        # only 8 LSBs are addressable through this command
-                        gpi = self._gpio & ~self._direction & 0xFF
-                        gpo = byte & self._direction & 0xFF
-                        msb = self._gpio & ~0xFF
-                        gpio = gpi | gpo | msb
-                        self._update_gpio(False, gpio)
-                        self.log.debug('. bbw %02x: %s',
-                                       self._gpio, f'{self._gpio:08b}')
-                elif self._bitmode == self.BitMode.SYNCBB:
-                    tx_fifo = self._fifos.tx
-                    lost = 0
-                    for byte in data:
-                        with tx_fifo.lock:
-                            free_count = tx_fifo.size - len(tx_fifo.q)
-                            if free_count > 0:
-                                tx_fifo.q.append(self._gpio & 0xFF)
-                            else:
-                                lost += 1
-                        # only 8 LSBs are addressable through this command
-                        gpi = self._gpio & ~self._direction & 0xFF
-                        gpo = byte & self._direction & 0xFF
-                        msb = self._gpio & ~0xFF
-                        gpio = gpi | gpo | msb
-                        self._update_gpio(False, gpio)
-                        self.log.debug('. bbw %02x: %s',
-                                       self._gpio, f'{self._gpio:08b}')
-                    if lost:
-                        self.log.debug('%d samples lost, TX full', lost)
-                else:
-                    try:
-                        mode = self.BitMode(self._bitmode).name
-                    except ValueError:
-                        mode = 'unknown'
-                    self.log.warning('Write buffer discarded, mode %s', mode)
-                    self.log.warning('. (%d) %s',
-                                     len(data), hexlify(data).decode())
-                            
-  def _tx_worker_generate(self, bitmode) -> None:
-        tx_fifo = self._fifos.tx
-        if bitmode == self.BitMode.BITBANG:
-            ts = now()
-            # how much time has elapsed since last background action
-            elapsed = ts-self._last_txw_ts
-            self._last_txw_ts = ts
-            # how many bytes should have been captured since last
-            # action
-            byte_count = round(self._baudrate*elapsed)
-            # fill the TX FIFO with as many bytes, stop if full
-            if byte_count:
-                with tx_fifo.lock:
-                    free_count = tx_fifo.size - len(tx_fifo.q)
-                    push_count = min(free_count, byte_count)
-                    tx_fifo.q.extend([self._gpio] * push_count)
-                self.log.debug('in %.3fms -> %d',
-                               elapsed*1000, push_count)
-
-
-*/

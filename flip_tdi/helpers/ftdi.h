@@ -1,6 +1,8 @@
 #pragma once
 #include "ftdi_usb_define.h"
 
+//#define FTDI_DEBUG
+
 typedef struct Ftdi Ftdi;
 
 typedef void (*FtdiCallbackTxImmediate)(void* context);
@@ -25,9 +27,6 @@ void ftdi_set_bitmode(Ftdi* ftdi, uint16_t value, uint16_t index);
 void ftdi_set_latency_timer(Ftdi* ftdi, uint16_t value, uint16_t index);
 uint8_t ftdi_get_latency_timer(Ftdi* ftdi);
 void ftdi_reset_latency_timer(Ftdi* ftdi);
-
-//void ftdi_get_modem_status(uint16_t *status);
-
 uint16_t* ftdi_get_modem_status_uint16_t(Ftdi* ftdi);
 FtdiModemStatus ftdi_get_modem_status(Ftdi* ftdi);
 void ftdi_set_modem_status(Ftdi* ftdi, FtdiModemStatus status);

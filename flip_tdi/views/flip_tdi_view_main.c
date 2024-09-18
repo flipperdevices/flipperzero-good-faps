@@ -1,21 +1,8 @@
 #include "flip_tdi_view_main.h"
 #include "../flip_tdi_app_i.h"
-//#include <flip_tdi_icons.h>
 
 #include <input/input.h>
 #include <gui/elements.h>
-
-// #define FIELD_FOUND_WEIGHT 5
-
-// typedef enum {
-//     NfcRfidDetectorTypeFieldPresenceNfc,
-//     NfcRfidDetectorTypeFieldPresenceRfid,
-// } NfcRfidDetectorTypeFieldPresence;
-
-// static const Icon* FlipTDIViewMainTypeIcons[] = {
-//     [NfcRfidDetectorTypeFieldPresenceNfc] = &I_NFC_detect_45x30,
-//     [NfcRfidDetectorTypeFieldPresenceRfid] = &I_Rfid_detect_45x30,
-// };
 
 struct FlipTDIViewMainType {
     View* view;
@@ -43,8 +30,7 @@ void flip_tdi_view_main_draw(Canvas* canvas, FlipTDIViewMainTypeModel* model) {
     canvas_set_color(canvas, ColorBlack);
 
     canvas_set_font(canvas, FontPrimary);
-    canvas_draw_str(canvas, 34, 10, "FlipTDI");
-
+    canvas_draw_icon(canvas, 0, 0, &I_flip_tdi);
     elements_button_right(canvas, "More");
 }
 

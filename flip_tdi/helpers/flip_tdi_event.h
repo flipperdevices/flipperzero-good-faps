@@ -2,7 +2,9 @@
 
 typedef enum {
     //SubmenuIndex
-    SubmenuIndexWiring = 10,
+    SubmenuIndexWiringUart = 10,
+    SubmenuIndexWiringSpi,
+    SubmenuIndexWiringGpio,
     SubmenuIndexAbout,
 
     //FlipTDICustomEvent

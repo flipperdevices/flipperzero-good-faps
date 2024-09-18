@@ -7,15 +7,15 @@
 #define FTDI_USB_VID (0x0403)
 #define FTDI_USB_PID (0x6014)
 
-#define FTDI_USB_EP_IN (0x81)
+#define FTDI_USB_EP_IN  (0x81)
 #define FTDI_USB_EP_OUT (0x02)
 
-#define FTDI_USB_EP_IN_SIZE (64UL)
+#define FTDI_USB_EP_IN_SIZE  (64UL)
 #define FTDI_USB_EP_OUT_SIZE (64UL)
 
-#define FTDI_USB_RX_MAX_SIZE (FTDI_USB_EP_OUT_SIZE)
+#define FTDI_USB_RX_MAX_SIZE       (FTDI_USB_EP_OUT_SIZE)
 #define FTDI_USB_MODEM_STATUS_SIZE (sizeof(uint16_t))
-#define FTDI_USB_TX_MAX_SIZE (FTDI_USB_EP_IN_SIZE - FTDI_USB_MODEM_STATUS_SIZE)
+#define FTDI_USB_TX_MAX_SIZE       (FTDI_USB_EP_IN_SIZE - FTDI_USB_MODEM_STATUS_SIZE)
 
 typedef struct {
     uint16_t status;
@@ -35,21 +35,10 @@ typedef enum {
     EventTx = (1 << 3),
     EventTxComplete = (1 << 4),
     EventResetSio = (1 << 5),
-    EventResetPurgeRx = (1 << 6),
-    EventResetPurgeTx = (1 << 7),
-    EventSetBitmode = (1 << 8),
-    EventSetLatencyTimer = (1 << 9),
-    EventSetEventChar = (1 << 10),
-    EventSetErrorChar = (1 << 11),
-    EventSetBaudrate = (1 << 12),
-    EventSetData = (1 << 13),
-    EventSetFlowCtrl = (1 << 14),
-    EventTxImmediate = (1 << 15),
+    EventTxImmediate = (1 << 6),
 
     EventAll = EventExit | EventReset | EventRx | EventTx | EventTxComplete | EventResetSio |
-               EventResetPurgeRx | EventResetPurgeTx | EventSetBitmode | EventSetLatencyTimer |
-               EventSetEventChar | EventSetErrorChar | EventSetBaudrate | EventSetData |
-               EventSetFlowCtrl | EventTxImmediate,
+               EventTxImmediate,
 } FtdiEvent;
 
 struct FtdiUsb {
@@ -73,8 +62,6 @@ static int32_t ftdi_thread_worker(void* context) {
 
     uint32_t len_data = 0;
     FtdiTxData tx_data = {0};
-    // uint16_t *status = 0;
-    // ftdi_get_modem_status(&status);
     uint16_t* status = ftdi_get_modem_status_uint16_t(ftdi_usb->ftdi);
 
     tx_data.status = status[0];
@@ -82,8 +69,6 @@ static int32_t ftdi_thread_worker(void* context) {
 
     while(true) {
         uint32_t flags = furi_thread_flags_wait(EventAll, FuriFlagWaitAny, FuriWaitForever);
-
-        //furi_hal_gpio_write(&gpio_ext_pa7, 1);
 
         if(flags & EventRx) { //fast flag
             uint8_t buf[FTDI_USB_RX_MAX_SIZE];
@@ -96,7 +81,6 @@ static int32_t ftdi_thread_worker(void* context) {
             // }
             if(len_data > 0) {
                 ftdi_set_rx_buf(ftdi_usb->ftdi, buf, len_data);
-                //ftdi_loopback(ftdi_usb->ftdi);
                 ftdi_start_uart_tx(ftdi_usb->ftdi);
             }
             flags &= ~EventRx; // clear flag
@@ -104,21 +88,19 @@ static int32_t ftdi_thread_worker(void* context) {
 
         if(flags) {
             if(flags & EventResetSio) {
-                furi_log_puts("EventResetSio\r\n");
                 ftdi_reset_sio(ftdi_usb->ftdi);
                 ftdi_usb_send(dev, (uint8_t*)&tx_data, FTDI_USB_MODEM_STATUS_SIZE);
             }
             if(flags & EventTxComplete) {
                 ftdi_usb->tx_complete = true;
-                if((ftdi_usb->tx_immediate) ||
-                   (ftdi_available_tx_buf(ftdi_usb->ftdi) != 0)) {
+                if((ftdi_usb->tx_immediate) || (ftdi_available_tx_buf(ftdi_usb->ftdi) != 0)) {
                     ftdi_reset_latency_timer(ftdi_usb->ftdi);
                     flags |= EventTx;
                 }
             }
 
             if(flags & EventTxImmediate) {
-                ftdi_usb->tx_immediate= true;
+                ftdi_usb->tx_immediate = true;
                 if(ftdi_usb->tx_complete) {
                     flags |= EventTx;
                 }
@@ -142,27 +124,16 @@ static int32_t ftdi_thread_worker(void* context) {
                 }
             }
 
-            // if(flags & EventResetPurgeRx) {
-            //     ftdi_reset_purge_rx(ftdi_usb->ftdi);
-            // }
-            // if(flags & EventResetPurgeTx) {
-            //     ftdi_reset_purge_tx(ftdi_usb->ftdi);
-            // }
-
             if(flags & EventExit) {
                 FURI_LOG_I(TAG, "exit");
                 break;
             }
         }
-
-        // furi_hal_gpio_write(&gpio_ext_pa7, 0);
     }
 
     return 0;
 }
 
-// needed in ftdi_usb_deinit, ftdi_usb_suspend, usb_rxtx_ep_callback, ftdi_usb_control,
-// where if_ctx isn't passed
 static FtdiUsb* ftdi_cur = NULL;
 
 static void ftdi_usb_callback_tx_immediate(void* context) {
@@ -188,8 +159,6 @@ static void ftdi_usb_init(usbd_device* dev, FuriHalUsbInterface* intf, void* ctx
 
     ftdi_usb->ftdi = ftdi_alloc();
     ftdi_set_callback_tx_immediate(ftdi_usb->ftdi, ftdi_usb_callback_tx_immediate, ftdi_usb);
-    // furi_hal_gpio_init(&gpio_ext_pa7, GpioModeOutputPushPull, GpioPullDown, GpioSpeedVeryHigh);
-    // furi_hal_gpio_init(&gpio_ext_pa6, GpioModeOutputPushPull, GpioPullDown, GpioSpeedVeryHigh);
 
     furi_thread_start(ftdi_usb->thread);
 }
@@ -211,9 +180,6 @@ static void ftdi_usb_deinit(usbd_device* dev) {
     ftdi_usb->thread = NULL;
 
     ftdi_free(ftdi_usb->ftdi);
-
-    //furi_hal_gpio_init(&gpio_ext_pa7, GpioModeAnalog, GpioPullNo, GpioSpeedLow);
-    //furi_hal_gpio_init(&gpio_ext_pa6, GpioModeAnalog, GpioPullNo, GpioSpeedLow);
 
     free(ftdi_usb->usb.str_prod_descr);
     ftdi_usb->usb.str_prod_descr = NULL;
@@ -238,32 +204,14 @@ static void ftdi_usb_wakeup(usbd_device* dev) {
 static void ftdi_usb_suspend(usbd_device* dev) {
     FtdiUsb* ftdi_usb = ftdi_cur;
     if(!ftdi_usb || ftdi_usb->dev != dev) return;
-    // furi_thread_flags_set(furi_thread_get_id(ftdi_usb->thread), EventReset);
 }
-
-// static void ftdi_usb_rxtx_ep_callback(usbd_device* dev, uint8_t event, uint8_t ep) {
-//     UNUSED(ep);
-//     UNUSED(event);
-//     FtdiUsb* ftdi_usb = ftdi_cur;
-//     if(!ftdi_usb || ftdi_usb->dev != dev) return;
-//     // furi_thread_flags_set(furi_thread_get_id(ftdi_usb->thread), EventRxTx);
-// }
 
 static void ftdi_usb_rx_ep_callback(usbd_device* dev, uint8_t event, uint8_t ep) {
     UNUSED(dev);
     UNUSED(event);
     UNUSED(ep);
     FtdiUsb* ftdi_usb = ftdi_cur;
-    //furi_hal_gpio_write(&gpio_ext_pa6, 1);
     furi_thread_flags_set(furi_thread_get_id(ftdi_usb->thread), EventRx);
-
-    // uint8_t buf[FTDI_USB_RX_MAX_SIZE];
-    // uint32_t len_data = ftdi_usb_receive(dev, buf, FTDI_USB_RX_MAX_SIZE);
-    // if(len_data > 0) {
-    //     ftdi_set_rx_buf(ftdi_usb->ftdi, buf, len_data);
-    //     // ftdi_loopback(ftdi_usb->ftdi);
-    // }
-    //furi_hal_gpio_write(&gpio_ext_pa6, 0);
 }
 
 static void ftdi_usb_tx_ep_callback(usbd_device* dev, uint8_t event, uint8_t ep) {
@@ -308,8 +256,8 @@ static usbd_respond
         return usbd_fail;
     }
 
+#ifdef FTDI_DEBUG
     furi_log_puts("-----------\r\n");
-
     char tmp_str[] = "0xFFFFFFFF";
     itoa(req->bmRequestType, tmp_str, 16);
     furi_log_puts(tmp_str);
@@ -330,76 +278,83 @@ static usbd_respond
     itoa(req->wLength, tmp_str, 16);
     furi_log_puts(tmp_str);
     furi_log_puts(" \r\n");
-
-    // if(((USB_REQ_RECIPIENT | USB_REQ_TYPE) & req->bmRequestType) !=
-    //    (USB_REQ_INTERFACE | USB_REQ_CLASS)) {
-    //     return usbd_fail;
-    // }
+#endif
 
     switch(req->bmRequestType) {
     case FtdiControlRequestsOut:
 
         switch(req->bRequest) {
         case FtdiRequestsSiOReqReset:
+#ifdef FTDI_DEBUG
             furi_log_puts("ftdi_usb_control OUT\r\n");
+#endif
             if(req->wValue == FtdiResetSio) {
+#ifdef FTDI_DEBUG
                 furi_log_puts("FtdiResetSio\r\n");
-                //ftdi_reset_sio(ftdi_usb->ftdi);
+#endif
                 furi_thread_flags_set(furi_thread_get_id(ftdi_usb->thread), EventResetSio);
             }
             if(req->wValue == FtdiResetPurgeRx) {
+#ifdef FTDI_DEBUG
                 furi_log_puts("FtdiResetPurgeRx\r\n");
+#endif
                 ftdi_reset_purge_rx(ftdi_usb->ftdi);
-
-                //furi_thread_flags_set(furi_thread_get_id(ftdi_usb->thread), EventResetPurgeRx);
             }
             if(req->wValue == FtdiResetPurgeTx) {
+#ifdef FTDI_DEBUG
                 furi_log_puts("FtdiResetPurgeTx\r\n");
+#endif
                 ftdi_reset_purge_tx(ftdi_usb->ftdi);
-                //furi_thread_flags_set(furi_thread_get_id(ftdi_usb->thread), EventResetPurgeTx);
             }
             return usbd_ack;
             break;
         case FtdiRequestsSiOReqSetBitmode:
+#ifdef FTDI_DEBUG
             furi_log_puts("FtdiRequestsSiOReqSetBitmode\r\n");
+#endif
             ftdi_set_bitmode(ftdi_usb->ftdi, req->wValue, req->wIndex);
-            // furi_thread_flags_set(furi_thread_get_id(ftdi_usb->thread), EventSetBitmode);
             return usbd_ack;
             break;
         case FtdiRequestsSiOReqSetLatencyTimer:
+#ifdef FTDI_DEBUG
             furi_log_puts("FtdiRequestsSiOReqSetLatencyTimer\r\n");
+#endif
             ftdi_set_latency_timer(ftdi_usb->ftdi, req->wValue, req->wIndex);
-            // furi_thread_flags_set(furi_thread_get_id(ftdi_usb->thread), EventSetLatencyTimer);
             return usbd_ack;
             break;
         case FtdiRequestsSiOReqSetEventChar:
+#ifdef FTDI_DEBUG
             furi_log_puts("FtdiRequestsSiOReqSetEventChar\r\n");
+#endif
             //value?????? bool enable:  value |= 1 << 8
-            // furi_thread_flags_set(furi_thread_get_id(ftdi_usb->thread), EventSetEventChar);
             return usbd_ack;
             break;
         case FtdiRequestsSiOReqSetErrorChar:
+#ifdef FTDI_DEBUG
             furi_log_puts("FtdiRequestsSiOReqSetErrorChar\r\n");
+#endif
             //value?????? bool enable:  value |= 1 << 8
-            // furi_thread_flags_set(furi_thread_get_id(ftdi_usb->thread), EventSetErrorChar);
             return usbd_ack;
             break;
         case FtdiRequestsSiOReqSetBaudrate:
+#ifdef FTDI_DEBUG
             furi_log_puts("FtdiRequestsSiOReqSetBaudrate\r\n");
+#endif
             ftdi_set_baudrate(ftdi_usb->ftdi, req->wValue, req->wIndex);
-            // furi_thread_flags_set(furi_thread_get_id(ftdi_usb->thread), EventSetBaudrate);
             return usbd_ack;
             break;
         case FtdiRequestsSiOReqSetData:
+#ifdef FTDI_DEBUG
             furi_log_puts("FtdiRequestsSiOReqSetData\r\n");
+#endif
             ftdi_set_data_config(ftdi_usb->ftdi, req->wValue, req->wIndex);
-            // furi_thread_flags_set(furi_thread_get_id(ftdi_usb->thread), EventSetData);
             return usbd_ack;
             break;
         case FtdiRequestsSiOReqSetFlowCtrl:
+#ifdef FTDI_DEBUG
             furi_log_puts("FtdiRequestsSiOReqSetFlowCtrl\r\n");
+#endif
             ftdi_set_flow_ctrl(ftdi_usb->ftdi, req->wIndex);
-            // furi_thread_flags_set(furi_thread_get_id(ftdi_usb->thread), EventSetFlowCtrl);
             return usbd_ack;
             break;
         default:
@@ -408,20 +363,25 @@ static usbd_respond
 
         break;
     case FtdiControlRequestsIn:
+#ifdef FTDI_DEBUG
         furi_log_puts("ftdi_usb_control IN\r\n");
+#endif
         switch(req->bRequest) {
         case FtdiRequestsSiOReqGetLatencyTimer:
+#ifdef FTDI_DEBUG
             furi_log_puts("FtdiRequestsSiOReqGetLatencyTimer\r\n");
+#endif
             ftdi_usb->data_recvest[0] = ftdi_get_latency_timer(ftdi_usb->ftdi);
             ftdi_usb->data_recvest_len = 1;
             ftdi_usb->dev->status.data_ptr = ftdi_usb->data_recvest;
             ftdi_usb->dev->status.data_count = ftdi_usb->data_recvest_len;
-            // furi_thread_flags_set(furi_thread_get_id(ftdi_usb->thread), EventSetLatencyTimer);
             return usbd_ack;
             break;
 
         case FtdiRequestsSiOReqPollModemStatus:
+#ifdef FTDI_DEBUG
             furi_log_puts("FtdiRequestsSiOReqPollModemStatus\r\n");
+#endif
             uint16_t* status = ftdi_get_modem_status_uint16_t(ftdi_usb->ftdi);
             memcpy(ftdi_usb->data_recvest, status, sizeof(uint16_t));
             ftdi_usb->data_recvest_len = req->wLength;
@@ -430,7 +390,9 @@ static usbd_respond
             return usbd_ack;
             break;
         case FtdiRequestsSiOReqReadPins:
+#ifdef FTDI_DEBUG
             furi_log_puts("FtdiRequestsSiOReqReadPins\r\n");
+#endif
             ftdi_usb->data_recvest[0] = ftdi_get_bitbang_gpio(ftdi_usb->ftdi);
             ftdi_usb->data_recvest_len = 1;
             ftdi_usb->dev->status.data_ptr = ftdi_usb->data_recvest;
@@ -444,21 +406,6 @@ static usbd_respond
     default:
         break;
     }
-
-    // switch(req->bRequest) {
-    // case USB_MSC_BOT_GET_MAX_LUN: {
-    //     static uint8_t max_lun = 0;
-    //     dev->status.data_ptr = &max_lun;
-    //     dev->status.data_count = 1;
-    //     return usbd_ack;
-    // }; break;
-    // case USB_MSC_BOT_RESET: {
-    //     FtdiUsb* ftdi_usb = ftdi_cur;
-    //     if(!ftdi_usb || ftdi_usb->dev != dev) return usbd_fail;
-    //     furi_thread_flags_set(furi_thread_get_id(ftdi_usb->thread), EventReset);
-    //     return usbd_ack;
-    // }; break;
-    // }
     return usbd_fail;
 }
 

@@ -94,23 +94,6 @@ static int32_t ftdi_uart_echo_worker(void* context) {
                 is_dma_tx = false;
             }
         }
-
-        // if(events & WorkerEventRxIdle) {
-        //     //furi_hal_serial_tx(ftdi_uart->serial_handle, (uint8_t*)"\r\nDetect IDLE\r\n", 15);
-        // }
-
-        // if(events &
-        //    (WorkerEventRxOverrunError | WorkerEventRxFramingError | WorkerEventRxNoiseError)) {
-        //     if(events & WorkerEventRxOverrunError) {
-        //         furi_hal_serial_tx(ftdi_uart->serial_handle, (uint8_t*)"\r\nDetect ORE\r\n", 14);
-        //     }
-        //     if(events & WorkerEventRxFramingError) {
-        //         furi_hal_serial_tx(ftdi_uart->serial_handle, (uint8_t*)"\r\nDetect FE\r\n", 13);
-        //     }
-        //     if(events & WorkerEventRxNoiseError) {
-        //         furi_hal_serial_tx(ftdi_uart->serial_handle, (uint8_t*)"\r\nDetect NE\r\n", 13);
-        //     }
-        // }
     }
     ftdi_uart_tx_dma_deinit(ftdi_uart);
     FURI_LOG_I(TAG, "Worker stopped");

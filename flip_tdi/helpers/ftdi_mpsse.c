@@ -161,7 +161,9 @@ uint8_t ftdi_mpsse_get_data_stream(FtdiMpsse* ftdi_mpsse) {
         FURI_LOG_E(TAG, "Timeout");
         ftdi_mpsse->error = FtdiMpsseErrorTimeout;
     }
+#ifdef FTDI_DEBUG
     FURI_LOG_RAW_I("0x%02X ", data);
+#endif
     return data;
 }
 
@@ -298,10 +300,6 @@ void ftdi_mpsse_state_machine(FtdiMpsse* ftdi_mpsse) {
         if(ftdi_mpsse->data_size >= FTDI_MPSSE_TX_RX_SIZE) {
             ftdi_mpsse->error = FtdiMpsseErrorTxOverflow;
             FURI_LOG_E(TAG, "Tx buffer overflow");
-            // gpio_state_io = 0xFF;
-            // do{
-            //     ftdi_mpssse_set_data_stream(ftdi_mpsse, &gpio_state_io, 1);
-            // } while (ftdi_mpsse->data_size--);
         } else {
             ftdi_mpsse->data_size++;
             ftdi_mpsse_data_read_bytes_pve_msb(ftdi_mpsse->data_buf, ftdi_mpsse->data_size);
@@ -315,10 +313,6 @@ void ftdi_mpsse_state_machine(FtdiMpsse* ftdi_mpsse) {
         if(ftdi_mpsse->data_size >= FTDI_MPSSE_TX_RX_SIZE) {
             ftdi_mpsse->error = FtdiMpsseErrorTxOverflow;
             FURI_LOG_E(TAG, "Tx buffer overflow");
-            // gpio_state_io = 0xFF;
-            // do{
-            //     ftdi_mpssse_set_data_stream(ftdi_mpsse, &gpio_state_io, 1);
-            // } while (ftdi_mpsse->data_size--);
         } else {
             ftdi_mpsse->data_size++;
             ftdi_mpsse_data_read_bytes_nve_msb(ftdi_mpsse->data_buf, ftdi_mpsse->data_size);
@@ -347,10 +341,6 @@ void ftdi_mpsse_state_machine(FtdiMpsse* ftdi_mpsse) {
         if(ftdi_mpsse->data_size >= FTDI_MPSSE_TX_RX_SIZE) {
             ftdi_mpsse->error = FtdiMpsseErrorTxOverflow;
             FURI_LOG_E(TAG, "Tx buffer overflow");
-            // gpio_state_io = 0xFF;
-            // do{
-            //     ftdi_mpssse_set_data_stream(ftdi_mpsse, &gpio_state_io, 1);
-            // } while (ftdi_mpsse->data_size--);
         } else {
             ftdi_mpsse->data_size++;
             ftdi_mpsse_data_read_bytes_pve_lsb(ftdi_mpsse->data_buf, ftdi_mpsse->data_size);

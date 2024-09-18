@@ -1,4 +1,6 @@
 ADD_SCENE(flip_tdi, main, Main)
 ADD_SCENE(flip_tdi, menu, Menu)
-ADD_SCENE(flip_tdi, wiring, Wiring)
+ADD_SCENE(flip_tdi, wiring_uart, WiringUart)
+ADD_SCENE(flip_tdi, wiring_spi, WiringSpi)
+ADD_SCENE(flip_tdi, wiring_gpio, WiringGpio)
 ADD_SCENE(flip_tdi, about, About)

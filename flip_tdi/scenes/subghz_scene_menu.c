@@ -13,7 +13,11 @@ void flip_tdi_scene_menu_on_enter(void* context) {
     FlipTDIApp* app = context;
     Submenu* submenu = app->submenu;
     submenu_add_item(
-        submenu, "Wiring", SubmenuIndexWiring, flip_tdi_scene_menu_submenu_callback, app);
+        submenu, "WiringUart", SubmenuIndexWiringUart, flip_tdi_scene_menu_submenu_callback, app);
+    submenu_add_item(
+        submenu, "WiringSpi", SubmenuIndexWiringSpi, flip_tdi_scene_menu_submenu_callback, app);
+    submenu_add_item(
+        submenu, "WiringGpio", SubmenuIndexWiringGpio, flip_tdi_scene_menu_submenu_callback, app);
     submenu_add_item(
         submenu, "About", SubmenuIndexAbout, flip_tdi_scene_menu_submenu_callback, app);
 
@@ -32,8 +36,14 @@ bool flip_tdi_scene_menu_on_event(void* context, SceneManagerEvent event) {
         if(event.event == SubmenuIndexAbout) {
             scene_manager_next_scene(app->scene_manager, FlipTDISceneAbout);
             consumed = true;
-        } else if(event.event == SubmenuIndexWiring) {
-            scene_manager_next_scene(app->scene_manager, FlipTDISceneWiring);
+        } else if(event.event == SubmenuIndexWiringUart) {
+            scene_manager_next_scene(app->scene_manager, FlipTDISceneWiringUart);
+            consumed = true;
+        } else if(event.event == SubmenuIndexWiringSpi) {
+            scene_manager_next_scene(app->scene_manager, FlipTDISceneWiringSpi);
+            consumed = true;
+        } else if(event.event == SubmenuIndexWiringGpio) {
+            scene_manager_next_scene(app->scene_manager, FlipTDISceneWiringGpio);
             consumed = true;
         }
         scene_manager_set_scene_state(app->scene_manager, FlipTDIViewSubmenu, event.event);

@@ -28,6 +28,7 @@
     ((x) = ((x) >> 8 & 0xff00ff) | ((x) & 0xff00ff) << 8, (x) = (x) >> 16 | (x) << 16)
 
 bool key_already_found_for_nonce_in_dict(KeysDict* dict, MfClassicNonce* nonce) {
+    // This function must not be passed the CUID dictionary
     bool found = false;
     uint8_t key_bytes[sizeof(MfClassicKey)];
     keys_dict_rewind(dict);
@@ -45,7 +46,7 @@ bool key_already_found_for_nonce_in_dict(KeysDict* dict, MfClassicNonce* nonce) 
                 found = true;
                 break;
             }
-        } else if(nonce->attack == static_nested) {
+        } else if(nonce->attack == static_nested || nonce->attack == static_encrypted) {
             uint32_t expected_ks1 = crypt_word_ret(&temp, nonce->uid_xor_nt0, 0);
             if(nonce->ks1_1_enc == expected_ks1) {
                 found = true;
@@ -248,7 +249,7 @@ bool load_nested_nonces(
         }
 
         MfClassicNonce res = {0};
-        res.attack = static_nested;
+        res.attack = static_encrypted;
 
         int parsed = sscanf(
             line,
@@ -267,6 +268,7 @@ bool load_nested_nonces(
             res.uid_xor_nt0 = res.uid ^ res.nt0;
 
             if(parsed == 7) { // Both nonces are present
+                res.attack = static_nested;
                 res.par_2 = binaryStringToInt(res.par_2_str);
                 res.uid_xor_nt1 = res.uid ^ res.nt1;
             }

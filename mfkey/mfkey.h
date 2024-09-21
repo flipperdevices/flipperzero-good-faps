@@ -41,6 +41,7 @@ typedef struct {
     int cracked;
     int unique_cracked;
     int num_completed;
+    int num_candidates;
     int total;
     int dict_count;
     int search;
@@ -52,11 +53,13 @@ typedef struct {
     bool is_thread_running;
     bool close_thread_please;
     FuriThread* mfkeythread;
+    KeysDict* cuid_dict;
 } ProgramState;
 
 typedef enum {
     mfkey32,
-    static_nested
+    static_nested,
+    static_encrypted
 } AttackType;
 
 typedef struct {

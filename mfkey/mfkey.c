@@ -11,8 +11,9 @@
 // TODO: Find ~1 KB memory leak
 // TODO: Use seednt16 to reduce static encrypted key candidates: https://gist.github.com/noproto/8102f8f32546564cd674256e62ff76ea
 //       https://eprint.iacr.org/2024/1275.pdf section X
-// TODO: Static encrypted: Minimum RAM for adding to keys dict (avoid crashes)
-// TODO: Static encrypted: Optimize KeysDict or buffer keys to write in chunks
+// TODO: Static Encrypted: Minimum RAM for adding to keys dict (avoid crashes)
+// TODO: Static Encrypted: Optimize KeysDict or buffer keys to write in chunks
+// TODO: Static Nested: Save all candidate keys (first key may be invalid)
 
 #include <furi.h>
 #include <furi_hal.h>

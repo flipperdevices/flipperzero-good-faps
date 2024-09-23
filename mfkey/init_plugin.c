@@ -217,7 +217,6 @@ bool load_mfkey32_nonces(
         }
         furi_string_free(next_line);
         buffered_file_stream_close(nonce_array->stream);
-        //stream_free(nonce_array->stream);
 
         array_loaded = true;
         //FURI_LOG_I(TAG, "Loaded %lu Mfkey32 nonces", nonce_array->total_nonces);
@@ -310,21 +309,13 @@ MfClassicNonceArray* napi_mf_classic_nonce_array_alloc(
     nonce_array->stream = buffered_file_stream_alloc(storage);
     furi_record_close(RECORD_STORAGE);
 
-    bool array_loaded = false;
-
     if(program_state->mfkey32_present) {
-        array_loaded = load_mfkey32_nonces(
+        load_mfkey32_nonces(
             nonce_array, program_state, system_dict, system_dict_exists, user_dict);
     }
 
     if(program_state->nested_present) {
-        array_loaded |= load_nested_nonces(
-            nonce_array, program_state, system_dict, system_dict_exists, user_dict);
-    }
-
-    if(!array_loaded) {
-        free(nonce_array);
-        nonce_array = NULL;
+        load_nested_nonces(nonce_array, program_state, system_dict, system_dict_exists, user_dict);
     }
 
     return nonce_array;
@@ -335,6 +326,7 @@ void napi_mf_classic_nonce_array_free(MfClassicNonceArray* nonce_array) {
     furi_assert(nonce_array);
     furi_assert(nonce_array->stream);
 
+    // TODO: Already closed?
     buffered_file_stream_close(nonce_array->stream);
     stream_free(nonce_array->stream);
     free(nonce_array);

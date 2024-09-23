@@ -627,6 +627,7 @@ void mfkey(ProgramState* program_state) {
     // TODO: Track free state at the time this is called to ensure double free does not happen
     furi_assert(nonce_arr);
     furi_assert(nonce_arr->stream);
+    // TODO: Already closed?
     buffered_file_stream_close(nonce_arr->stream);
     stream_free(nonce_arr->stream);
     //FURI_LOG_I(TAG, "Free heap after free(): %zub", memmgr_get_free_heap());

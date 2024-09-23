@@ -13,7 +13,6 @@
 //       https://eprint.iacr.org/2024/1275.pdf section X
 // TODO: Static Encrypted: Minimum RAM for adding to keys dict (avoid crashes)
 // TODO: Static Encrypted: Optimize KeysDict or buffer keys to write in chunks
-// TODO: Static Nested: Save all candidate keys (first key may be invalid)
 
 #include <furi.h>
 #include <furi_hal.h>

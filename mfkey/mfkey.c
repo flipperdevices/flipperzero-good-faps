@@ -33,10 +33,11 @@
 #include <loader/firmware_api/firmware_api.h>
 #include <storage/storage.h>
 
+#define TAG "MFKey"
+
 // TODO: Remove defines that are not needed
 #define KEYS_DICT_SYSTEM_PATH EXT_PATH("nfc/assets/mf_classic_dict.nfc")
 #define KEYS_DICT_USER_PATH   EXT_PATH("nfc/assets/mf_classic_dict_user.nfc")
-#define TAG                   "MFKey"
 #define MAX_NAME_LEN          32
 #define MAX_PATH_LEN          64
 

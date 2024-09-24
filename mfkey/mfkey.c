@@ -733,7 +733,7 @@ static void render_callback(Canvas* const canvas, void* ctx) {
     snprintf(draw_str, sizeof(draw_str), "RAM: %zub", memmgr_get_free_heap());
     canvas_draw_str_aligned(canvas, 48, 5, AlignLeft, AlignTop, draw_str);
     canvas_draw_icon(canvas, 114, 4, &I_mfkey);
-    if(program_state->is_thread_running && program_state->mfkey_state == MFKeyAttack) {
+    if(program_state->mfkey_state == MFKeyAttack) {
         float eta_round = (float)1 - ((float)program_state->eta_round / (float)eta_round_time);
         float eta_total = (float)1 - ((float)program_state->eta_total / (float)eta_total_time);
         float progress = (float)program_state->num_completed / (float)program_state->total;
@@ -764,7 +764,7 @@ static void render_callback(Canvas* const canvas, void* ctx) {
         elements_progress_bar_with_text(canvas, 5, 31, 118, eta_round, draw_str);
         snprintf(draw_str, sizeof(draw_str), "Total ETA %03d Sec", program_state->eta_total);
         elements_progress_bar_with_text(canvas, 5, 44, 118, eta_total, draw_str);
-    } else if(program_state->is_thread_running && program_state->mfkey_state == DictionaryAttack) {
+    } else if(program_state->mfkey_state == DictionaryAttack) {
         snprintf(
             draw_str, sizeof(draw_str), "Dict solves: %d (in progress)", program_state->cracked);
         canvas_draw_str_aligned(canvas, 10, 18, AlignLeft, AlignTop, draw_str);
@@ -823,7 +823,6 @@ static void input_callback(InputEvent* input_event, void* event_queue) {
 }
 
 static void mfkey_state_init(ProgramState* program_state) {
-    program_state->is_thread_running = false;
     program_state->mfkey_state = Ready;
     program_state->cracked = 0;
     program_state->unique_cracked = 0;
@@ -836,10 +835,8 @@ static void mfkey_state_init(ProgramState* program_state) {
 // Entrypoint for worker thread
 static int32_t mfkey_worker_thread(void* ctx) {
     ProgramState* program_state = ctx;
-    program_state->is_thread_running = true;
     program_state->mfkey_state = Initializing;
     mfkey(program_state);
-    program_state->is_thread_running = false;
     return 0;
 }
 
@@ -874,25 +871,22 @@ int32_t mfkey_main() {
             if(input_event.type == InputTypePress) {
                 switch(input_event.key) {
                 case InputKeyRight:
-                    if(!program_state->is_thread_running && program_state->mfkey_state == Ready) {
+                    if(program_state->mfkey_state == Ready) {
                         program_state->mfkey_state = Help;
                     }
                     break;
                 case InputKeyOk:
-                    if(!program_state->is_thread_running && program_state->mfkey_state == Ready) {
+                    if(program_state->mfkey_state == Ready) {
                         furi_thread_start(program_state->mfkeythread);
                     }
                     break;
                 case InputKeyBack:
-                    if(!program_state->is_thread_running && program_state->mfkey_state == Help) {
+                    if(program_state->mfkey_state == Help) {
                         program_state->mfkey_state = Ready;
                     } else {
                         program_state->close_thread_please = true;
-                        if(program_state->is_thread_running) {
-                            // Wait until thread is finished
-                            furi_thread_join(program_state->mfkeythread);
-                        }
-                        program_state->close_thread_please = false;
+                        // Wait until thread is finished
+                        furi_thread_join(program_state->mfkeythread);
                         main_loop = false;
                     }
                     break;
@@ -906,6 +900,7 @@ int32_t mfkey_main() {
         view_port_update(view_port);
     }
 
+    // Thread joined in back event handler
     furi_thread_free(program_state->mfkeythread);
     view_port_enabled_set(view_port, false);
     gui_remove_view_port(gui, view_port);

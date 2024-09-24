@@ -50,7 +50,6 @@ typedef struct {
     int eta_round;
     bool mfkey32_present;
     bool nested_present;
-    bool is_thread_running;
     bool close_thread_please;
     FuriThread* mfkeythread;
     KeysDict* cuid_dict;

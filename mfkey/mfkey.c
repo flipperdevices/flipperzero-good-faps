@@ -729,10 +729,8 @@ static void render_callback(Canvas* const canvas, void* ctx) {
     canvas_draw_frame(canvas, 0, 0, 128, 64);
     canvas_draw_frame(canvas, 0, 15, 128, 64);
 
-    canvas_set_font(canvas, FontPrimary);
-    canvas_draw_str_aligned(canvas, 5, 4, AlignLeft, AlignTop, "MFKey");
+    // FontSecondary by default, title is drawn at the end
     snprintf(draw_str, sizeof(draw_str), "RAM: %zub", memmgr_get_free_heap());
-    canvas_set_font(canvas, FontSecondary);
     canvas_draw_str_aligned(canvas, 48, 5, AlignLeft, AlignTop, draw_str);
     canvas_draw_icon(canvas, 114, 4, &I_mfkey);
     if(program_state->is_thread_running && program_state->mfkey_state == MFKeyAttack) {
@@ -749,7 +747,6 @@ static void render_callback(Canvas* const canvas, void* ctx) {
             eta_total = 1;
             program_state->eta_total = 0;
         }
-        canvas_set_font(canvas, FontSecondary);
         snprintf(
             draw_str,
             sizeof(draw_str),
@@ -768,7 +765,6 @@ static void render_callback(Canvas* const canvas, void* ctx) {
         snprintf(draw_str, sizeof(draw_str), "Total ETA %03d Sec", program_state->eta_total);
         elements_progress_bar_with_text(canvas, 5, 44, 118, eta_total, draw_str);
     } else if(program_state->is_thread_running && program_state->mfkey_state == DictionaryAttack) {
-        canvas_set_font(canvas, FontSecondary);
         snprintf(
             draw_str, sizeof(draw_str), "Dict solves: %d (in progress)", program_state->cracked);
         canvas_draw_str_aligned(canvas, 10, 18, AlignLeft, AlignTop, draw_str);
@@ -777,9 +773,7 @@ static void render_callback(Canvas* const canvas, void* ctx) {
     } else if(program_state->mfkey_state == Complete) {
         // TODO: Scrollable list view to see cracked keys if user presses down
         elements_progress_bar(canvas, 5, 18, 118, 1);
-        canvas_set_font(canvas, FontSecondary);
-        snprintf(draw_str, sizeof(draw_str), "Complete");
-        canvas_draw_str_aligned(canvas, 64, 31, AlignCenter, AlignTop, draw_str);
+        canvas_draw_str_aligned(canvas, 64, 31, AlignCenter, AlignTop, "Complete");
         snprintf(
             draw_str,
             sizeof(draw_str),
@@ -795,19 +789,16 @@ static void render_callback(Canvas* const canvas, void* ctx) {
             canvas_draw_str_aligned(canvas, 64, 51, AlignCenter, AlignTop, draw_str);
         }
     } else if(program_state->mfkey_state == Ready) {
-        canvas_set_font(canvas, FontSecondary);
         canvas_draw_str_aligned(canvas, 50, 30, AlignLeft, AlignTop, "Ready");
         elements_button_center(canvas, "Start");
         elements_button_right(canvas, "Help");
     } else if(program_state->mfkey_state == Help) {
-        canvas_set_font(canvas, FontSecondary);
         canvas_draw_str_aligned(canvas, 7, 20, AlignLeft, AlignTop, "Collect nonces by reading");
         canvas_draw_str_aligned(canvas, 7, 30, AlignLeft, AlignTop, "tag or reader in NFC app:");
         canvas_draw_str_aligned(canvas, 7, 40, AlignLeft, AlignTop, "https://docs.flipper.net/");
         canvas_draw_str_aligned(canvas, 7, 50, AlignLeft, AlignTop, "nfc/mfkey32");
     } else if(program_state->mfkey_state == Error) {
         canvas_draw_str_aligned(canvas, 50, 25, AlignLeft, AlignTop, "Error");
-        canvas_set_font(canvas, FontSecondary);
         if(program_state->err == MissingNonces) {
             canvas_draw_str_aligned(canvas, 25, 36, AlignLeft, AlignTop, "No nonces found");
         } else if(program_state->err == ZeroNonces) {
@@ -820,6 +811,9 @@ static void render_callback(Canvas* const canvas, void* ctx) {
     } else {
         // Unhandled program state
     }
+    // Title
+    canvas_set_font(canvas, FontPrimary);
+    canvas_draw_str_aligned(canvas, 5, 4, AlignLeft, AlignTop, "MFKey");
     furi_mutex_release(program_state->mutex);
 }
 

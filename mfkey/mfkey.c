@@ -33,10 +33,11 @@
 #include <loader/firmware_api/firmware_api.h>
 #include <storage/storage.h>
 
+#define TAG "MFKey"
+
 // TODO: Remove defines that are not needed
 #define KEYS_DICT_SYSTEM_PATH EXT_PATH("nfc/assets/mf_classic_dict.nfc")
 #define KEYS_DICT_USER_PATH   EXT_PATH("nfc/assets/mf_classic_dict_user.nfc")
-#define TAG                   "MFKey"
 #define MAX_NAME_LEN          32
 #define MAX_PATH_LEN          64
 
@@ -728,27 +729,24 @@ static void render_callback(Canvas* const canvas, void* ctx) {
     canvas_draw_frame(canvas, 0, 0, 128, 64);
     canvas_draw_frame(canvas, 0, 15, 128, 64);
 
-    canvas_set_font(canvas, FontPrimary);
-    canvas_draw_str_aligned(canvas, 5, 4, AlignLeft, AlignTop, "MFKey");
+    // FontSecondary by default, title is drawn at the end
     snprintf(draw_str, sizeof(draw_str), "RAM: %zub", memmgr_get_free_heap());
-    canvas_set_font(canvas, FontSecondary);
     canvas_draw_str_aligned(canvas, 48, 5, AlignLeft, AlignTop, draw_str);
     canvas_draw_icon(canvas, 114, 4, &I_mfkey);
-    if(program_state->is_thread_running && program_state->mfkey_state == MFKeyAttack) {
+    if(program_state->mfkey_state == MFKeyAttack) {
         float eta_round = (float)1 - ((float)program_state->eta_round / (float)eta_round_time);
         float eta_total = (float)1 - ((float)program_state->eta_total / (float)eta_total_time);
         float progress = (float)program_state->num_completed / (float)program_state->total;
-        if(eta_round < 0) {
+        if(eta_round < 0 || eta_round > 1) {
             // Round ETA miscalculated
             eta_round = 1;
             program_state->eta_round = 0;
         }
-        if(eta_total < 0) {
+        if(eta_total < 0 || eta_round > 1) {
             // Total ETA miscalculated
             eta_total = 1;
             program_state->eta_total = 0;
         }
-        canvas_set_font(canvas, FontSecondary);
         snprintf(
             draw_str,
             sizeof(draw_str),
@@ -766,8 +764,7 @@ static void render_callback(Canvas* const canvas, void* ctx) {
         elements_progress_bar_with_text(canvas, 5, 31, 118, eta_round, draw_str);
         snprintf(draw_str, sizeof(draw_str), "Total ETA %03d Sec", program_state->eta_total);
         elements_progress_bar_with_text(canvas, 5, 44, 118, eta_total, draw_str);
-    } else if(program_state->is_thread_running && program_state->mfkey_state == DictionaryAttack) {
-        canvas_set_font(canvas, FontSecondary);
+    } else if(program_state->mfkey_state == DictionaryAttack) {
         snprintf(
             draw_str, sizeof(draw_str), "Dict solves: %d (in progress)", program_state->cracked);
         canvas_draw_str_aligned(canvas, 10, 18, AlignLeft, AlignTop, draw_str);
@@ -776,9 +773,7 @@ static void render_callback(Canvas* const canvas, void* ctx) {
     } else if(program_state->mfkey_state == Complete) {
         // TODO: Scrollable list view to see cracked keys if user presses down
         elements_progress_bar(canvas, 5, 18, 118, 1);
-        canvas_set_font(canvas, FontSecondary);
-        snprintf(draw_str, sizeof(draw_str), "Complete");
-        canvas_draw_str_aligned(canvas, 64, 31, AlignCenter, AlignTop, draw_str);
+        canvas_draw_str_aligned(canvas, 64, 31, AlignCenter, AlignTop, "Complete");
         snprintf(
             draw_str,
             sizeof(draw_str),
@@ -794,19 +789,16 @@ static void render_callback(Canvas* const canvas, void* ctx) {
             canvas_draw_str_aligned(canvas, 64, 51, AlignCenter, AlignTop, draw_str);
         }
     } else if(program_state->mfkey_state == Ready) {
-        canvas_set_font(canvas, FontSecondary);
         canvas_draw_str_aligned(canvas, 50, 30, AlignLeft, AlignTop, "Ready");
         elements_button_center(canvas, "Start");
         elements_button_right(canvas, "Help");
     } else if(program_state->mfkey_state == Help) {
-        canvas_set_font(canvas, FontSecondary);
         canvas_draw_str_aligned(canvas, 7, 20, AlignLeft, AlignTop, "Collect nonces by reading");
         canvas_draw_str_aligned(canvas, 7, 30, AlignLeft, AlignTop, "tag or reader in NFC app:");
         canvas_draw_str_aligned(canvas, 7, 40, AlignLeft, AlignTop, "https://docs.flipper.net/");
         canvas_draw_str_aligned(canvas, 7, 50, AlignLeft, AlignTop, "nfc/mfkey32");
     } else if(program_state->mfkey_state == Error) {
         canvas_draw_str_aligned(canvas, 50, 25, AlignLeft, AlignTop, "Error");
-        canvas_set_font(canvas, FontSecondary);
         if(program_state->err == MissingNonces) {
             canvas_draw_str_aligned(canvas, 25, 36, AlignLeft, AlignTop, "No nonces found");
         } else if(program_state->err == ZeroNonces) {
@@ -819,6 +811,9 @@ static void render_callback(Canvas* const canvas, void* ctx) {
     } else {
         // Unhandled program state
     }
+    // Title
+    canvas_set_font(canvas, FontPrimary);
+    canvas_draw_str_aligned(canvas, 5, 4, AlignLeft, AlignTop, "MFKey");
     furi_mutex_release(program_state->mutex);
 }
 
@@ -828,7 +823,6 @@ static void input_callback(InputEvent* input_event, void* event_queue) {
 }
 
 static void mfkey_state_init(ProgramState* program_state) {
-    program_state->is_thread_running = false;
     program_state->mfkey_state = Ready;
     program_state->cracked = 0;
     program_state->unique_cracked = 0;
@@ -841,10 +835,8 @@ static void mfkey_state_init(ProgramState* program_state) {
 // Entrypoint for worker thread
 static int32_t mfkey_worker_thread(void* ctx) {
     ProgramState* program_state = ctx;
-    program_state->is_thread_running = true;
     program_state->mfkey_state = Initializing;
     mfkey(program_state);
-    program_state->is_thread_running = false;
     return 0;
 }
 
@@ -866,11 +858,8 @@ int32_t mfkey_main() {
     Gui* gui = furi_record_open(RECORD_GUI);
     gui_add_view_port(gui, view_port, GuiLayerFullscreen);
 
-    program_state->mfkeythread = furi_thread_alloc();
-    furi_thread_set_name(program_state->mfkeythread, "MFKeyWorker");
-    furi_thread_set_stack_size(program_state->mfkeythread, 2048);
-    furi_thread_set_context(program_state->mfkeythread, program_state);
-    furi_thread_set_callback(program_state->mfkeythread, mfkey_worker_thread);
+    program_state->mfkeythread =
+        furi_thread_alloc_ex("MFKeyWorker", 2048, mfkey_worker_thread, program_state);
 
     InputEvent input_event;
     for(bool main_loop = true; main_loop;) {
@@ -882,25 +871,22 @@ int32_t mfkey_main() {
             if(input_event.type == InputTypePress) {
                 switch(input_event.key) {
                 case InputKeyRight:
-                    if(!program_state->is_thread_running && program_state->mfkey_state == Ready) {
+                    if(program_state->mfkey_state == Ready) {
                         program_state->mfkey_state = Help;
                     }
                     break;
                 case InputKeyOk:
-                    if(!program_state->is_thread_running && program_state->mfkey_state == Ready) {
+                    if(program_state->mfkey_state == Ready) {
                         furi_thread_start(program_state->mfkeythread);
                     }
                     break;
                 case InputKeyBack:
-                    if(!program_state->is_thread_running && program_state->mfkey_state == Help) {
+                    if(program_state->mfkey_state == Help) {
                         program_state->mfkey_state = Ready;
                     } else {
                         program_state->close_thread_please = true;
-                        if(program_state->is_thread_running) {
-                            // Wait until thread is finished
-                            furi_thread_join(program_state->mfkeythread);
-                        }
-                        program_state->close_thread_please = false;
+                        // Wait until thread is finished
+                        furi_thread_join(program_state->mfkeythread);
                         main_loop = false;
                     }
                     break;
@@ -914,6 +900,7 @@ int32_t mfkey_main() {
         view_port_update(view_port);
     }
 
+    // Thread joined in back event handler
     furi_thread_free(program_state->mfkeythread);
     view_port_enabled_set(view_port, false);
     gui_remove_view_port(gui, view_port);

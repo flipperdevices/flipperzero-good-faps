@@ -9,10 +9,11 @@
 #include "plugin_interface.h"
 #include <flipper_application/flipper_application.h>
 
+#define TAG "MFKey"
+
 // TODO: Remove defines that are not needed
 #define MF_CLASSIC_NONCE_PATH        EXT_PATH("nfc/.mfkey32.log")
 #define MF_CLASSIC_NESTED_NONCE_PATH EXT_PATH("nfc/.nested.log")
-#define TAG                          "MFKey"
 #define MAX_NAME_LEN                 32
 #define MAX_PATH_LEN                 64
 

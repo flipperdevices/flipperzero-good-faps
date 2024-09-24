@@ -867,11 +867,8 @@ int32_t mfkey_main() {
     Gui* gui = furi_record_open(RECORD_GUI);
     gui_add_view_port(gui, view_port, GuiLayerFullscreen);
 
-    program_state->mfkeythread = furi_thread_alloc();
-    furi_thread_set_name(program_state->mfkeythread, "MFKeyWorker");
-    furi_thread_set_stack_size(program_state->mfkeythread, 2048);
-    furi_thread_set_context(program_state->mfkeythread, program_state);
-    furi_thread_set_callback(program_state->mfkeythread, mfkey_worker_thread);
+    program_state->mfkeythread =
+        furi_thread_alloc_ex("MFKeyWorker", 2048, mfkey_worker_thread, program_state);
 
     InputEvent input_event;
     for(bool main_loop = true; main_loop;) {

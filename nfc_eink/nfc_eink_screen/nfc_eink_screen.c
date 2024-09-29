@@ -5,7 +5,6 @@
 
 #define TAG "NfcEinkScreen"
 
-///TODO: possibly move this closer to save/load functions
 #define NFC_EINK_FORMAT_VERSION               (1)
 #define NFC_EINK_FILE_HEADER                  "Flipper NFC Eink screen"
 #define NFC_EINK_DEVICE_UID_KEY               "UID"
@@ -20,7 +19,6 @@
 #define NFC_EINK_SCREEN_DATA_TOTAL_KEY        "Data total"
 #define NFC_EINK_SCREEN_BLOCK_DATA_KEY        "Block"
 
-///TODO: move this externs to separate files in screen folders for each type
 extern const NfcEinkScreenHandlers waveshare_handlers;
 extern const NfcEinkScreenHandlers goodisplay_handlers;
 
@@ -84,8 +82,6 @@ void nfc_eink_screen_init(NfcEinkScreen* screen, NfcEinkScreenType type) {
     size_t memory_size = device->block_total * data->base.data_block_size;
 
     data->image_data = malloc(memory_size);
-    ///TODO: this can be used as a config option, which will define the initial color of the screen
-    memset(data->image_data, 0xFF, memory_size);
 }
 
 void nfc_eink_screen_free(NfcEinkScreen* screen) {

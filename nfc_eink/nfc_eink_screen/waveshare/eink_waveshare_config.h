@@ -6,8 +6,8 @@ typedef enum {
     EinkScreenTypeWaveshare2n7inch = 16,
     EinkScreenTypeWaveshare2n9inch = 7,
     EinkScreenTypeWaveshare4n2inch = 10,
-    EinkScreenTypeWaveshare7n5inch = 12,
-    EinkScreenTypeWaveshare7n5inchV2 = 14,
+    EinkScreenTypeWaveshare7n5inchHD = 12,
+    EinkScreenTypeWaveshare7n5inch = 14,
 } EinkScreenTypeWaveshare;
 
 EinkScreenTypeWaveshare

@@ -98,7 +98,6 @@ typedef struct {
 } FURI_PACKED EinkGoodisplayResetSequence;
 
 typedef struct {
-    uint8_t command_code;
     APDU_Header apdu;
     uint8_t data_length;
     EinkGoodisplaySizeConfigPack eink_size_config;

@@ -23,22 +23,38 @@ typedef enum {
     NfcEinkManufacturerUnknown
 } NfcEinkManufacturer;
 
-/// TODO: Align all screens here by manufacturers before release
 typedef enum {
     NfcEinkScreenTypeUnknown,
-    NfcEinkScreenTypeGoodisplay2n13inch,
-    NfcEinkScreenTypeGoodisplay2n9inch,
+    NfcEinkScreenTypeGoodisplayEY2Color1n54inch,
+    NfcEinkScreenTypeGoodisplayEY2Color2n13inch,
+    NfcEinkScreenTypeGoodisplayEY2Color2n9inch,
+    NfcEinkScreenTypeGoodisplayEY2Color3n71inch,
+    NfcEinkScreenTypeGoodisplayEY2Color4n2inch,
 
-    //NfcEinkTypeGoodisplay4n2inch,
+    NfcEinkScreenTypeGoodisplayEW2Color1n54inch,
+    NfcEinkScreenTypeGoodisplayEW2Color2n13inch,
+    NfcEinkScreenTypeGoodisplayEW2Color2n9inch,
+    NfcEinkScreenTypeGoodisplayEW2Color4n2inch,
 
-    NfcEinkScreenTypeWaveshare2n13inch,
-    NfcEinkScreenTypeWaveshare2n9inch,
-    NfcEinkScreenTypeGoodisplay1n54inch,
-    NfcEinkScreenTypeGoodisplay3n71inch,
+    NfcEinkScreenTypeGoodisplayEY3Color1n54inch,
+    NfcEinkScreenTypeGoodisplayEY3Color2n13inch,
+    NfcEinkScreenTypeGoodisplayEY3Color2n9inch,
+    NfcEinkScreenTypeGoodisplayEY3Color4n2inch,
 
-    NfcEinkScreenTypeWaveshare2n7inch,
-    NfcEinkScreenTypeWaveshare4n2inch,
-    NfcEinkScreenTypeWaveshare7n5inch,
+    NfcEinkScreenTypeGoodisplayEW3Color2n13inch,
+    NfcEinkScreenTypeGoodisplayEW3Color2n9inch,
+    NfcEinkScreenTypeGoodisplayEQ3Color4n2inch,
+    //-----------------------------------------------
+    NfcEinkScreenTypeWaveshare2Color2n13inch,
+    NfcEinkScreenTypeWaveshare2Color2n7inch,
+    NfcEinkScreenTypeWaveshare2Color2n9inch,
+    NfcEinkScreenTypeWaveshare2Color4n2inch,
+    NfcEinkScreenTypeWaveshare2Color7n5inch,
+    NfcEinkScreenTypeWaveshare2ColorHD7n5inch,
+
+    NfcEinkScreenTypeWaveshare3Color1n54inch,
+    NfcEinkScreenTypeWaveshare3Color2n9inch,
+    //All new screens can be added here
 
     NfcEinkScreenTypeNum
 } NfcEinkScreenType;
@@ -63,7 +79,6 @@ typedef struct {
         free((void*)old);                             \
     } while(false)
 
-//#define M_SET(a, b) (M_INIT(a); memcpy(a, b, M_ARRAY_SIZE))
 #define M_CLEAR(a) (free((void*)a))
 
 #define M_DESCRIPTOR_ARRAY_OPLIST \

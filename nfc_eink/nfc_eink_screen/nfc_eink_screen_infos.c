@@ -20,7 +20,7 @@ static const NfcEinkScreenInfo screen_descriptors[] = {
         .height = 122,
         .screen_size = NfcEinkScreenSize2n13inch,
         .screen_manufacturer = NfcEinkManufacturerWaveshare,
-        .screen_type = NfcEinkScreenTypeWaveshare2n13inch,
+        .screen_type = NfcEinkScreenTypeWaveshare2Color2n13inch,
         .data_block_size = 16,
     },
     {
@@ -29,7 +29,7 @@ static const NfcEinkScreenInfo screen_descriptors[] = {
         .height = 176,
         .screen_size = NfcEinkScreenSize2n7inch,
         .screen_manufacturer = NfcEinkManufacturerWaveshare,
-        .screen_type = NfcEinkScreenTypeWaveshare2n7inch,
+        .screen_type = NfcEinkScreenTypeWaveshare2Color2n7inch,
         .data_block_size = 121,
     },
     {
@@ -38,7 +38,7 @@ static const NfcEinkScreenInfo screen_descriptors[] = {
         .height = 128,
         .screen_size = NfcEinkScreenSize2n9inch,
         .screen_manufacturer = NfcEinkManufacturerWaveshare,
-        .screen_type = NfcEinkScreenTypeWaveshare2n9inch,
+        .screen_type = NfcEinkScreenTypeWaveshare2Color2n9inch,
         .data_block_size = 16,
     },
     {
@@ -47,7 +47,7 @@ static const NfcEinkScreenInfo screen_descriptors[] = {
         .height = 400,
         .screen_size = NfcEinkScreenSize4n2inch,
         .screen_manufacturer = NfcEinkManufacturerWaveshare,
-        .screen_type = NfcEinkScreenTypeWaveshare4n2inch,
+        .screen_type = NfcEinkScreenTypeWaveshare2Color4n2inch,
         .data_block_size = 100,
     },
     {
@@ -56,7 +56,7 @@ static const NfcEinkScreenInfo screen_descriptors[] = {
         .height = 800,
         .screen_size = NfcEinkScreenSize7n5inch,
         .screen_manufacturer = NfcEinkManufacturerWaveshare,
-        .screen_type = NfcEinkScreenTypeWaveshare7n5inch,
+        .screen_type = NfcEinkScreenTypeWaveshare2Color7n5inch,
         .data_block_size = 120,
     },
     {
@@ -65,7 +65,7 @@ static const NfcEinkScreenInfo screen_descriptors[] = {
         .height = 200,
         .screen_size = NfcEinkScreenSize1n54inch,
         .screen_manufacturer = NfcEinkManufacturerGoodisplay,
-        .screen_type = NfcEinkScreenTypeGoodisplay1n54inch,
+        .screen_type = NfcEinkScreenTypeGoodisplayEY2Color1n54inch,
         .data_block_size = 0xFA,
     },
     {
@@ -74,7 +74,7 @@ static const NfcEinkScreenInfo screen_descriptors[] = {
         .height = 122,
         .screen_size = NfcEinkScreenSize2n13inch,
         .screen_manufacturer = NfcEinkManufacturerGoodisplay,
-        .screen_type = NfcEinkScreenTypeGoodisplay2n13inch,
+        .screen_type = NfcEinkScreenTypeGoodisplayEY2Color2n13inch,
         .data_block_size = 0xFA,
     },
     {
@@ -83,7 +83,7 @@ static const NfcEinkScreenInfo screen_descriptors[] = {
         .height = 128,
         .screen_size = NfcEinkScreenSize2n9inch,
         .screen_manufacturer = NfcEinkManufacturerGoodisplay,
-        .screen_type = NfcEinkScreenTypeGoodisplay2n9inch,
+        .screen_type = NfcEinkScreenTypeGoodisplayEY2Color2n9inch,
         .data_block_size = 0xFA,
     },
     {
@@ -92,7 +92,7 @@ static const NfcEinkScreenInfo screen_descriptors[] = {
         .height = 240,
         .screen_size = NfcEinkScreenSize3n71inch,
         .screen_manufacturer = NfcEinkManufacturerGoodisplay,
-        .screen_type = NfcEinkScreenTypeGoodisplay3n71inch,
+        .screen_type = NfcEinkScreenTypeGoodisplayEY2Color3n71inch,
         .data_block_size = 0xFA,
     },
 };

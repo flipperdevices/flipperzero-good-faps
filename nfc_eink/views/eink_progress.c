@@ -36,7 +36,6 @@ EinkProgress* eink_progress_alloc(void) {
     instance->view = view_alloc();
     view_allocate_model(instance->view, ViewModelTypeLocking, sizeof(EinkProgressViewModel));
     view_set_draw_callback(instance->view, eink_progress_draw_callback);
-    //view_set_input_callback(instance->view, dict_attack_input_callback);
     view_set_context(instance->view, instance);
     with_view_model(
         instance->view,

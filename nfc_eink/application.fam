@@ -10,7 +10,9 @@ App(
     sources=[
         "*.c*"
     ],
-    fap_libs=["assets", "mbedtls"],
     fap_icon="icon.png",
+    fap_icon_assets="assets",
+    fap_description="Application for emulation and writing to NFC Eink tags",
+    fap_version="1.0",
     fap_category="NFC",
 )

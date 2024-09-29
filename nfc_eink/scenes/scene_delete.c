@@ -1,4 +1,4 @@
-#include "../nfc_eink_app.h"
+#include "../nfc_eink_app_i.h"
 
 void nfc_eink_scene_delete_widget_callback(GuiButtonType result, InputType type, void* context) {
     NfcEinkApp* instance = context;

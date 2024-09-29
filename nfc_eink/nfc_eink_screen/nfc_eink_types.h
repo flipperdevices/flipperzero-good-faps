@@ -3,7 +3,6 @@
 #include <furi.h>
 #include <nfc/nfc.h>
 #include <nfc/protocols/nfc_generic_event.h>
-#include <nfc/nfc_common.h>
 #include <nfc/nfc_device.h>
 
 #include "nfc_eink_screen_infos.h"

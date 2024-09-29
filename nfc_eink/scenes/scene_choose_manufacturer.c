@@ -1,4 +1,4 @@
-#include "../nfc_eink_app.h"
+#include "../nfc_eink_app_i.h"
 
 static void nfc_eink_scene_choose_manufacturer_submenu_callback(void* context, uint32_t index) {
     NfcEinkApp* instance = context;

@@ -15,7 +15,6 @@ static bool eink_waveshare_send_data(
     furi_assert(screen);
     furi_assert(data);
     furi_assert(data_len > 0);
-    //furi_assert(validator);
 
     bit_buffer_reset(screen->tx_buf);
     bit_buffer_reset(screen->rx_buf);
@@ -33,7 +32,6 @@ static bool eink_waveshare_send_data(
         result = ((response_len == 2) && (response[0] == 0) && (response[1] == 0)) ||
                  ((response_len == 2) && (response[0] == 0xFF) && (response[1] == 0));
 
-        //result = validator(response, response_len);
     } else {
         FURI_LOG_E(TAG, "Iso14443_3aError: %02X", error);
     }

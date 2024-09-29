@@ -1,4 +1,4 @@
-#include "../nfc_eink_app.h"
+#include "../nfc_eink_app_i.h"
 
 static const char* nfc_eink_scene_settings_write_mode[] = {
     "Strict",

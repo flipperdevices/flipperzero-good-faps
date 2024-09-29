@@ -1,4 +1,4 @@
-#include "../nfc_eink_app.h"
+#include "../nfc_eink_app_i.h"
 
 #include <lib/nfc/nfc.h>
 #include <lib/nfc/protocols/nfc_protocol.h>

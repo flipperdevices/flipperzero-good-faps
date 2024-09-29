@@ -1,4 +1,4 @@
-#include "../nfc_eink_app.h"
+#include "../nfc_eink_app_i.h"
 
 void nfc_eink_scene_file_select_on_enter(void* context) {
     NfcEinkApp* instance = context;

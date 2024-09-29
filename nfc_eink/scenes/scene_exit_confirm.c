@@ -1,4 +1,4 @@
-#include "../nfc_eink_app.h"
+#include "../nfc_eink_app_i.h"
 
 void nfc_eink_scene_exit_confirm_dialog_callback(DialogExResult result, void* context) {
     NfcEinkApp* instance = context;

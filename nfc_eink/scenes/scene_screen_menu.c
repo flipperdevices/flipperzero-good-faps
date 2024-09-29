@@ -1,4 +1,4 @@
-#include "../nfc_eink_app.h"
+#include "../nfc_eink_app_i.h"
 
 #define TAG "NfcEinkSceneScreenMenu"
 

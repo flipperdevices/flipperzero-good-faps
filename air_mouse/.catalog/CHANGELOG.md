@@ -1,3 +1,5 @@
+## 1.3
+ - Removed call to legacy SDK API
 ## 1.2
  - Migration to new BLE profile
 ## 1.1

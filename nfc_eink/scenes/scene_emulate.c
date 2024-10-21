@@ -7,6 +7,7 @@
 
 static void nfc_eink_stop_emulation(NfcEinkApp* instance, bool free_screen) {
     furi_assert(instance);
+    furi_delay_ms(5);
     nfc_listener_stop(instance->listener);
     nfc_listener_free(instance->listener);
     if(free_screen) {
@@ -28,11 +29,8 @@ static void nfc_eink_emulate_callback(NfcEinkScreenEventType type, void* context
     case NfcEinkScreenEventTypeFinish:
         event = NfcEinkAppCustomEventProcessFinish;
         break;
-    case NfcEinkScreenEventTypeTargetLost:
-        event = NfcEinkAppCustomEventTargetLost;
-        break;
-    case NfcEinkScreenEventTypeFailure:
-        event = NfcEinkAppCustomEventUnknownError;
+    case NfcEinkScreenEventTypeError:
+        event = NfcEinkAppCustomEventError;
         break;
     default:
         FURI_LOG_E(TAG, "Event: %02X not implemented", type);
@@ -78,11 +76,8 @@ bool nfc_eink_scene_emulate_on_event(void* context, SceneManagerEvent event) {
             instance->screen_loaded = true;
             scene_manager_next_scene(instance->scene_manager, NfcEinkAppSceneScreenMenu);
             notification_message(instance->notifications, &sequence_success);
-        } else if(event.event == NfcEinkAppCustomEventTargetLost) {
-            nfc_eink_stop_emulation(instance, true);
-            scene_manager_next_scene(instance->scene_manager, NfcEinkAppSceneError);
-            notification_message(instance->notifications, &sequence_error);
-        } else if(event.event == NfcEinkAppCustomEventUnknownError) {
+        } else if(event.event == NfcEinkAppCustomEventError) {
+            instance->last_error = nfc_eink_screen_get_error(instance->screen);
             nfc_eink_stop_emulation(instance, true);
             scene_manager_next_scene(instance->scene_manager, NfcEinkAppSceneError);
             notification_message(instance->notifications, &sequence_error);

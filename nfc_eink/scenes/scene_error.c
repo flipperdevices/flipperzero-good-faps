@@ -1,5 +1,23 @@
 #include "../nfc_eink_app_i.h"
 
+#define TAG "NfcEinkSceneError"
+
+static const char* nfc_eink_scene_error_get_text_from_code(NfcEinkScreenError error) {
+    if(error == NfcEinkScreenErrorUnsupportedScreen)
+        return "Unsupported\nscreen";
+    else if(error == NfcEinkScreenErrorUnableToWrite)
+        return "Unable to write";
+    else if(error == NfcEinkScreenErrorTargetLost)
+        return "Target lost";
+    else if(error == NfcEinkScreenErrorNone) {
+        FURI_LOG_W(TAG, "No error, but on error screen");
+        return "None";
+    } else {
+        FURI_LOG_W(TAG, "Unknown error: %02X", error);
+        return "Unknown error";
+    }
+}
+
 void nfc_eink_scene_error_popup_callback(void* context) {
     NfcEinkApp* nfc = context;
     view_dispatcher_send_custom_event(nfc->view_dispatcher, NfcEinkAppCustomEventTimerExpired);
@@ -11,8 +29,9 @@ void nfc_eink_scene_error_on_enter(void* context) {
     Popup* popup = instance->popup;
     popup_set_icon(popup, 10, 14, &I_WarningDolphin_45x42);
     popup_set_header(popup, "Error", 90, 26, AlignCenter, AlignCenter);
-    ///TODO: Text error should be determined from some error variable or from EinkScreen event
-    popup_set_text(popup, "Target Lost", 85, 40, AlignCenter, AlignCenter);
+
+    const char* msg = nfc_eink_scene_error_get_text_from_code(instance->last_error);
+    popup_set_text(popup, msg, 85, 40, AlignCenter, AlignCenter);
 
     popup_set_timeout(popup, 5000);
     popup_set_context(popup, instance);

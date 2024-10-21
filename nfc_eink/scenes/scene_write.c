@@ -25,8 +25,8 @@ static void nfc_eink_write_callback(NfcEinkScreenEventType type, void* context) 
         event = NfcEinkAppCustomEventBlockProcessed;
         break;
 
-    case NfcEinkScreenEventTypeFailure:
-        event = NfcEinkAppCustomEventUnknownError;
+    case NfcEinkScreenEventTypeError:
+        event = NfcEinkAppCustomEventError;
         break;
 
     case NfcEinkScreenEventTypeUpdating:
@@ -116,7 +116,8 @@ bool nfc_eink_scene_write_on_event(void* context, SceneManagerEvent event) {
                 NfcEinkAppSceneWrite,
                 NfcEinkAppSceneWriteStateWritingDataBlocks);
             nfc_eink_scene_write_show_writing_data(instance);
-        } else if(event.event == NfcEinkAppCustomEventUnknownError) {
+        } else if(event.event == NfcEinkAppCustomEventError) {
+            instance->last_error = nfc_eink_screen_get_error(instance->screen);
             scene_manager_next_scene(instance->scene_manager, NfcEinkAppSceneError);
             notification_message(instance->notifications, &sequence_error);
         } else if(event.event == NfcEinkAppCustomEventBlockProcessed) {

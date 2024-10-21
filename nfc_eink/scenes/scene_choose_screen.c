@@ -43,7 +43,7 @@ void nfc_eink_scene_choose_screen_on_enter(void* context) {
         const NfcEinkScreenInfo* item = *EinkScreenInfoArray_get(instance->arr, i);
         submenu_add_item(
             submenu, item->name, i, nfc_eink_scene_choose_screen_submenu_callback, instance);
-        FURI_LOG_W(TAG, "Item: %s, width: %d, height: %d", item->name, item->width, item->height);
+        FURI_LOG_D(TAG, "Item: %s, width: %d, height: %d", item->name, item->width, item->height);
     }
 
     view_dispatcher_switch_to_view(instance->view_dispatcher, NfcEinkViewMenu);

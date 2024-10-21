@@ -44,6 +44,7 @@ typedef enum {
     EinkWavesharePollerStatePowerOnV2,
     EinkWavesharePollerStateRefresh,
     EinkWavesharePollerStateWaitReady,
+    EinkWavesharePollerStateRetry,
     EinkWavesharePollerStateFinish,
     EinkWavesharePollerStateError,
     EinkWavesharePollerStateNum
@@ -52,6 +53,7 @@ typedef enum {
 typedef struct {
     NfcEinkWaveshareListenerStates listener_state;
     EinkWavesharePollerState poller_state;
+    uint8_t poller_retry_cnt;
     size_t data_index;
     uint16_t block_number; // TODO: try to remove this
     uint8_t buf[16 * 4];

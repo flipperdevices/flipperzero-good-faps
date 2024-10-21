@@ -29,6 +29,7 @@ uint16_t nfc_eink_screen_get_received_size(const NfcEinkScreen* screen);
 
 void nfc_eink_screen_get_progress(const NfcEinkScreen* screen, size_t* current, size_t* total);
 const char* nfc_eink_screen_get_name(const NfcEinkScreen* screen);
+NfcEinkScreenError nfc_eink_screen_get_error(const NfcEinkScreen* screen);
 
 bool nfc_eink_screen_save(const NfcEinkScreen* screen, const char* file_path);
 bool nfc_eink_screen_delete(const char* file_path);

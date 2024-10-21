@@ -215,7 +215,7 @@ NfcCommand eink_waveshare_listener_callback(NfcGenericEvent event, void* context
         if(ctx->listener_state == NfcEinkWaveshareListenerStateUpdatedSuccefully)
             eink_waveshare_on_done(screen);
         else if(ctx->listener_state != NfcEinkWaveshareListenerStateIdle)
-            eink_waveshare_on_target_lost(screen);
+            nfc_eink_screen_set_error(screen, NfcEinkScreenErrorTargetLost);
         command = NfcCommandStop;
     } else if(Iso14443_3a_event->type == Iso14443_3aListenerEventTypeHalted) {
         FURI_LOG_D(TAG, "Halted");

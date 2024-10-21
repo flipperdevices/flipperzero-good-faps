@@ -8,6 +8,13 @@
 #include "nfc_eink_screen_infos.h"
 
 typedef enum {
+    NfcEinkScreenErrorNone,
+    NfcEinkScreenErrorUnableToWrite,
+    NfcEinkScreenErrorTargetLost,
+    NfcEinkScreenErrorUnsupportedScreen,
+} NfcEinkScreenError;
+
+typedef enum {
     NfcEinkScreenEventTypeTargetDetected,
     NfcEinkScreenEventTypeTargetLost,
 
@@ -16,7 +23,7 @@ typedef enum {
     NfcEinkScreenEventTypeUpdating,
 
     NfcEinkScreenEventTypeFinish,
-    NfcEinkScreenEventTypeFailure,
+    NfcEinkScreenEventTypeError,
 } NfcEinkScreenEventType;
 
 typedef void (*NfcEinkScreenEventCallback)(NfcEinkScreenEventType type, void* context);

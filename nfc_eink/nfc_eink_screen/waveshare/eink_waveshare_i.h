@@ -75,9 +75,6 @@ typedef struct {
 #define eink_waveshare_on_updating(instance) \
     nfc_eink_screen_vendor_callback(instance, NfcEinkScreenEventTypeUpdating)
 
-#define eink_waveshare_on_error(instance) \
-    nfc_eink_screen_vendor_callback(instance, NfcEinkScreenEventTypeFailure)
-
 NfcCommand eink_waveshare_listener_callback(NfcGenericEvent event, void* context);
 NfcCommand eink_waveshare_poller_callback(NfcGenericEvent event, void* context);
 

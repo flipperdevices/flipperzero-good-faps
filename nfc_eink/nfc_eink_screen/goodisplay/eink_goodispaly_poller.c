@@ -360,9 +360,9 @@ static NfcCommand
 }
 
 static NfcCommand eink_goodisplay_error_handler(Iso14443_4aPoller* poller, NfcEinkScreen* screen) {
-    FURI_LOG_E(TAG, "Error!");
     UNUSED(poller);
-    eink_goodisplay_on_error(screen);
+    FURI_LOG_E(TAG, "Error during writing!");
+    nfc_eink_screen_set_error(screen, NfcEinkScreenErrorUnableToWrite);
     return NfcCommandStop;
 }
 

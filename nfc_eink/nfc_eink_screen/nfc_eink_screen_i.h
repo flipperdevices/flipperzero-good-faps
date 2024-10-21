@@ -30,6 +30,7 @@ typedef struct {
 struct NfcEinkScreen {
     NfcEinkScreenData* data;
     NfcEinkScreenDevice* device;
+    NfcEinkScreenError error;
     BitBuffer* tx_buf;
     BitBuffer* rx_buf;
     const NfcEinkScreenHandlers* handlers;
@@ -38,3 +39,4 @@ struct NfcEinkScreen {
 };
 
 void nfc_eink_screen_vendor_callback(NfcEinkScreen* instance, NfcEinkScreenEventType type);
+void nfc_eink_screen_set_error(NfcEinkScreen* instance, NfcEinkScreenError error);

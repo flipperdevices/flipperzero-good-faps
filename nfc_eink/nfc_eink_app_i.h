@@ -54,8 +54,7 @@ typedef enum {
     NfcEinkAppCustomEventUpdating,
     NfcEinkAppCustomEventProcessFinish,
     NfcEinkAppCustomEventTargetDetected,
-    NfcEinkAppCustomEventTargetLost,
-    NfcEinkAppCustomEventUnknownError,
+    NfcEinkAppCustomEventError,
     NfcEinkAppCustomEventExit,
 } NfcEinkAppCustomEvents;
 
@@ -111,6 +110,7 @@ struct NfcEinkApp {
     NfcListener* listener;
     NfcPoller* poller;
     NfcEinkScreen* screen;
+    NfcEinkScreenError last_error;
     const NfcEinkScreenInfo* info_temp;
     EinkScreenInfoArray_t arr;
     NfcEinkSettings settings;

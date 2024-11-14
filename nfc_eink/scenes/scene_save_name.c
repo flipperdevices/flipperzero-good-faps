@@ -52,7 +52,7 @@ bool nfc_eink_scene_save_name_on_event(void* context, SceneManagerEvent event) {
                 furi_string_set(instance->file_path, NFC_EINK_APP_FOLDER);
             }
 
-            strcat(instance->text_store, NFC_EINK_APP_EXTENSION);
+            strlcat(instance->text_store, NFC_EINK_APP_EXTENSION, sizeof(instance->text_store));
             path_append(instance->file_path, instance->text_store);
 
             if(nfc_eink_screen_save(instance->screen, furi_string_get_cstr(instance->file_path))) {

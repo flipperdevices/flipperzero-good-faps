@@ -79,6 +79,12 @@ typedef enum {
     NfcEinkWriteModeFree
 } NfcEinkWriteMode;
 
+typedef enum {
+    NfcEinkLoadResultFailed,
+    NfcEinkLoadResultSuccess,
+    NfcEinkLoadResultCanceled,
+} NfcEinkLoadResult;
+
 typedef struct {
     NfcEinkWriteMode write_mode;
     bool invert_image;
@@ -121,7 +127,7 @@ struct NfcEinkApp {
     FuriString* file_name;
 };
 
-bool nfc_eink_load_from_file_select(NfcEinkApp* instance);
+NfcEinkLoadResult nfc_eink_load_from_file_select(NfcEinkApp* instance);
 void nfc_eink_blink_emulate_start(NfcEinkApp* app);
 void nfc_eink_blink_write_start(NfcEinkApp* app);
 void nfc_eink_blink_stop(NfcEinkApp* app);

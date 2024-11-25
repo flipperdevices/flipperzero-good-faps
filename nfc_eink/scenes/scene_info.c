@@ -6,7 +6,7 @@ void nfc_eink_scene_info_on_enter(void* context) {
     if(!instance->screen_loaded) {
         const NfcEinkScreenInfo* info = instance->info_temp;
         instance->screen = nfc_eink_screen_alloc(info->screen_manufacturer);
-        nfc_eink_screen_init(instance->screen, info->screen_type);
+        nfc_eink_screen_init(instance->screen, info->name);
 
         if(!nfc_eink_screen_load_data(
                furi_string_get_cstr(instance->file_path), instance->screen, info)) {

@@ -130,8 +130,7 @@ static NfcCommand
 
     do {
         EinkScreenTypeWaveshare screen_type =
-            eink_waveshare_config_translate_screen_type_to_protocol(
-                screen->data->base.screen_type);
+            eink_waveshare_config_get_protocol_screen_type_by_name(screen->name);
         bool result = eink_waveshare_send_command(
             poller, screen, EINK_WAVESHARE_COMMAND_SELECT_TYPE, &screen_type, sizeof(screen_type));
         if(!result) break;

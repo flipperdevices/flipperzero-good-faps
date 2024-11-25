@@ -44,10 +44,11 @@ static void eink_waveshare_free(NfcEinkScreenDevice* instance) {
 void eink_waveshare_parse_config(NfcEinkScreen* screen, const uint8_t* data, uint8_t data_length) {
     UNUSED(data_length);
 
-    uint8_t protocol_type = data[0];
+    uint8_t protocol_screen_type = data[0];
+    const char* name =
+        eink_waveshare_config_get_screen_name_by_protocol_screen_type(protocol_screen_type);
+    furi_string_set(screen->name, name);
 
-    screen->device->screen_type =
-        eink_waveshare_config_translate_protocol_to_screen_type(protocol_type);
     eink_waveshare_on_config_received(screen);
 }
 

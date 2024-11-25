@@ -56,7 +56,8 @@ static void eink_goodisplay_free(NfcEinkScreenDevice* instance) {
 }
 
 void eink_goodisplay_parse_config(NfcEinkScreen* screen, const uint8_t* data, uint8_t data_length) {
-    screen->device->screen_type = eink_goodisplay_config_get_screen_type(data, data_length);
+    const char* name = eink_goodisplay_config_get_screen_name(data, data_length);
+    furi_string_set(screen->name, name);
     eink_goodisplay_on_config_received(screen);
 }
 

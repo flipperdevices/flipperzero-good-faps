@@ -127,4 +127,4 @@ void eink_goodisplay_config_pack_free(EinkGoodisplayConfigPack* pack);
 void eink_goodisplay_config_pack_set_by_screen_info(
     EinkGoodisplayConfigPack* pack,
     const NfcEinkScreenInfo* info);
-NfcEinkScreenType eink_goodisplay_config_get_screen_type(const uint8_t* data, uint8_t data_length);
+const char* eink_goodisplay_config_get_screen_name(const uint8_t* data, uint8_t data_length);

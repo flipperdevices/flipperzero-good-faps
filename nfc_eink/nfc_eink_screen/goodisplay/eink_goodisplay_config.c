@@ -58,23 +58,22 @@ void eink_goodisplay_config_pack_set_by_screen_info(
     //pack->update_ctrl1.ram_bypass_inverse_option = 0x08;
 }
 
-NfcEinkScreenType
-    eink_goodisplay_config_get_screen_type(const uint8_t* data, uint8_t data_length) {
+const char* eink_goodisplay_config_get_screen_name(const uint8_t* data, uint8_t data_length) {
     furi_assert(data);
     furi_assert(data_length >= sizeof(EinkGoodisplaySizeConfigPack));
-    NfcEinkScreenType screen_type = NfcEinkScreenTypeUnknown;
+    const char* name = NFC_EINK_SCREEN_UNKNOWN;
 
     const EinkGoodisplaySizeConfigPack* config = (EinkGoodisplaySizeConfigPack*)(data);
 
     if(config->screen_data.screen_resolution == NfcEinkGoodisplayScreenResolution2n13inch) {
-        screen_type = NfcEinkScreenTypeGoodisplayEY2Color2n13inch;
+        name = NFC_EINK_SCREEN_GDEY0213B74;
     } else if(config->screen_data.screen_resolution == NfcEinkGoodisplayScreenResolution2n9inch) {
-        screen_type = NfcEinkScreenTypeGoodisplayEY2Color2n9inch;
+        name = NFC_EINK_SCREEN_GDEY029T94;
     } else if(config->screen_data.screen_resolution == NfcEinkGoodisplayScreenResolution1n54inch) {
-        screen_type = NfcEinkScreenTypeGoodisplayEY2Color1n54inch;
+        name = NFC_EINK_SCREEN_GDEY0154D67;
     } else if(config->screen_data.screen_resolution == NfcEinkGoodisplayScreenResolution3n71inch) {
-        screen_type = NfcEinkScreenTypeGoodisplayEY2Color3n71inch;
+        name = NFC_EINK_SCREEN_GDEY037T03;
     }
 
-    return screen_type;
+    return name;
 }

@@ -50,6 +50,7 @@ NfcEinkScreen* nfc_eink_screen_alloc(NfcEinkManufacturer manufacturer) {
 
     NfcEinkScreen* screen = malloc(sizeof(NfcEinkScreen));
     screen->error = NfcEinkScreenErrorNone;
+    screen->name = furi_string_alloc();
     screen->handlers = manufacturers[manufacturer].handlers;
 
     screen->device = screen->handlers->alloc();
@@ -66,28 +67,51 @@ static inline uint16_t nfc_eink_screen_calculate_image_size(const NfcEinkScreenI
     return info->width * (info->height % 8 == 0 ? (info->height / 8) : (info->height / 8 + 1));
 }
 
-void nfc_eink_screen_init(NfcEinkScreen* screen, NfcEinkScreenType type) {
-    furi_assert(type != NfcEinkScreenTypeUnknown);
-    furi_assert(type < NfcEinkScreenTypeNum);
-
+static bool nfc_eink_screen_init_internal(NfcEinkScreen* screen) {
     NfcEinkScreenData* data = screen->data;
     NfcEinkScreenDevice* device = screen->device;
 
-    const NfcEinkScreenInfo* info = nfc_eink_descriptor_get_by_type(type);
-    memcpy(&data->base, info, sizeof(NfcEinkScreenInfo));
+    bool result = false;
+    do {
+        if(furi_string_equal_str(screen->name, "Unknown")) {
+            FURI_LOG_E(TAG, "Cannot init %s screen", furi_string_get_cstr(screen->name));
+            break;
+        }
 
-    data->image_size = nfc_eink_screen_calculate_image_size(info);
+        const NfcEinkScreenInfo* info = nfc_eink_descriptor_get_by_name(screen->name);
+        if(!info) {
+            FURI_LOG_E(
+                TAG,
+                "Screen %s was not found, unable to init!",
+                furi_string_get_cstr(screen->name));
+            break;
+        }
 
-    device->block_total = data->image_size / info->data_block_size;
-    if(data->image_size % info->data_block_size != 0) device->block_total += 1;
-    size_t memory_size = device->block_total * data->base.data_block_size;
+        memcpy(&data->base, info, sizeof(NfcEinkScreenInfo));
 
-    data->image_data = malloc(memory_size);
+        data->image_size = nfc_eink_screen_calculate_image_size(info);
+
+        device->block_total = data->image_size / info->data_block_size;
+        if(data->image_size % info->data_block_size != 0) device->block_total += 1;
+        size_t memory_size = device->block_total * data->base.data_block_size;
+
+        data->image_data = malloc(memory_size);
+        result = true;
+    } while(false);
+
+    return result;
+}
+
+void nfc_eink_screen_init(NfcEinkScreen* screen, const char* name) {
+    furi_assert(screen);
+    furi_assert(name);
+    furi_string_set_str(screen->name, name);
+    nfc_eink_screen_init_internal(screen);
 }
 
 void nfc_eink_screen_free(NfcEinkScreen* screen) {
     furi_check(screen);
-
+    furi_string_free(screen->name);
     screen->handlers->free(screen->device);
     free(screen->device);
 
@@ -180,6 +204,7 @@ bool nfc_eink_screen_load_info(const char* file_path, const NfcEinkScreenInfo** 
     bool loaded = false;
     Storage* storage = furi_record_open(RECORD_STORAGE);
     FlipperFormat* ff = flipper_format_buffered_file_alloc(storage);
+    FuriString* name = furi_string_alloc();
 
     do {
         if(!flipper_format_buffered_file_open_existing(ff, file_path)) break;
@@ -188,12 +213,7 @@ bool nfc_eink_screen_load_info(const char* file_path, const NfcEinkScreenInfo** 
         if(!flipper_format_read_uint32(ff, NFC_EINK_SCREEN_MANUFACTURER_TYPE_KEY, &tmp, 1)) break;
         NfcEinkManufacturer manufacturer = tmp;
 
-        if(!flipper_format_read_uint32(ff, NFC_EINK_SCREEN_TYPE_KEY, &tmp, 1)) break;
-        NfcEinkScreenType screen_type = tmp;
-        if(screen_type == NfcEinkScreenTypeUnknown || screen_type == NfcEinkScreenTypeNum) {
-            FURI_LOG_E(TAG, "Loaded screen type is invalid");
-            break;
-        }
+        if(!flipper_format_read_string(ff, NFC_EINK_SCREEN_NAME_KEY, name)) break;
 
         uint32_t width = 0;
         if(!flipper_format_read_uint32(ff, NFC_EINK_SCREEN_WIDTH_KEY, &width, 1)) break;
@@ -201,7 +221,11 @@ bool nfc_eink_screen_load_info(const char* file_path, const NfcEinkScreenInfo** 
         uint32_t height = 0;
         if(!flipper_format_read_uint32(ff, NFC_EINK_SCREEN_HEIGHT_KEY, &height, 1)) break;
 
-        const NfcEinkScreenInfo* inf_tmp = nfc_eink_descriptor_get_by_type(screen_type);
+        const NfcEinkScreenInfo* inf_tmp = nfc_eink_descriptor_get_by_name(name);
+        if(!inf_tmp) {
+            FURI_LOG_E(TAG, "Screen %s was not found", furi_string_get_cstr(name));
+            break;
+        }
 
         if(inf_tmp->screen_manufacturer != manufacturer) {
             FURI_LOG_E(TAG, "Loaded manufacturer doesn't match with info field");
@@ -217,6 +241,7 @@ bool nfc_eink_screen_load_info(const char* file_path, const NfcEinkScreenInfo** 
         loaded = true;
     } while(false);
 
+    furi_string_free(name);
     flipper_format_free(ff);
     furi_record_close(RECORD_STORAGE);
 
@@ -343,10 +368,6 @@ bool nfc_eink_screen_save(const NfcEinkScreen* screen, const char* file_path) {
         uint32_t buf = screen->data->base.screen_manufacturer;
         if(!flipper_format_write_uint32(ff, NFC_EINK_SCREEN_MANUFACTURER_TYPE_KEY, &buf, 1)) break;
 
-        // Write screen type
-        buf = screen->data->base.screen_type;
-        if(!flipper_format_write_uint32(ff, NFC_EINK_SCREEN_TYPE_KEY, &buf, 1)) break;
-
         // Write screen name
         if(!flipper_format_write_string_cstr(ff, NFC_EINK_SCREEN_NAME_KEY, screen->data->base.name))
             break;
@@ -412,10 +433,9 @@ void nfc_eink_screen_vendor_callback(NfcEinkScreen* instance, NfcEinkScreenEvent
     if(type == NfcEinkScreenEventTypeConfigurationReceived) {
         FURI_LOG_D(TAG, "Config received");
 
-        if(instance->device->screen_type == NfcEinkScreenTypeUnknown) {
+        if(!nfc_eink_screen_init_internal(instance)) {
             nfc_eink_screen_set_error(instance, NfcEinkScreenErrorUnsupportedScreen);
-        } else
-            nfc_eink_screen_init(instance, instance->device->screen_type);
+        }
     } else
         nfc_eink_screen_event_invoke(instance, type);
 }

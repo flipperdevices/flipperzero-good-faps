@@ -13,7 +13,6 @@ typedef struct {
     uint16_t block_total;
     uint16_t block_current;
     uint16_t received_data;
-    NfcEinkScreenType screen_type;
     NfcEinkScreenSpecificContext* screen_context;
 } NfcEinkScreenDevice;
 
@@ -30,6 +29,7 @@ typedef struct {
 struct NfcEinkScreen {
     NfcEinkScreenData* data;
     NfcEinkScreenDevice* device;
+    FuriString* name;
     NfcEinkScreenError error;
     BitBuffer* tx_buf;
     BitBuffer* rx_buf;

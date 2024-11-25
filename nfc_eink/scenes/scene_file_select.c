@@ -3,9 +3,14 @@
 void nfc_eink_scene_file_select_on_enter(void* context) {
     NfcEinkApp* instance = context;
 
-    if(nfc_eink_load_from_file_select(instance)) {
+    NfcEinkLoadResult result = nfc_eink_load_from_file_select(instance);
+    if(result == NfcEinkLoadResultSuccess) {
         scene_manager_next_scene(instance->scene_manager, NfcEinkAppSceneScreenMenu);
-    } else {
+    } else if(result == NfcEinkLoadResultFailed) {
+        instance->last_error = NfcEinkScreenErrorUnsupportedScreen;
+        scene_manager_next_scene(instance->scene_manager, NfcEinkAppSceneError);
+        notification_message(instance->notifications, &sequence_error);
+    } else if(result == NfcEinkLoadResultCanceled) {
         scene_manager_previous_scene(instance->scene_manager);
     }
 }

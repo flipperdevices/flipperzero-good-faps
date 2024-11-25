@@ -23,70 +23,32 @@ typedef enum {
     NfcEinkManufacturerUnknown
 } NfcEinkManufacturer;
 
-typedef enum {
-    NfcEinkScreenTypeUnknown,
-    NfcEinkScreenTypeGoodisplayEY2Color1n54inch,
-    NfcEinkScreenTypeGoodisplayEY2Color2n13inch,
-    NfcEinkScreenTypeGoodisplayEY2Color2n9inch,
-    NfcEinkScreenTypeGoodisplayEY2Color3n71inch,
-    NfcEinkScreenTypeGoodisplayEY2Color4n2inch,
-
-    NfcEinkScreenTypeGoodisplayEW2Color1n54inch,
-    NfcEinkScreenTypeGoodisplayEW2Color2n13inch,
-    NfcEinkScreenTypeGoodisplayEW2Color2n9inch,
-    NfcEinkScreenTypeGoodisplayEW2Color4n2inch,
-
-    NfcEinkScreenTypeGoodisplayEY3Color1n54inch,
-    NfcEinkScreenTypeGoodisplayEY3Color2n13inch,
-    NfcEinkScreenTypeGoodisplayEY3Color2n9inch,
-    NfcEinkScreenTypeGoodisplayEY3Color4n2inch,
-
-    NfcEinkScreenTypeGoodisplayEW3Color2n13inch,
-    NfcEinkScreenTypeGoodisplayEW3Color2n9inch,
-    NfcEinkScreenTypeGoodisplayEQ3Color4n2inch,
-    //-----------------------------------------------
-    NfcEinkScreenTypeWaveshare2Color2n13inch,
-    NfcEinkScreenTypeWaveshare2Color2n7inch,
-    NfcEinkScreenTypeWaveshare2Color2n9inch,
-    NfcEinkScreenTypeWaveshare2Color4n2inch,
-    NfcEinkScreenTypeWaveshare2Color7n5inch,
-    NfcEinkScreenTypeWaveshare2ColorHD7n5inch,
-
-    NfcEinkScreenTypeWaveshare3Color1n54inch,
-    NfcEinkScreenTypeWaveshare3Color2n9inch,
-    //All new screens can be added here
-
-    NfcEinkScreenTypeNum
-} NfcEinkScreenType;
+#define NFC_EINK_SCREEN_UNKNOWN        "Unknown"
+#define NFC_EINK_SCREEN_WAVESHARE_2n13 "Waveshare 2.13 inch"
+#define NFC_EINK_SCREEN_WAVESHARE_2n7  "Waveshare 2.7 inch"
+#define NFC_EINK_SCREEN_WAVESHARE_2n9  "Waveshare 2.9 inch"
+#define NFC_EINK_SCREEN_WAVESHARE_4n2  "Waveshare 4.2 inch"
+#define NFC_EINK_SCREEN_WAVESHARE_7n5  "Waveshare 7.5 inch"
+#define NFC_EINK_SCREEN_GDEY0154D67    "GDEY0154D67"
+#define NFC_EINK_SCREEN_GDEY0213B74    "GDEY0213B74"
+#define NFC_EINK_SCREEN_GDEY029T94     "GDEY029T94"
+#define NFC_EINK_SCREEN_GDEY037T03     "GDEY037T03"
 
 typedef struct {
     uint16_t width;
     uint16_t height;
     uint8_t data_block_size;
-    NfcEinkScreenType screen_type;
+    uint32_t protocol_type_field;
     NfcEinkScreenSize screen_size;
     NfcEinkManufacturer screen_manufacturer;
     const char* name;
 } NfcEinkScreenInfo;
 
-#define M_ARRAY_SIZE (sizeof(NfcEinkScreenInfo*) * NfcEinkScreenTypeNum)
-#define M_INIT(a)    ((a) = malloc(M_ARRAY_SIZE))
+ARRAY_DEF(EinkScreenInfoArray, const NfcEinkScreenInfo*, M_PTR_OPLIST);
 
-#define M_INIT_SET(new, old)                          \
-    do {                                              \
-        M_INIT(new);                                  \
-        memcpy((void*)new, (void*)old, M_ARRAY_SIZE); \
-        free((void*)old);                             \
-    } while(false)
-
-#define M_CLEAR(a) (free((void*)a))
-
-#define M_DESCRIPTOR_ARRAY_OPLIST \
-    (INIT(M_INIT), INIT_SET(M_INIT_SET), CLEAR(M_CLEAR), TYPE(const NfcEinkScreenInfo*))
-
-ARRAY_DEF(EinkScreenInfoArray, const NfcEinkScreenInfo*, M_DESCRIPTOR_ARRAY_OPLIST);
-
-const NfcEinkScreenInfo* nfc_eink_descriptor_get_by_type(NfcEinkScreenType type);
+const NfcEinkScreenInfo* nfc_eink_descriptor_get_by_name(const FuriString* name);
+const NfcEinkScreenInfo* nfc_eink_descriptor_get_by_index(size_t index);
+const NfcEinkScreenInfo* nfc_eink_descriptor_get_by_protocol_field(uint32_t protocol_field);
 
 uint8_t nfc_eink_descriptor_get_all_usable(EinkScreenInfoArray_t result);
 
@@ -98,6 +60,4 @@ uint8_t nfc_eink_descriptor_filter_by_screen_size(
     EinkScreenInfoArray_t result,
     NfcEinkScreenSize screen_size);
 
-uint8_t nfc_eink_descriptor_filter_by_screen_type(
-    EinkScreenInfoArray_t result,
-    NfcEinkScreenType screen_type);
+uint8_t nfc_eink_descriptor_filter_by_name(EinkScreenInfoArray_t result, const char* name);

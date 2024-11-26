@@ -25,7 +25,7 @@ static NfcEinkScreenDevice* eink_waveshare_alloc() {
 
     NfcEinkWaveshareSpecificContext* ctx = malloc(sizeof(NfcEinkWaveshareSpecificContext));
     ctx->listener_state = NfcEinkWaveshareListenerStateIdle;
-    ctx->poller_state = EinkWavesharePollerStateInit;
+    ctx->poller_state = EinkWavesharePollerStateReadPages;
 
     const uint8_t block0_3[] = {
         0x57, 0x53, 0x44, 0xC8, 0x5A, 0x31, 0x30, 0x6D, 0x36, 0, 0, 0, 0x00, 0x00, 0x00, 0x00};

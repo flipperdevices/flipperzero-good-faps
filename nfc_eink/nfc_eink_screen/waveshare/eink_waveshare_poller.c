@@ -30,7 +30,13 @@ static bool
     return ((response_len == 2) && (response[0] == 0xFF) && (response[1] == 0));
 }
 
-static bool eink_waveshare_send_data(
+static bool eink_waveshare_dummy_validator(const uint8_t* response, const size_t response_len) {
+    UNUSED(response);
+    UNUSED(response_len);
+    return true;
+}
+
+static EinkWaveshareSendStatus eink_waveshare_send_data(
     Iso14443_3aPoller* poller,
     const NfcEinkScreen* screen,
     const uint8_t* data,
@@ -117,6 +123,23 @@ static EinkWavesharePollerState eink_waveshare_poller_state_generic_handler(
     return (result == EinkWaveshareSendStatusSuccess) ? success_state :
                                                         EinkWavesharePollerStateError;
 }
+
+static NfcCommand
+    eink_waveshare_poller_state_read(Iso14443_3aPoller* poller, NfcEinkScreen* screen) {
+    FURI_LOG_D(TAG, "Read pages");
+    NfcEinkWaveshareSpecificContext* ctx = screen->device->screen_context;
+    EinkWaveshareSendStatus result = EinkWaveshareSendStatusFail;
+    uint8_t page = 4;
+    for(size_t i = 0; i < 3; i++) {
+        uint8_t data[2] = {0x30, page};
+        result = eink_waveshare_send_data(
+            poller, screen, data, 2, eink_waveshare_dummy_validator, EINK_WAVESHARE_POLLER_FWT);
+        page += 4;
+    }
+
+    ctx->poller_state = (result == EinkWaveshareSendStatusSuccess) ? EinkWavesharePollerStateInit :
+                                                                     EinkWavesharePollerStateError;
+    return NfcCommandContinue;
 }
 
 static NfcCommand
@@ -359,6 +382,7 @@ static NfcCommand
 }
 
 static const EinkWavesharePollerStateHandler handlers[EinkWavesharePollerStateNum] = {
+    [EinkWavesharePollerStateReadPages] = eink_waveshare_poller_state_read,
     [EinkWavesharePollerStateInit] = eink_waveshare_poller_state_init,
     [EinkWavesharePollerStateSelectType] = eink_waveshare_poller_state_select_type,
     [EinkWavesharePollerStateSetNormalMode] = eink_waveshare_poller_state_set_normal_mode,

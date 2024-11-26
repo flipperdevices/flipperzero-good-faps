@@ -32,6 +32,7 @@ typedef enum {
 } NfcEinkWaveshareListenerStates;
 
 typedef enum {
+    EinkWavesharePollerStateReadPages,
     EinkWavesharePollerStateInit,
     EinkWavesharePollerStateSelectType,
     EinkWavesharePollerStateSetNormalMode,

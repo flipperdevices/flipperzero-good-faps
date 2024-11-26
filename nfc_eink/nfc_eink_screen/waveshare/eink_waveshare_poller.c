@@ -7,6 +7,12 @@
 #define EINK_WAVESHARE_POLLER_FWT           (60000)
 #define EINK_WAVESHARE_POLLER_FWT_INFINITE  (0)
 
+typedef enum {
+    EinkWaveshareSendStatusSuccess,
+    EinkWaveshareSendStatusFail,
+    EinkWaveshareSendStatusTransportError,
+} EinkWaveshareSendStatus;
+
 typedef NfcCommand (
     *EinkWavesharePollerStateHandler)(Iso14443_3aPoller* poller, NfcEinkScreen* screen);
 
@@ -45,20 +51,22 @@ static bool eink_waveshare_send_data(
     Iso14443_3aError error =
         iso14443_3a_poller_send_standard_frame(poller, screen->tx_buf, screen->rx_buf, timeout);
 
-    bool result = false;
+    EinkWaveshareSendStatus result = EinkWaveshareSendStatusFail;
     if(error == Iso14443_3aErrorNone) {
         size_t response_len = bit_buffer_get_size_bytes(screen->rx_buf);
         const uint8_t* response = bit_buffer_get_data(screen->rx_buf);
 
-        result = validator(response, response_len);
+        result = validator(response, response_len) ? EinkWaveshareSendStatusSuccess :
+                                                     EinkWaveshareSendStatusFail;
 
     } else {
         FURI_LOG_E(TAG, "Iso14443_3aError: %02X", error);
+        result = EinkWaveshareSendStatusTransportError;
     }
     return result;
 }
 
-static bool eink_waveshare_send_command_ex(
+static EinkWaveshareSendStatus eink_waveshare_send_command_ex(
     Iso14443_3aPoller* poller,
     NfcEinkScreen* screen,
     const uint8_t command,
@@ -77,13 +85,14 @@ static bool eink_waveshare_send_command_ex(
         memcpy(&data[2], command_data, command_data_length);
     }
 
-    bool result = eink_waveshare_send_data(poller, screen, data, data_len, validator, timeout);
+    EinkWaveshareSendStatus result =
+        eink_waveshare_send_data(poller, screen, data, data_len, validator, timeout);
     free(data);
 
     return result;
 }
 
-static bool eink_waveshare_send_command(
+static EinkWaveshareSendStatus eink_waveshare_send_command(
     Iso14443_3aPoller* poller,
     NfcEinkScreen* screen,
     const uint8_t command,
@@ -96,7 +105,7 @@ static bool eink_waveshare_send_command(
         command_data,
         command_data_length,
         eink_waveshare_default_validator,
-        EINK_WAVESHARE_POLLER_FWT_INFINITE);
+        EINK_WAVESHARE_POLLER_FWT);
 }
 
 static EinkWavesharePollerState eink_waveshare_poller_state_generic_handler(
@@ -104,8 +113,10 @@ static EinkWavesharePollerState eink_waveshare_poller_state_generic_handler(
     NfcEinkScreen* screen,
     uint8_t command,
     EinkWavesharePollerState success_state) {
-    bool result = eink_waveshare_send_command(poller, screen, command, NULL, 0);
-    return result ? success_state : EinkWavesharePollerStateError;
+    EinkWaveshareSendStatus result = eink_waveshare_send_command(poller, screen, command, NULL, 0);
+    return (result == EinkWaveshareSendStatusSuccess) ? success_state :
+                                                        EinkWavesharePollerStateError;
+}
 }
 
 static NfcCommand
@@ -131,9 +142,9 @@ static NfcCommand
     do {
         EinkScreenTypeWaveshare screen_type =
             eink_waveshare_config_get_protocol_screen_type_by_name(screen->name);
-        bool result = eink_waveshare_send_command(
+        EinkWaveshareSendStatus result = eink_waveshare_send_command(
             poller, screen, EINK_WAVESHARE_COMMAND_SELECT_TYPE, &screen_type, sizeof(screen_type));
-        if(!result) break;
+        if(result != EinkWaveshareSendStatusSuccess) break;
 
         ctx->poller_state = EinkWavesharePollerStateSetNormalMode;
     } while(false);
@@ -223,7 +234,7 @@ static NfcCommand
     ctx->poller_state = EinkWavesharePollerStateRetry;
 
     do {
-        bool result = eink_waveshare_send_data(
+        EinkWaveshareSendStatus result = eink_waveshare_send_data(
             poller,
             screen,
             data,
@@ -231,7 +242,7 @@ static NfcCommand
             eink_waveshare_default_validator,
             EINK_WAVESHARE_POLLER_FWT);
 
-        if(!result) break;
+        if(result != EinkWaveshareSendStatusSuccess) break;
 
         ctx->data_index += block_size;
         ctx->block_number++;
@@ -280,18 +291,21 @@ static NfcCommand
     FURI_LOG_D(TAG, "Wait ready");
     NfcEinkWaveshareSpecificContext* ctx = screen->device->screen_context;
 
-    if(eink_waveshare_send_command_ex(
-           poller,
-           screen,
-           EINK_WAVESHARE_COMMAND_WAIT_FOR_READY,
-           NULL,
-           0,
-           eink_waveshare_refresh_cmd_validator,
-           EINK_WAVESHARE_POLLER_FWT)) {
+    EinkWaveshareSendStatus status = eink_waveshare_send_command_ex(
+        poller,
+        screen,
+        EINK_WAVESHARE_COMMAND_WAIT_FOR_READY,
+        NULL,
+        0,
+        eink_waveshare_refresh_cmd_validator,
+        EINK_WAVESHARE_POLLER_FWT);
+    if(status == EinkWaveshareSendStatusSuccess) {
         ctx->poller_state = EinkWavesharePollerStateFinish;
-    } else {
+    } else if(status == EinkWaveshareSendStatusFail) {
         ctx->poller_state = EinkWavesharePollerStateWaitReady;
         furi_delay_ms(100);
+    } else if(status == EinkWaveshareSendStatusTransportError) {
+        ctx->poller_state = EinkWavesharePollerStateError;
     }
     return NfcCommandContinue;
 }

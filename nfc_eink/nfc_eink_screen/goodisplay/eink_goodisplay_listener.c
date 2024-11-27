@@ -101,7 +101,6 @@ static inline uint8_t nfc_eink_screen_apdu_command_DB(
         resp->status = __builtin_bswap16(0x9000);
         length = 2;
     } else if(hdr->P1 == 0x00 && hdr->P2 == 0x00) {
-        ///TODO: Add here some saving and parsing logic for screen config
         eink_goodisplay_parse_config(screen, command->data, command->data_length);
         resp->status = __builtin_bswap16(0x9000);
         length = 2;

@@ -3,7 +3,7 @@
 #include "eink_waveshare_config.h"
 
 static NfcDevice* eink_waveshare_nfc_device_alloc() {
-    //const uint8_t uid[] = {0x46, 0x53, 0x54, 0x5E, 0x31, 0x30, 0x6D}; //FSTN10m
+    //const uint8_t uid[] = {0x46, 0x53, 0x54, 0x4E, 0x31, 0x30, 0x6D}; //FSTN10m
     const uint8_t uid[] = {0x57, 0x53, 0x44, 0x5A, 0x31, 0x30, 0x6D}; //WSDZ10m
     const uint8_t atqa[] = {0x44, 0x00};
 
@@ -25,7 +25,7 @@ static NfcEinkScreenDevice* eink_waveshare_alloc() {
 
     NfcEinkWaveshareSpecificContext* ctx = malloc(sizeof(NfcEinkWaveshareSpecificContext));
     ctx->listener_state = NfcEinkWaveshareListenerStateIdle;
-    ctx->poller_state = EinkWavesharePollerStateReadPages;
+    ctx->poller_state = EinkWavesharePollerStateInit;
 
     const uint8_t block0_3[] = {
         0x57, 0x53, 0x44, 0xC8, 0x5A, 0x31, 0x30, 0x6D, 0x36, 0, 0, 0, 0x00, 0x00, 0x00, 0x00};

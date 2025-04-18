@@ -53,7 +53,8 @@ bool signal_gen_scene_pwm_on_event(void* context, SceneManagerEvent event) {
         } else if(event.event == SignalGenPwmEventChannelChange) {
             consumed = true;
             // Stop previous channel PWM
-            if(furi_hal_pwm_is_running(app->pwm_ch_prev)) {
+            if(app->pwm_ch_prev != FuriHalPwmOutputIdNone &&
+               furi_hal_pwm_is_running(app->pwm_ch_prev)) {
                 furi_hal_pwm_stop(app->pwm_ch_prev);
             }
 

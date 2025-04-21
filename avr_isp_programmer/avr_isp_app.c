@@ -168,6 +168,25 @@ void avr_isp_app_free(AvrIspApp* app) {
 
 int32_t avr_isp_app(void* p) {
     UNUSED(p);
+
+    if(furi_hal_usb_is_locked()) {
+        DialogsApp* dialogs = furi_record_open(RECORD_DIALOGS);
+        DialogMessage* message = dialog_message_alloc();
+        dialog_message_set_header(message, "Connection\nis active!", 3, 2, AlignLeft, AlignTop);
+        dialog_message_set_text(
+            message,
+            "Disconnect\ncompanion app to\nuse this function.",
+            3,
+            30,
+            AlignLeft,
+            AlignTop);
+        dialog_message_set_icon(message, &I_ActiveConnection_50x64, 78, 0);
+        dialog_message_show(dialogs, message);
+        dialog_message_free(message);
+        furi_record_close(RECORD_DIALOGS);
+        return -1;
+    }
+
     AvrIspApp* avr_isp_app = avr_isp_app_alloc();
 
     view_dispatcher_run(avr_isp_app->view_dispatcher);

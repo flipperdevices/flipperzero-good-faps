@@ -400,7 +400,6 @@ static NfcCommand gen4_poller_write_mf_ultralight(Gen4Poller* instance) {
                 instance->total_blocks = 128;
                 break;
 
-
             case MfUltralightTypeOrigin:
                 FURI_LOG_D(TAG, "Ultralight type");
                 instance->config.data_parsed.mfu_mode = Gen4UltralightModeUL;

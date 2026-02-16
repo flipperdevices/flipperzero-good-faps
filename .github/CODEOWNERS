@@ -1,14 +1,18 @@
 # Who owns all the fish by default
-* @skotopes @DrZlo13 @hedger
+* @DrZlo13 @hedger @gornekich
 
-/avr_isp_programmer @skotopes @DrZlo13 @hedger @Skorpionm
-/dap_link @skotopes @DrZlo13 @hedger
-/hid_app @skotopes @DrZlo13 @hedger @nminaylov
-/mass_storage @skotopes @DrZlo13 @hedger @nminaylov
-/mfkey32 @skotopes @DrZlo13 @hedger @gornekich
-/nfc_magic @skotopes @DrZlo13 @hedger @gornekich
-/nfc_rfid_detector @skotopes @DrZlo13 @hedger @gornekich
-/picopass @skotopes @DrZlo13 @hedger @gornekich @bettse
-/signal_generator @skotopes @DrZlo13 @hedger @nminaylov
-/spi_mem_manager @skotopes @DrZlo13 @hedger
-/weather_station @skotopes @DrZlo13 @hedger @Skorpionm
+/air_arkanoid @DrZlo13 @hedger @gornekich
+/air_mouse @DrZlo13 @hedger @nminaylov @gornekich
+/avr_isp_programmer @DrZlo13 @hedger @Skorpionm @gornekich
+/clock @DrZlo13 @hedger @gornekich
+/dap_link @DrZlo13 @hedger @gornekich
+/flip_tdi @DrZlo13 @hedger @Skorpionm @gornekich
+/mass_storage @DrZlo13 @hedger @nminaylov @gornekich
+/mfkey @DrZlo13 @hedger @gornekich
+/music_player @DrZlo13 @hedger @gornekich
+/nfc_magic @DrZlo13 @hedger @gornekich
+/nfc_rfid_detector @DrZlo13 @hedger @gornekich
+/signal_generator @DrZlo13 @hedger @nminaylov @gornekich
+/spi_mem_manager @DrZlo13 @hedger @gornekich
+/video_game_module_tool @DrZlo13 @hedger @gsurkov @gornekich
+/weather_station @DrZlo13 @hedger @Skorpionm @gornekich

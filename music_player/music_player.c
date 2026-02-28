@@ -11,7 +11,7 @@
 #define TAG "MusicPlayer"
 
 #define MUSIC_PLAYER_APP_EXTENSION "*"
-#define MUSIC_PLAYER_EXAMPLE_FILE  "Marble_Machine.fmf"
+#define MUSIC_PLAYER_EXAMPLE_FILE "Marble_Machine.fmf"
 
 #define MUSIC_PLAYER_SEMITONE_HISTORY_SIZE 3
 

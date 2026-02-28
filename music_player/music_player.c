@@ -39,12 +39,12 @@ typedef struct {
 
 typedef struct {
     MusicPlayerModel* model;
-    FuriMutex*        model_mutex;
+    FuriMutex* model_mutex;
 
     FuriMessageQueue* input_queue;
 
     ViewPort* view_port;
-    Gui*      gui;
+    Gui* gui;
 
     MusicWorker* worker;
 
@@ -56,44 +56,83 @@ static const float MUSIC_PLAYER_VOLUMES[] = {0, .25, .5, .75, 1};
 
 static const char* semitone_to_note(int8_t semitone) {
     switch(semitone) {
-    case 0:  return "C";
-    case 1:  return "C#";
-    case 2:  return "D";
-    case 3:  return "D#";
-    case 4:  return "E";
-    case 5:  return "F";
-    case 6:  return "F#";
-    case 7:  return "G";
-    case 8:  return "G#";
-    case 9:  return "A";
-    case 10: return "A#";
-    case 11: return "B";
-    default: return "--";
+    case 0:
+        return "C";
+    case 1:
+        return "C#";
+    case 2:
+        return "D";
+    case 3:
+        return "D#";
+    case 4:
+        return "E";
+    case 5:
+        return "F";
+    case 6:
+        return "F#";
+    case 7:
+        return "G";
+    case 8:
+        return "G#";
+    case 9:
+        return "A";
+    case 10:
+        return "A#";
+    case 11:
+        return "B";
+    default:
+        return "--";
     }
 }
 
 static bool is_white_note(uint8_t semitone, uint8_t id) {
     switch(semitone) {
-    case 0:  if(id == 0) return true; break;
-    case 2:  if(id == 1) return true; break;
-    case 4:  if(id == 2) return true; break;
-    case 5:  if(id == 3) return true; break;
-    case 7:  if(id == 4) return true; break;
-    case 9:  if(id == 5) return true; break;
-    case 11: if(id == 6) return true; break;
-    default: break;
+    case 0:
+        if(id == 0) return true;
+        break;
+    case 2:
+        if(id == 1) return true;
+        break;
+    case 4:
+        if(id == 2) return true;
+        break;
+    case 5:
+        if(id == 3) return true;
+        break;
+    case 7:
+        if(id == 4) return true;
+        break;
+    case 9:
+        if(id == 5) return true;
+        break;
+    case 11:
+        if(id == 6) return true;
+        break;
+    default:
+        break;
     }
     return false;
 }
 
 static bool is_black_note(uint8_t semitone, uint8_t id) {
     switch(semitone) {
-    case 1:  if(id == 0) return true; break;
-    case 3:  if(id == 1) return true; break;
-    case 6:  if(id == 3) return true; break;
-    case 8:  if(id == 4) return true; break;
-    case 10: if(id == 5) return true; break;
-    default: break;
+    case 1:
+        if(id == 0) return true;
+        break;
+    case 3:
+        if(id == 1) return true;
+        break;
+    case 6:
+        if(id == 3) return true;
+        break;
+    case 8:
+        if(id == 4) return true;
+        break;
+    case 10:
+        if(id == 5) return true;
+        break;
+    default:
+        break;
     }
     return false;
 }
@@ -232,8 +271,8 @@ static void music_worker_callback(
     uint8_t semitone,
     uint8_t dots,
     uint8_t duration,
-    float   position,
-    void*   context) {
+    float position,
+    void* context) {
     MusicPlayer* music_player = context;
     furi_check(furi_mutex_acquire(music_player->model_mutex, FuriWaitForever) == FuriStatusOk);
 
@@ -246,7 +285,7 @@ static void music_worker_callback(
     semitone = (semitone == 0xFF) ? 0xFF : semitone % 12;
 
     music_player->model->semitone = semitone;
-    music_player->model->dots     = dots;
+    music_player->model->dots = dots;
     music_player->model->duration = duration;
     music_player->model->position = position;
 
@@ -266,7 +305,7 @@ void music_player_clear(MusicPlayer* instance) {
 MusicPlayer* music_player_alloc() {
     MusicPlayer* instance = malloc(sizeof(MusicPlayer));
 
-    instance->model         = malloc(sizeof(MusicPlayerModel));
+    instance->model = malloc(sizeof(MusicPlayerModel));
     instance->model->volume = 3;
     instance->model->tempo  = 0;
     instance->model->paused = false;

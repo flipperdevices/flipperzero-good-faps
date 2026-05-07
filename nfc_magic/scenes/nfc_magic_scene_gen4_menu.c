@@ -7,6 +7,7 @@ enum SubmenuIndex {
     SubmenuIndexSetDirectWriteBlock0Mode,
     SubmenuIndexInfo,
     SubmenuIndexWipe,
+    SubmenuIndexAdvanced,
 };
 
 void nfc_magic_scene_gen4_menu_submenu_callback(void* context, uint32_t index) {
@@ -62,6 +63,12 @@ void nfc_magic_scene_gen4_menu_on_enter(void* context) {
         submenu, "Wipe", SubmenuIndexWipe, nfc_magic_scene_gen4_menu_submenu_callback, instance);
     submenu_add_item(
         submenu, "Info", SubmenuIndexInfo, nfc_magic_scene_gen4_menu_submenu_callback, instance);
+    submenu_add_item(
+        submenu,
+        "Advanced",
+        SubmenuIndexAdvanced,
+        nfc_magic_scene_gen4_menu_submenu_callback,
+        instance);
 
     submenu_set_selected_item(
         submenu, scene_manager_get_scene_state(instance->scene_manager, NfcMagicSceneGen4Menu));
@@ -91,6 +98,9 @@ bool nfc_magic_scene_gen4_menu_on_event(void* context, SceneManagerEvent event) 
         } else if(event.event == SubmenuIndexSetDirectWriteBlock0Mode) {
             scene_manager_next_scene(
                 instance->scene_manager, NfcMagicSceneGen4SetDirectWriteBlock0Mode);
+            consumed = true;
+        } else if(event.event == SubmenuIndexAdvanced) {
+            scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4Advanced);
             consumed = true;
         }
 

@@ -42,19 +42,19 @@
 
 #include "lib/nfc/protocols/mf_classic/mf_classic_poller.h"
 
-#define NFC_APP_FOLDER           ANY_PATH("nfc")
-#define NFC_APP_EXTENSION        ".nfc"
+#define NFC_APP_FOLDER ANY_PATH("nfc")
+#define NFC_APP_EXTENSION ".nfc"
 #define NFC_APP_SHADOW_EXTENSION ".shd"
 
-#define NFC_APP_MF_CLASSIC_DICT_USER_PATH   (NFC_APP_FOLDER "/assets/mf_classic_dict_user.nfc")
+#define NFC_APP_MF_CLASSIC_DICT_USER_PATH (NFC_APP_FOLDER "/assets/mf_classic_dict_user.nfc")
 #define NFC_APP_MF_CLASSIC_DICT_SYSTEM_PATH (NFC_APP_FOLDER "/assets/mf_classic_dict.nfc")
 
-#define NFC_MAGIC_APP_NAME_SIZE             22
-#define NFC_MAGIC_APP_TEXT_STORE_SIZE       128
-#define NFC_MAGIC_APP_FOLDER                ANY_PATH("nfc")
-#define NFC_MAGIC_APP_EXTENSION             ".nfc"
-#define NFC_MAGIC_APP_FILENAME_PREFIX       "NFC"
-#define NFC_MAGIC_APP_BYTE_INPUT_STORE_SIZE (4)
+#define NFC_MAGIC_APP_NAME_SIZE 22
+#define NFC_MAGIC_APP_TEXT_STORE_SIZE 128
+#define NFC_MAGIC_APP_FOLDER ANY_PATH("nfc")
+#define NFC_MAGIC_APP_EXTENSION ".nfc"
+#define NFC_MAGIC_APP_FILENAME_PREFIX "NFC"
+#define NFC_MAGIC_APP_BYTE_INPUT_STORE_SIZE (32)
 
 enum NfcMagicAppCustomEvent {
     // Reserve first 100 events for button types and indexes, starting from 0
@@ -130,6 +130,7 @@ struct NfcMagicApp {
 
     FuriString* text_box_store;
     uint8_t byte_input_store[NFC_MAGIC_APP_BYTE_INPUT_STORE_SIZE];
+    uint8_t gen4_input_count;
 
     // Common Views
     Submenu* submenu;

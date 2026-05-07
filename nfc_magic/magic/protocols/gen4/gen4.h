@@ -3,13 +3,16 @@
 #include "core/common_defines.h"
 #include <stdint.h>
 
-#define GEN4_CONFIG_SIZE   (32)
+#define GEN4_CONFIG_SIZE (32)
 #define GEN4_REVISION_SIZE (5)
 
 #define GEN4_PASSWORD_LEN (4)
-#define GEN4_ATS_MAX_LEN  (16)
-#define GEN4_ATQA_LEN     (2)
-#define GEN4_CRC_LEN      (2)
+#define GEN4_ATS_MAX_LEN (16)
+#define GEN4_ATQA_LEN (2)
+#define GEN4_CRC_LEN (2)
+#define GEN4_UID_MAX_LEN (10)
+#define GEN4_SIGNATURE_SIZE (32)
+#define GEN4_VERSION_SIZE (8)
 
 typedef enum {
     Gen4ProtocolMfClassic = 0x00,
@@ -103,3 +106,8 @@ const char* gen4_get_direct_write_mode_name(Gen4DirectWriteBlock0Mode mode);
 const char* gen4_get_uid_len_num(Gen4UIDLength code);
 
 const char* gen4_get_configuration_name(const Gen4Config* config);
+
+void gen4_calc_mfc_block0(const uint8_t* uid, uint8_t uid_len, uint8_t* block0);
+void gen4_calc_mfu_bcc(const uint8_t* uid, uint8_t* bcc0, uint8_t* bcc1);
+bool gen4_hex_str_to_bytes(const char* hex_str, uint8_t* bytes, uint8_t len);
+void gen4_bytes_to_hex_str(const uint8_t* bytes, uint8_t len, char* hex_str);

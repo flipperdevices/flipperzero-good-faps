@@ -40,12 +40,23 @@ typedef enum {
     Gen4PollerModeWipe,
     Gen4PollerModeWrite,
     Gen4PollerModeSetPassword,
-
     Gen4PollerModeGetInfo,
-
     Gen4PollerModeSetDefaultCfg,
     Gen4PollerModeSetShadowMode,
-    Gen4PollerModeSetDirectWriteBlock0Mode
+    Gen4PollerModeSetDirectWriteBlock0Mode,
+    Gen4PollerModeWriteUID,
+    Gen4PollerModeSetATQASAK,
+    Gen4PollerModeSetATS,
+    Gen4PollerModeSetULProtocol,
+    Gen4PollerModeSetULMode,
+    Gen4PollerModeSetMaxRWBlock,
+    Gen4PollerModeSetType,
+    Gen4PollerModeWriteNTAGPwd,
+    Gen4PollerModeWritePack,
+    Gen4PollerModeWriteOTP,
+    Gen4PollerModeWriteVersion,
+    Gen4PollerModeWriteSignature,
+    Gen4PollerModeFullWipe,
 } Gen4PollerMode;
 
 typedef struct {
@@ -95,6 +106,24 @@ void gen4_poller_struct_set_direct_write_block_0_mode(
     Gen4DirectWriteBlock0Mode mode);
 
 void gen4_poller_struct_set_shadow_mode(Gen4Poller* instance, Gen4ShadowMode mode);
+
+void gen4_poller_struct_set_uid(Gen4Poller* instance, const uint8_t* uid, uint8_t uid_len);
+void gen4_poller_struct_set_atqa_sak_params(
+    Gen4Poller* instance,
+    uint8_t atqa0,
+    uint8_t atqa1,
+    uint8_t sak);
+void gen4_poller_struct_set_ats_params(Gen4Poller* instance, const uint8_t* ats, uint8_t ats_len);
+void gen4_poller_struct_set_protocol(Gen4Poller* instance, Gen4Protocol protocol);
+void gen4_poller_struct_set_ul_mode(Gen4Poller* instance, Gen4UltralightMode mode);
+void gen4_poller_struct_set_max_rw_block(Gen4Poller* instance, uint8_t max_block);
+void gen4_poller_struct_set_tag_type(Gen4Poller* instance, uint8_t tag_type);
+void gen4_poller_struct_set_ntag_pwd(Gen4Poller* instance, const uint8_t* pwd);
+void gen4_poller_struct_set_pack(Gen4Poller* instance, const uint8_t* pack);
+void gen4_poller_struct_set_otp(Gen4Poller* instance, const uint8_t* otp);
+void gen4_poller_struct_set_version(Gen4Poller* instance, const uint8_t* version);
+void gen4_poller_struct_set_signature(Gen4Poller* instance, const uint8_t* signature);
+void gen4_poller_struct_set_wipe_type(Gen4Poller* instance, uint8_t wipe_type);
 
 #ifdef __cplusplus
 }

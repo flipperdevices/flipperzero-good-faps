@@ -174,11 +174,7 @@ bool nfc_magic_scene_gen4_advanced_on_event(void* context, SceneManagerEvent eve
             scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4HexInput);
             consumed = true;
         } else if(event.event == SubmenuIndexSetType) {
-            scene_manager_set_scene_state(
-                instance->scene_manager,
-                NfcMagicSceneGen4HexInput,
-                Gen4HexInputModeTagType | (1UL << 8));
-            scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4HexInput);
+            scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4SelectType);
             consumed = true;
         } else if(event.event == SubmenuIndexWriteNTAGPwd) {
             scene_manager_set_scene_state(
@@ -228,7 +224,7 @@ bool nfc_magic_scene_gen4_advanced_on_event(void* context, SceneManagerEvent eve
             instance->scene_manager, NfcMagicSceneGen4Advanced, event.event);
     } else if(event.type == SceneManagerEventTypeBack) {
         consumed = scene_manager_search_and_switch_to_previous_scene(
-            instance->scene_manager, NfcMagicSceneGen4Menu);
+            instance->scene_manager, NfcMagicSceneGen4ActionsMenu);
     }
 
     return consumed;

@@ -1221,7 +1221,7 @@ static NfcCommand gen4_poller_set_type_handler(Gen4Poller* instance) {
     return command;
 }
 
-static NfcCommand gen4_poller_write_otp_handler(Gen4Poller* instance) {
+static NfcCommand gen4_poller_write_ntag_pwd_handler(Gen4Poller* instance) {
     NfcCommand command = NfcCommandContinue;
 
     do {

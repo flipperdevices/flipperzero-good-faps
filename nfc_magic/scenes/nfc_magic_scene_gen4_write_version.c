@@ -62,7 +62,7 @@ void nfc_magic_scene_gen4_write_version_on_enter(void* context) {
     instance->gen4_poller = gen4_poller_alloc(instance->nfc);
     gen4_poller_set_password(instance->gen4_poller, instance->gen4_password);
     gen4_poller_struct_set_version(
-        instance->gen4_poller, instance->byte_input_store, 8);
+        instance->gen4_poller, instance->byte_input_store);
 
     gen4_poller_start(
         instance->gen4_poller, nfc_magic_scene_gen4_write_version_poller_callback, instance);

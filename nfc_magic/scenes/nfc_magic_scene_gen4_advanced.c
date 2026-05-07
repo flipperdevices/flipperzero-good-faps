@@ -153,18 +153,10 @@ bool nfc_magic_scene_gen4_advanced_on_event(void* context, SceneManagerEvent eve
             scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4HexInput);
             consumed = true;
         } else if(event.event == SubmenuIndexSetProtocol) {
-            scene_manager_set_scene_state(
-                instance->scene_manager,
-                NfcMagicSceneGen4HexInput,
-                Gen4HexInputModeProtocol | (1UL << 8));
-            scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4HexInput);
+            scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4SelectProtocol);
             consumed = true;
         } else if(event.event == SubmenuIndexSetULMode) {
-            scene_manager_set_scene_state(
-                instance->scene_manager,
-                NfcMagicSceneGen4HexInput,
-                Gen4HexInputModeULMode | (1UL << 8));
-            scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4HexInput);
+            scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4SelectULMode);
             consumed = true;
         } else if(event.event == SubmenuIndexSetMaxRWBlock) {
             scene_manager_set_scene_state(
@@ -212,11 +204,7 @@ bool nfc_magic_scene_gen4_advanced_on_event(void* context, SceneManagerEvent eve
             scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4HexInput);
             consumed = true;
         } else if(event.event == SubmenuIndexFullWipe) {
-            scene_manager_set_scene_state(
-                instance->scene_manager,
-                NfcMagicSceneGen4HexInput,
-                Gen4HexInputModeWipeType | (1UL << 8));
-            scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4HexInput);
+            scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4SelectWipe);
             consumed = true;
         }
 

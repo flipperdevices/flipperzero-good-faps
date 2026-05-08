@@ -132,11 +132,7 @@ bool nfc_magic_scene_gen4_advanced_on_event(void* context, SceneManagerEvent eve
 
     if(event.type == SceneManagerEventTypeCustom) {
         if(event.event == SubmenuIndexWriteUID) {
-            scene_manager_set_scene_state(
-                instance->scene_manager,
-                NfcMagicSceneGen4HexInput,
-                Gen4HexInputModeUID | ((uint32_t)NFC_MAGIC_APP_BYTE_INPUT_STORE_SIZE << 8));
-            scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4HexInput);
+            scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4SelectUIDLen);
             consumed = true;
         } else if(event.event == SubmenuIndexSetATQASAK) {
             scene_manager_set_scene_state(

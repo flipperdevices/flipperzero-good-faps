@@ -1,13 +1,13 @@
 #include "../nfc_magic_app_i.h"
 
 enum SubmenuIndex {
+    SubmenuIndexSetType = 0,
     SubmenuIndexWriteUID,
     SubmenuIndexSetATQASAK,
     SubmenuIndexSetATS,
     SubmenuIndexSetProtocol,
     SubmenuIndexSetULMode,
     SubmenuIndexSetMaxRWBlock,
-    SubmenuIndexSetType,
     SubmenuIndexWriteNTAGPwd,
     SubmenuIndexWritePACK,
     SubmenuIndexWriteOTP,
@@ -43,6 +43,12 @@ void nfc_magic_scene_gen4_advanced_on_enter(void* context) {
     Submenu* submenu = instance->submenu;
     submenu_add_item(
         submenu,
+        "Set Tag Type",
+        SubmenuIndexSetType,
+        nfc_magic_scene_gen4_advanced_submenu_callback,
+        instance);
+    submenu_add_item(
+        submenu,
         "Write UID",
         SubmenuIndexWriteUID,
         nfc_magic_scene_gen4_advanced_submenu_callback,
@@ -75,12 +81,6 @@ void nfc_magic_scene_gen4_advanced_on_enter(void* context) {
         submenu,
         "Set Max R/W Block",
         SubmenuIndexSetMaxRWBlock,
-        nfc_magic_scene_gen4_advanced_submenu_callback,
-        instance);
-    submenu_add_item(
-        submenu,
-        "Set Tag Type",
-        SubmenuIndexSetType,
         nfc_magic_scene_gen4_advanced_submenu_callback,
         instance);
     submenu_add_item(

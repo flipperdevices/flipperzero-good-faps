@@ -216,5 +216,7 @@ bool nfc_magic_scene_gen4_advanced_on_event(void* context, SceneManagerEvent eve
 
 void nfc_magic_scene_gen4_advanced_on_exit(void* context) {
     NfcMagicApp* instance = context;
+    scene_manager_set_scene_state(
+        instance->scene_manager, NfcMagicSceneGen4Advanced, 0);
     submenu_reset(instance->submenu);
 }

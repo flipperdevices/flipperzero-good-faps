@@ -180,12 +180,6 @@ static void ftdi_usb_deinit(usbd_device* dev) {
     ftdi_usb->thread = NULL;
 
     ftdi_free(ftdi_usb->ftdi);
-
-    free(ftdi_usb->usb.str_prod_descr);
-    ftdi_usb->usb.str_prod_descr = NULL;
-    free(ftdi_usb->usb.str_serial_descr);
-    ftdi_usb->usb.str_serial_descr = NULL;
-    free(ftdi_usb);
 }
 
 static void ftdi_usb_send(usbd_device* dev, uint8_t* buf, uint16_t len) {
@@ -495,7 +489,7 @@ FtdiUsb* ftdi_usb_start(void) {
     ftdi_usb->usb.cfg_descr = (void*)&usb_ftdi_cfg_descr;
 
     if(!furi_hal_usb_set_config(&ftdi_usb->usb, ftdi_usb)) {
-        FURI_LOG_E(TAG, "USB locked, cannot start Mass Storage");
+        FURI_LOG_E(TAG, "USB locked, cannot start FlipTDI");
         free(ftdi_usb->usb.str_prod_descr);
         free(ftdi_usb->usb.str_serial_descr);
         free(ftdi_usb);
@@ -506,4 +500,5 @@ FtdiUsb* ftdi_usb_start(void) {
 
 void ftdi_usb_stop(FtdiUsb* ftdi_usb) {
     furi_hal_usb_set_config(ftdi_usb->usb_prev, NULL);
+    free(ftdi_usb);
 }

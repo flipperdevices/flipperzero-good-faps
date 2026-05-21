@@ -297,12 +297,6 @@ static void usb_deinit(usbd_device* dev) {
     furi_thread_join(mass->thread);
     furi_thread_free(mass->thread);
     mass->thread = NULL;
-
-    free(mass->usb.str_prod_descr);
-    mass->usb.str_prod_descr = NULL;
-    free(mass->usb.str_serial_descr);
-    mass->usb.str_serial_descr = NULL;
-    free(mass);
 }
 
 static void usb_wakeup(usbd_device* dev) {
@@ -478,4 +472,10 @@ MassStorageUsb* mass_storage_usb_start(const char* filename, SCSIDeviceFunc fn) 
 
 void mass_storage_usb_stop(MassStorageUsb* mass) {
     furi_hal_usb_set_config(mass->usb_prev, NULL);
+
+    free(mass->usb.str_prod_descr);
+    mass->usb.str_prod_descr = NULL;
+    free(mass->usb.str_serial_descr);
+    mass->usb.str_serial_descr = NULL;
+    free(mass);
 }

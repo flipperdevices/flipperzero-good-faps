@@ -60,9 +60,10 @@ FlipTDIApp* flip_tdi_app_alloc() {
         flip_tdi_view_main_get_view(app->flip_tdi_view_main_instance));
 
     // FTDI emulation Start
-    flip_tdi_start(app);
+    app->ftdi_usb = ftdi_usb_start();
 
-    scene_manager_next_scene(app->scene_manager, FlipTDISceneMain);
+    scene_manager_next_scene(
+        app->scene_manager, app->ftdi_usb ? FlipTDISceneMain : FlipTDISceneCloseRpc);
 
     return app;
 }
@@ -71,13 +72,13 @@ void flip_tdi_app_free(FlipTDIApp* app) {
     furi_assert(app);
 
     // FTDI emulation Stop
-    flip_tdi_stop(app);
+    if(app->ftdi_usb) ftdi_usb_stop(app->ftdi_usb);
 
     // Submenu
     view_dispatcher_remove_view(app->view_dispatcher, FlipTDIViewSubmenu);
     submenu_free(app->submenu);
 
-    //  Widget
+    // Widget
     view_dispatcher_remove_view(app->view_dispatcher, FlipTDIViewWidget);
     widget_free(app->widget);
 

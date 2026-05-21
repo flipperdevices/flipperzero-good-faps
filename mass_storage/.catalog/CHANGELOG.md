@@ -1,3 +1,6 @@
+## v.1.5
+Fixed crash when connected to a USB charger instead of a PC
+
 ## v.1.4
 Removed call to legacy SDK API
 

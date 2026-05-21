@@ -1,4 +1,5 @@
 # Configuration
+.clangd
 .clang-format
 .editorconfig
 

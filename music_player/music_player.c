@@ -1,4 +1,4 @@
-#include <music_worker/music_worker.h>
+#include "music_worker.h"
 
 #include <furi.h>
 #include <furi_hal.h>
@@ -527,18 +527,9 @@ int32_t music_player_app(void* p) {
                 furi_mutex_release(music_player->model_mutex);
 
                 if(paused) {
-                    music_worker_stop(music_player->worker);
+                    music_worker_pause(music_player->worker);
                 } else {
-                    // Reload so playback resumes from the current tempo file
-                    music_worker_clear(music_player->worker);
-                    const char* src = (storage_common_exists(
-                                           furi_record_open(RECORD_STORAGE),
-                                           MUSIC_PLAYER_TEMP_FILE))
-                                          ? MUSIC_PLAYER_TEMP_FILE
-                                          : furi_string_get_cstr(file_path);
-                    furi_record_close(RECORD_STORAGE);
-                    if(music_worker_load(music_player->worker, src))
-                        music_worker_start(music_player->worker);
+                    music_worker_resume(music_player->worker);
                 }
 
             } else if(input.key == InputKeyRight) {

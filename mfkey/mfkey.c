@@ -325,7 +325,7 @@ bool key_already_found_for_nonce_in_solved(
             if(nonce->ar1_enc == (crypt_word(&temp) ^ nonce->p64b)) {
                 return true;
             }
-        } else if(nonce->attack == static_nested) {
+        } else if(nonce->attack == static_nested || nonce->attack == static_encrypted) {
             uint32_t expected_ks1 = crypt_word_ret(&temp, nonce->uid_xor_nt0, 0);
             if(nonce->ks1_1_enc == expected_ks1) {
                 return true;

@@ -54,7 +54,7 @@
 #define NFC_MAGIC_APP_FOLDER                ANY_PATH("nfc")
 #define NFC_MAGIC_APP_EXTENSION             ".nfc"
 #define NFC_MAGIC_APP_FILENAME_PREFIX       "NFC"
-#define NFC_MAGIC_APP_BYTE_INPUT_STORE_SIZE (4)
+#define NFC_MAGIC_APP_BYTE_INPUT_STORE_SIZE (32)
 
 enum NfcMagicAppCustomEvent {
     // Reserve first 100 events for button types and indexes, starting from 0
@@ -130,6 +130,7 @@ struct NfcMagicApp {
 
     FuriString* text_box_store;
     uint8_t byte_input_store[NFC_MAGIC_APP_BYTE_INPUT_STORE_SIZE];
+    uint8_t gen4_input_count;
 
     // Common Views
     Submenu* submenu;

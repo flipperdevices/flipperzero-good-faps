@@ -118,3 +118,62 @@ const char* gen4_get_configuration_name(const Gen4Config* config) {
         break;
     };
 }
+
+void gen4_calc_mfc_block0(const uint8_t* uid, uint8_t uid_len, uint8_t* block0) {
+    block0[0] = uid[0];
+    block0[1] = uid[1];
+    block0[2] = uid[2];
+    block0[3] = uid[3];
+    uint8_t bcc = uid[0] ^ uid[1] ^ uid[2] ^ uid[3];
+    for(uint8_t i = 4; i < uid_len; i++) {
+        block0[i] = uid[i];
+        bcc ^= uid[i];
+    }
+    block0[uid_len] = bcc;
+}
+
+void gen4_calc_mfu_bcc(const uint8_t* uid, uint8_t* bcc0, uint8_t* bcc1) {
+    uint8_t bcc0_val = uid[0] ^ uid[1] ^ uid[2] ^ 0x88;
+    uint8_t bcc1_val = uid[3] ^ uid[4] ^ uid[5] ^ uid[6];
+    *bcc0 = bcc0_val;
+    *bcc1 = bcc1_val;
+}
+
+bool gen4_hex_str_to_bytes(const char* hex_str, uint8_t* bytes, uint8_t len) {
+    for(uint8_t i = 0; i < len; i++) {
+        char h = hex_str[i * 2];
+        char l = hex_str[i * 2 + 1];
+        uint8_t val = 0;
+
+        if(h >= '0' && h <= '9') {
+            val = (h - '0') << 4;
+        } else if(h >= 'A' && h <= 'F') {
+            val = (h - 'A' + 10) << 4;
+        } else if(h >= 'a' && h <= 'f') {
+            val = (h - 'a' + 10) << 4;
+        } else {
+            return false;
+        }
+
+        if(l >= '0' && l <= '9') {
+            val |= (l - '0');
+        } else if(l >= 'A' && l <= 'F') {
+            val |= (l - 'A' + 10);
+        } else if(l >= 'a' && l <= 'f') {
+            val |= (l - 'a' + 10);
+        } else {
+            return false;
+        }
+
+        bytes[i] = val;
+    }
+    return true;
+}
+
+void gen4_bytes_to_hex_str(const uint8_t* bytes, uint8_t len, char* hex_str) {
+    for(uint8_t i = 0; i < len; i++) {
+        hex_str[i * 2] = "0123456789ABCDEF"[bytes[i] >> 4];
+        hex_str[i * 2 + 1] = "0123456789ABCDEF"[bytes[i] & 0x0F];
+    }
+    hex_str[len * 2] = '\0';
+}

@@ -15,11 +15,17 @@ void nfc_magic_scene_gen4_select_wipe_on_enter(void* context) {
 
     Submenu* submenu = instance->submenu;
     submenu_add_item(
-        submenu, "MIFARE Classic Wipe", SubmenuIndexWipeMFC,
-        nfc_magic_scene_gen4_select_wipe_submenu_callback, instance);
+        submenu,
+        "MIFARE Classic Wipe",
+        SubmenuIndexWipeMFC,
+        nfc_magic_scene_gen4_select_wipe_submenu_callback,
+        instance);
     submenu_add_item(
-        submenu, "Ultralight Wipe", SubmenuIndexWipeUL,
-        nfc_magic_scene_gen4_select_wipe_submenu_callback, instance);
+        submenu,
+        "Ultralight Wipe",
+        SubmenuIndexWipeUL,
+        nfc_magic_scene_gen4_select_wipe_submenu_callback,
+        instance);
 
     submenu_set_selected_item(
         submenu,

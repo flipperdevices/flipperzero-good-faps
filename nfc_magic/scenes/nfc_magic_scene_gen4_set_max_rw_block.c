@@ -5,9 +5,8 @@ enum {
     NfcMagicSceneGen4SetMaxRWBlockStateCardFound,
 };
 
-NfcCommand nfc_magic_scene_gen4_set_max_rw_block_poller_callback(
-    Gen4PollerEvent event,
-    void* context) {
+NfcCommand
+    nfc_magic_scene_gen4_set_max_rw_block_poller_callback(Gen4PollerEvent event, void* context) {
     NfcMagicApp* instance = context;
     furi_assert(event.data);
 
@@ -42,8 +41,7 @@ static void nfc_magic_scene_gen4_set_max_rw_block_setup_view(NfcMagicApp* instan
             instance->popup, "Apply the\ncard\nto the back", 128, 32, AlignRight, AlignCenter);
     } else {
         popup_set_icon(popup, 12, 23, &I_Loading_24);
-        popup_set_header(
-            popup, "Setting Max RW\nDon't move...", 52, 32, AlignLeft, AlignCenter);
+        popup_set_header(popup, "Setting Max RW\nDon't move...", 52, 32, AlignLeft, AlignCenter);
     }
 
     view_dispatcher_switch_to_view(instance->view_dispatcher, NfcMagicAppViewPopup);
@@ -65,9 +63,7 @@ void nfc_magic_scene_gen4_set_max_rw_block_on_enter(void* context) {
     gen4_poller_struct_set_max_rw_block(instance->gen4_poller, instance->byte_input_store[0]);
 
     gen4_poller_start(
-        instance->gen4_poller,
-        nfc_magic_scene_gen4_set_max_rw_block_poller_callback,
-        instance);
+        instance->gen4_poller, nfc_magic_scene_gen4_set_max_rw_block_poller_callback, instance);
 }
 
 bool nfc_magic_scene_gen4_set_max_rw_block_on_event(void* context, SceneManagerEvent event) {

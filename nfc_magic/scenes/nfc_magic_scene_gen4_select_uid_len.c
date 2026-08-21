@@ -20,14 +20,23 @@ void nfc_magic_scene_gen4_select_uid_len_on_enter(void* context) {
 
     Submenu* submenu = instance->submenu;
     submenu_add_item(
-        submenu, "4-byte UID", SubmenuIndexUID4,
-        nfc_magic_scene_gen4_select_uid_len_submenu_callback, instance);
+        submenu,
+        "4-byte UID",
+        SubmenuIndexUID4,
+        nfc_magic_scene_gen4_select_uid_len_submenu_callback,
+        instance);
     submenu_add_item(
-        submenu, "7-byte UID", SubmenuIndexUID7,
-        nfc_magic_scene_gen4_select_uid_len_submenu_callback, instance);
+        submenu,
+        "7-byte UID",
+        SubmenuIndexUID7,
+        nfc_magic_scene_gen4_select_uid_len_submenu_callback,
+        instance);
     submenu_add_item(
-        submenu, "10-byte UID", SubmenuIndexUID10,
-        nfc_magic_scene_gen4_select_uid_len_submenu_callback, instance);
+        submenu,
+        "10-byte UID",
+        SubmenuIndexUID10,
+        nfc_magic_scene_gen4_select_uid_len_submenu_callback,
+        instance);
 
     submenu_set_selected_item(
         submenu,
@@ -41,9 +50,12 @@ bool nfc_magic_scene_gen4_select_uid_len_on_event(void* context, SceneManagerEve
 
     if(event.type == SceneManagerEventTypeCustom) {
         uint8_t count = 0;
-        if(event.event == SubmenuIndexUID4) count = 4;
-        else if(event.event == SubmenuIndexUID7) count = 7;
-        else if(event.event == SubmenuIndexUID10) count = 10;
+        if(event.event == SubmenuIndexUID4)
+            count = 4;
+        else if(event.event == SubmenuIndexUID7)
+            count = 7;
+        else if(event.event == SubmenuIndexUID10)
+            count = 10;
 
         if(count) {
             scene_manager_set_scene_state(

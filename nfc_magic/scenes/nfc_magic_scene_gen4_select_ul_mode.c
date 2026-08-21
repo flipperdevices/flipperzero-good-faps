@@ -17,17 +17,29 @@ void nfc_magic_scene_gen4_select_ul_mode_on_enter(void* context) {
 
     Submenu* submenu = instance->submenu;
     submenu_add_item(
-        submenu, "UL EV1", SubmenuIndexULEV1,
-        nfc_magic_scene_gen4_select_ul_mode_submenu_callback, instance);
+        submenu,
+        "UL EV1",
+        SubmenuIndexULEV1,
+        nfc_magic_scene_gen4_select_ul_mode_submenu_callback,
+        instance);
     submenu_add_item(
-        submenu, "NTAG", SubmenuIndexNTAG,
-        nfc_magic_scene_gen4_select_ul_mode_submenu_callback, instance);
+        submenu,
+        "NTAG",
+        SubmenuIndexNTAG,
+        nfc_magic_scene_gen4_select_ul_mode_submenu_callback,
+        instance);
     submenu_add_item(
-        submenu, "UL-C", SubmenuIndexULC,
-        nfc_magic_scene_gen4_select_ul_mode_submenu_callback, instance);
+        submenu,
+        "UL-C",
+        SubmenuIndexULC,
+        nfc_magic_scene_gen4_select_ul_mode_submenu_callback,
+        instance);
     submenu_add_item(
-        submenu, "Ultralight", SubmenuIndexUL,
-        nfc_magic_scene_gen4_select_ul_mode_submenu_callback, instance);
+        submenu,
+        "Ultralight",
+        SubmenuIndexUL,
+        nfc_magic_scene_gen4_select_ul_mode_submenu_callback,
+        instance);
 
     submenu_set_selected_item(
         submenu,

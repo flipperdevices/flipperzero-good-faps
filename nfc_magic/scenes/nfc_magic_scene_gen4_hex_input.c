@@ -82,8 +82,8 @@ bool nfc_magic_scene_gen4_hex_input_on_event(void* context, SceneManagerEvent ev
 
     if(event.type == SceneManagerEventTypeCustom) {
         if(event.event == NfcMagicAppCustomEventByteInputDone) {
-            uint32_t state = scene_manager_get_scene_state(
-                instance->scene_manager, NfcMagicSceneGen4HexInput);
+            uint32_t state =
+                scene_manager_get_scene_state(instance->scene_manager, NfcMagicSceneGen4HexInput);
             enum Gen4HexInputMode mode = (enum Gen4HexInputMode)(state & 0xFF);
             uint8_t count = (uint8_t)((state >> 8) & 0xFF);
             instance->gen4_input_count = count;
@@ -114,24 +114,19 @@ bool nfc_magic_scene_gen4_hex_input_on_event(void* context, SceneManagerEvent ev
                 scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4WriteSignature);
                 break;
             case Gen4HexInputModeMaxRWBlock:
-                scene_manager_next_scene(
-                    instance->scene_manager, NfcMagicSceneGen4SetMaxRWBlock);
+                scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4SetMaxRWBlock);
                 break;
             case Gen4HexInputModeProtocol:
-                scene_manager_next_scene(
-                    instance->scene_manager, NfcMagicSceneGen4SetProtocol);
+                scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4SetProtocol);
                 break;
             case Gen4HexInputModeULMode:
-                scene_manager_next_scene(
-                    instance->scene_manager, NfcMagicSceneGen4SetULMode);
+                scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4SetULMode);
                 break;
             case Gen4HexInputModeTagType:
-                scene_manager_next_scene(
-                    instance->scene_manager, NfcMagicSceneGen4SetType);
+                scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4SetType);
                 break;
             case Gen4HexInputModeWipeType:
-                scene_manager_next_scene(
-                    instance->scene_manager, NfcMagicSceneGen4FullWipe);
+                scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4FullWipe);
                 break;
             }
             consumed = true;

@@ -144,20 +144,14 @@ Gen4PollerError gen4_poller_set_atqa_sak(
     uint8_t atqa1,
     uint8_t sak);
 
-Gen4PollerError gen4_poller_set_ul_protocol(
-    Gen4Poller* instance,
-    Gen4Password password,
-    Gen4Protocol protocol);
+Gen4PollerError
+    gen4_poller_set_ul_protocol(Gen4Poller* instance, Gen4Password password, Gen4Protocol protocol);
 
-Gen4PollerError gen4_poller_set_ul_mode(
-    Gen4Poller* instance,
-    Gen4Password password,
-    Gen4UltralightMode mode);
+Gen4PollerError
+    gen4_poller_set_ul_mode(Gen4Poller* instance, Gen4Password password, Gen4UltralightMode mode);
 
-Gen4PollerError gen4_poller_set_max_rw_block(
-    Gen4Poller* instance,
-    Gen4Password password,
-    uint8_t max_block);
+Gen4PollerError
+    gen4_poller_set_max_rw_block(Gen4Poller* instance, Gen4Password password, uint8_t max_block);
 
 Gen4PollerError gen4_poller_read_memory(
     Gen4Poller* instance,
@@ -166,19 +160,12 @@ Gen4PollerError gen4_poller_read_memory(
     uint8_t* data,
     uint8_t data_len);
 
-Gen4PollerError gen4_poller_mfu_read_block(
-    Gen4Poller* instance,
-    uint8_t block_num,
-    uint8_t* data);
+Gen4PollerError gen4_poller_mfu_read_block(Gen4Poller* instance, uint8_t block_num, uint8_t* data);
 
-Gen4PollerError gen4_poller_mfu_write_block(
-    Gen4Poller* instance,
-    uint8_t block_num,
-    const uint8_t* data);
+Gen4PollerError
+    gen4_poller_mfu_write_block(Gen4Poller* instance, uint8_t block_num, const uint8_t* data);
 
-Gen4PollerError gen4_poller_mfu_auth_pwd(
-    Gen4Poller* instance,
-    const uint8_t* password);
+Gen4PollerError gen4_poller_mfu_auth_pwd(Gen4Poller* instance, const uint8_t* password);
 
 #ifdef __cplusplus
 }

@@ -6,20 +6,20 @@
 
 #define GEN4_CMD_PREFIX (0xCF)
 
-#define GEN4_CMD_SET_SHD_MODE (0x32)
-#define GEN4_CMD_SET_ATS (0x34)
-#define GEN4_CMD_SET_ATQA_SAK (0x35)
-#define GEN4_CMD_SET_UL_PROTOCOL (0x69)
-#define GEN4_CMD_SET_UL_MODE (0x6A)
+#define GEN4_CMD_SET_SHD_MODE     (0x32)
+#define GEN4_CMD_SET_ATS          (0x34)
+#define GEN4_CMD_SET_ATQA_SAK     (0x35)
+#define GEN4_CMD_SET_UL_PROTOCOL  (0x69)
+#define GEN4_CMD_SET_UL_MODE      (0x6A)
 #define GEN4_CMD_SET_MAX_RW_BLOCK (0x6B)
-#define GEN4_CMD_GET_CFG (0xC6)
-#define GEN4_CMD_GET_REVISION (0xCC)
-#define GEN4_CMD_WRITE (0xCD)
-#define GEN4_CMD_READ (0xCE)
-#define GEN4_CMD_SET_DW_BLOCK_0 (0xCF)
-#define GEN4_CMD_SET_CFG (0xF0)
-#define GEN4_CMD_FUSE_CFG (0xF1)
-#define GEN4_CMD_SET_PWD (0xFE)
+#define GEN4_CMD_GET_CFG          (0xC6)
+#define GEN4_CMD_GET_REVISION     (0xCC)
+#define GEN4_CMD_WRITE            (0xCD)
+#define GEN4_CMD_READ             (0xCE)
+#define GEN4_CMD_SET_DW_BLOCK_0   (0xCF)
+#define GEN4_CMD_SET_CFG          (0xF0)
+#define GEN4_CMD_FUSE_CFG         (0xF1)
+#define GEN4_CMD_SET_PWD          (0xFE)
 
 #define GEN4_RESPONSE_SUCCESS (0x02)
 
@@ -353,10 +353,8 @@ Gen4PollerError gen4_poller_set_ul_protocol(
     return ret;
 }
 
-Gen4PollerError gen4_poller_set_ul_mode(
-    Gen4Poller* instance,
-    Gen4Password password,
-    Gen4UltralightMode mode) {
+Gen4PollerError
+    gen4_poller_set_ul_mode(Gen4Poller* instance, Gen4Password password, Gen4UltralightMode mode) {
     Gen4PollerError ret = Gen4PollerErrorNone;
     bit_buffer_reset(instance->tx_buffer);
 
@@ -388,10 +386,8 @@ Gen4PollerError gen4_poller_set_ul_mode(
     return ret;
 }
 
-Gen4PollerError gen4_poller_set_max_rw_block(
-    Gen4Poller* instance,
-    Gen4Password password,
-    uint8_t max_block) {
+Gen4PollerError
+    gen4_poller_set_max_rw_block(Gen4Poller* instance, Gen4Password password, uint8_t max_block) {
     Gen4PollerError ret = Gen4PollerErrorNone;
     bit_buffer_reset(instance->tx_buffer);
 
@@ -485,10 +481,8 @@ Gen4PollerError
     return ret;
 }
 
-Gen4PollerError gen4_poller_mfu_write_block(
-    Gen4Poller* instance,
-    uint8_t block_num,
-    const uint8_t* data) {
+Gen4PollerError
+    gen4_poller_mfu_write_block(Gen4Poller* instance, uint8_t block_num, const uint8_t* data) {
     Gen4PollerError ret = Gen4PollerErrorNone;
     bit_buffer_reset(instance->tx_buffer);
 
@@ -507,8 +501,7 @@ Gen4PollerError gen4_poller_mfu_write_block(
 
         size_t response = bit_buffer_get_size_bytes(instance->rx_buffer);
 
-        FURI_LOG_D(
-            TAG, "MFU write block %d response: 0x%02X", block_num, response);
+        FURI_LOG_D(TAG, "MFU write block %d response: 0x%02X", block_num, response);
 
         if(response != 0x0A) {
             ret = Gen4PollerErrorProtocol;
@@ -520,8 +513,7 @@ Gen4PollerError gen4_poller_mfu_write_block(
     return ret;
 }
 
-Gen4PollerError
-    gen4_poller_mfu_auth_pwd(Gen4Poller* instance, const uint8_t* password) {
+Gen4PollerError gen4_poller_mfu_auth_pwd(Gen4Poller* instance, const uint8_t* password) {
     Gen4PollerError ret = Gen4PollerErrorNone;
     bit_buffer_reset(instance->tx_buffer);
 

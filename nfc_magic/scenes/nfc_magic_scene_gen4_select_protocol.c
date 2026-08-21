@@ -15,11 +15,17 @@ void nfc_magic_scene_gen4_select_protocol_on_enter(void* context) {
 
     Submenu* submenu = instance->submenu;
     submenu_add_item(
-        submenu, "MIFARE Classic", SubmenuIndexMFC,
-        nfc_magic_scene_gen4_select_protocol_submenu_callback, instance);
+        submenu,
+        "MIFARE Classic",
+        SubmenuIndexMFC,
+        nfc_magic_scene_gen4_select_protocol_submenu_callback,
+        instance);
     submenu_add_item(
-        submenu, "Ultralight/NTAG", SubmenuIndexUL,
-        nfc_magic_scene_gen4_select_protocol_submenu_callback, instance);
+        submenu,
+        "Ultralight/NTAG",
+        SubmenuIndexUL,
+        nfc_magic_scene_gen4_select_protocol_submenu_callback,
+        instance);
 
     submenu_set_selected_item(
         submenu,

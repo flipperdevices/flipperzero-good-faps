@@ -5,9 +5,8 @@ enum {
     NfcMagicSceneGen4SetATQASAKStateCardFound,
 };
 
-NfcCommand nfc_magic_scene_gen4_set_atqa_sak_poller_callback(
-    Gen4PollerEvent event,
-    void* context) {
+NfcCommand
+    nfc_magic_scene_gen4_set_atqa_sak_poller_callback(Gen4PollerEvent event, void* context) {
     NfcMagicApp* instance = context;
     furi_assert(event.data);
 

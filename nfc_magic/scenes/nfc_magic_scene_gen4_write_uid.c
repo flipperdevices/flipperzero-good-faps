@@ -5,8 +5,7 @@ enum {
     NfcMagicSceneGen4WriteUIDStateCardFound,
 };
 
-NfcCommand
-    nfc_magic_scene_gen4_write_uid_poller_callback(Gen4PollerEvent event, void* context) {
+NfcCommand nfc_magic_scene_gen4_write_uid_poller_callback(Gen4PollerEvent event, void* context) {
     NfcMagicApp* instance = context;
     furi_assert(event.data);
 
@@ -61,9 +60,7 @@ void nfc_magic_scene_gen4_write_uid_on_enter(void* context) {
     instance->gen4_poller = gen4_poller_alloc(instance->nfc);
     gen4_poller_set_password(instance->gen4_poller, instance->gen4_password);
     gen4_poller_struct_set_uid(
-        instance->gen4_poller,
-        instance->byte_input_store,
-        instance->gen4_input_count);
+        instance->gen4_poller, instance->byte_input_store, instance->gen4_input_count);
 
     gen4_poller_start(
         instance->gen4_poller, nfc_magic_scene_gen4_write_uid_poller_callback, instance);

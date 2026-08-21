@@ -5,8 +5,7 @@ enum {
     NfcMagicSceneGen4SetATSStateCardFound,
 };
 
-NfcCommand
-    nfc_magic_scene_gen4_set_ats_poller_callback(Gen4PollerEvent event, void* context) {
+NfcCommand nfc_magic_scene_gen4_set_ats_poller_callback(Gen4PollerEvent event, void* context) {
     NfcMagicApp* instance = context;
     furi_assert(event.data);
 
@@ -47,17 +46,13 @@ static void nfc_magic_scene_gen4_set_ats_setup_view(NfcMagicApp* instance) {
 void nfc_magic_scene_gen4_set_ats_on_enter(void* context) {
     NfcMagicApp* instance = context;
     scene_manager_set_scene_state(
-        instance->scene_manager,
-        NfcMagicSceneGen4SetATS,
-        NfcMagicSceneGen4SetATSStateCardSearch);
+        instance->scene_manager, NfcMagicSceneGen4SetATS, NfcMagicSceneGen4SetATSStateCardSearch);
     nfc_magic_scene_gen4_set_ats_setup_view(instance);
     nfc_magic_app_blink_start(instance);
     instance->gen4_poller = gen4_poller_alloc(instance->nfc);
     gen4_poller_set_password(instance->gen4_poller, instance->gen4_password);
     gen4_poller_struct_set_ats_params(
-        instance->gen4_poller,
-        instance->byte_input_store + 1,
-        instance->byte_input_store[0]);
+        instance->gen4_poller, instance->byte_input_store + 1, instance->byte_input_store[0]);
     gen4_poller_start(
         instance->gen4_poller, nfc_magic_scene_gen4_set_ats_poller_callback, instance);
 }
@@ -96,9 +91,7 @@ void nfc_magic_scene_gen4_set_ats_on_exit(void* context) {
     gen4_poller_stop(instance->gen4_poller);
     gen4_poller_free(instance->gen4_poller);
     scene_manager_set_scene_state(
-        instance->scene_manager,
-        NfcMagicSceneGen4SetATS,
-        NfcMagicSceneGen4SetATSStateCardSearch);
+        instance->scene_manager, NfcMagicSceneGen4SetATS, NfcMagicSceneGen4SetATSStateCardSearch);
     popup_reset(instance->popup);
     nfc_magic_app_blink_stop(instance);
 }

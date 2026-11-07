@@ -1,27 +1,11 @@
 #include "../nfc_magic_app_i.h"
 
-enum Gen4HexInputMode {
-    Gen4HexInputModeUID,
-    Gen4HexInputModeATQASAK,
-    Gen4HexInputModeATS,
-    Gen4HexInputModeNTAGPwd,
-    Gen4HexInputModePACK,
-    Gen4HexInputModeOTP,
-    Gen4HexInputModeVersion,
-    Gen4HexInputModeSignature,
-    Gen4HexInputModeMaxRWBlock,
-    Gen4HexInputModeProtocol,
-    Gen4HexInputModeULMode,
-    Gen4HexInputModeTagType,
-    Gen4HexInputModeWipeType,
-};
-
 static const char* nfc_magic_scene_gen4_hex_input_get_header(enum Gen4HexInputMode mode) {
     switch(mode) {
     case Gen4HexInputModeUID:
         return "Enter UID in hex";
     case Gen4HexInputModeATQASAK:
-        return "Enter ATQA/SAK (6 hex)";
+        return "Enter ATQA/SAK (3 bytes)";
     case Gen4HexInputModeATS:
         return "Enter ATS in hex";
     case Gen4HexInputModeNTAGPwd:
@@ -36,14 +20,6 @@ static const char* nfc_magic_scene_gen4_hex_input_get_header(enum Gen4HexInputMo
         return "Enter Signature (32B)";
     case Gen4HexInputModeMaxRWBlock:
         return "Enter Max Block (1B)";
-    case Gen4HexInputModeProtocol:
-        return "Protocol: 00=MC,01=UL";
-    case Gen4HexInputModeULMode:
-        return "UL Mode: 00-03 hex";
-    case Gen4HexInputModeTagType:
-        return "Tag Type: 01-25 hex";
-    case Gen4HexInputModeWipeType:
-        return "Wipe: 00=MFC,01=UL";
     default:
         return "Enter data in hex";
     }
@@ -71,7 +47,7 @@ void nfc_magic_scene_gen4_hex_input_on_enter(void* context) {
         nfc_magic_scene_gen4_hex_input_byte_input_callback,
         NULL,
         instance,
-        instance->byte_input_store,
+        instance->gen4_byte_input_store,
         count);
     view_dispatcher_switch_to_view(instance->view_dispatcher, NfcMagicAppViewByteInput);
 }
@@ -90,45 +66,34 @@ bool nfc_magic_scene_gen4_hex_input_on_event(void* context, SceneManagerEvent ev
 
             switch(mode) {
             case Gen4HexInputModeUID:
-                scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4WriteUID);
+                instance->gen4_op = Gen4OpWriteUID;
                 break;
             case Gen4HexInputModeATQASAK:
-                scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4SetATQASAK);
+                instance->gen4_op = Gen4OpSetATQASAK;
                 break;
             case Gen4HexInputModeATS:
-                scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4SetATS);
+                instance->gen4_op = Gen4OpSetATS;
                 break;
             case Gen4HexInputModeNTAGPwd:
-                scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4WriteNTAGPwd);
+                instance->gen4_op = Gen4OpWriteNTAGPwd;
                 break;
             case Gen4HexInputModePACK:
-                scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4WritePack);
+                instance->gen4_op = Gen4OpWritePACK;
                 break;
             case Gen4HexInputModeOTP:
-                scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4WriteOTP);
+                instance->gen4_op = Gen4OpWriteOTP;
                 break;
             case Gen4HexInputModeVersion:
-                scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4WriteVersion);
+                instance->gen4_op = Gen4OpWriteVersion;
                 break;
             case Gen4HexInputModeSignature:
-                scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4WriteSignature);
+                instance->gen4_op = Gen4OpWriteSignature;
                 break;
             case Gen4HexInputModeMaxRWBlock:
-                scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4SetMaxRWBlock);
-                break;
-            case Gen4HexInputModeProtocol:
-                scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4SetProtocol);
-                break;
-            case Gen4HexInputModeULMode:
-                scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4SetULMode);
-                break;
-            case Gen4HexInputModeTagType:
-                scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4SetType);
-                break;
-            case Gen4HexInputModeWipeType:
-                scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4FullWipe);
+                instance->gen4_op = Gen4OpSetMaxRWBlock;
                 break;
             }
+            scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4RunOp);
             consumed = true;
         }
     }

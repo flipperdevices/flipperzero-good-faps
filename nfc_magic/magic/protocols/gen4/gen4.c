@@ -139,41 +139,17 @@ void gen4_calc_mfu_bcc(const uint8_t* uid, uint8_t* bcc0, uint8_t* bcc1) {
     *bcc1 = bcc1_val;
 }
 
-bool gen4_hex_str_to_bytes(const char* hex_str, uint8_t* bytes, uint8_t len) {
-    for(uint8_t i = 0; i < len; i++) {
-        char h = hex_str[i * 2];
-        char l = hex_str[i * 2 + 1];
-        uint8_t val = 0;
+const char*
+    gen4_atqa_sak_get_invalid_reason(uint8_t atqa0, uint8_t atqa1, uint8_t sak, uint8_t ats_len) {
+    UNUSED(atqa0);
 
-        if(h >= '0' && h <= '9') {
-            val = (h - '0') << 4;
-        } else if(h >= 'A' && h <= 'F') {
-            val = (h - 'A' + 10) << 4;
-        } else if(h >= 'a' && h <= 'f') {
-            val = (h - 'a' + 10) << 4;
-        } else {
-            return false;
-        }
-
-        if(l >= '0' && l <= '9') {
-            val |= (l - '0');
-        } else if(l >= 'A' && l <= 'F') {
-            val |= (l - 'A' + 10);
-        } else if(l >= 'a' && l <= 'f') {
-            val |= (l - 'a' + 10);
-        } else {
-            return false;
-        }
-
-        bytes[i] = val;
+    if(sak == 0x04) {
+        return "SAK 04 means an extra cascade level is required";
+    } else if((sak == 0x20 || sak == 0x28) && ats_len == 0) {
+        return "SAK 20 or 28 requires ATS to be turned on";
+    } else if(atqa1 == 0x40) {
+        return "ATQA of [00 40] will cause the card to not answer";
     }
-    return true;
-}
 
-void gen4_bytes_to_hex_str(const uint8_t* bytes, uint8_t len, char* hex_str) {
-    for(uint8_t i = 0; i < len; i++) {
-        hex_str[i * 2] = "0123456789ABCDEF"[bytes[i] >> 4];
-        hex_str[i * 2 + 1] = "0123456789ABCDEF"[bytes[i] & 0x0F];
-    }
-    hex_str[len * 2] = '\0';
+    return NULL;
 }

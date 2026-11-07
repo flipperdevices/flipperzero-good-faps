@@ -16,22 +16,6 @@ enum SubmenuIndex {
     SubmenuIndexFullWipe,
 };
 
-enum Gen4HexInputMode {
-    Gen4HexInputModeUID,
-    Gen4HexInputModeATQASAK,
-    Gen4HexInputModeATS,
-    Gen4HexInputModeNTAGPwd,
-    Gen4HexInputModePACK,
-    Gen4HexInputModeOTP,
-    Gen4HexInputModeVersion,
-    Gen4HexInputModeSignature,
-    Gen4HexInputModeMaxRWBlock,
-    Gen4HexInputModeProtocol,
-    Gen4HexInputModeULMode,
-    Gen4HexInputModeTagType,
-    Gen4HexInputModeWipeType,
-};
-
 void nfc_magic_scene_gen4_advanced_submenu_callback(void* context, uint32_t index) {
     NfcMagicApp* instance = context;
     view_dispatcher_send_custom_event(instance->view_dispatcher, index);
@@ -142,11 +126,7 @@ bool nfc_magic_scene_gen4_advanced_on_event(void* context, SceneManagerEvent eve
             scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4HexInput);
             consumed = true;
         } else if(event.event == SubmenuIndexSetATS) {
-            scene_manager_set_scene_state(
-                instance->scene_manager,
-                NfcMagicSceneGen4HexInput,
-                Gen4HexInputModeATS | (17UL << 8));
-            scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4HexInput);
+            scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4SelectAtsLen);
             consumed = true;
         } else if(event.event == SubmenuIndexSetProtocol) {
             scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4SelectProtocol);

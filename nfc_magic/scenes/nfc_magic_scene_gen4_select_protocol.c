@@ -39,12 +39,14 @@ bool nfc_magic_scene_gen4_select_protocol_on_event(void* context, SceneManagerEv
 
     if(event.type == SceneManagerEventTypeCustom) {
         if(event.event == SubmenuIndexMFC) {
-            instance->byte_input_store[0] = 0x00;
-            scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4SetProtocol);
+            instance->gen4_op = Gen4OpSetProtocol;
+            instance->gen4_op_param = Gen4ProtocolMfClassic;
+            scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4RunOp);
             consumed = true;
         } else if(event.event == SubmenuIndexUL) {
-            instance->byte_input_store[0] = 0x01;
-            scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4SetProtocol);
+            instance->gen4_op = Gen4OpSetProtocol;
+            instance->gen4_op_param = Gen4ProtocolMfUltralight;
+            scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4RunOp);
             consumed = true;
         }
         scene_manager_set_scene_state(

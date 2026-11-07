@@ -19,7 +19,7 @@ void nfc_magic_scene_key_input_on_enter(void* context) {
         NULL,
         instance,
         instance->byte_input_store,
-        NFC_MAGIC_APP_BYTE_INPUT_STORE_SIZE);
+        GEN4_PASSWORD_LEN);
     view_dispatcher_switch_to_view(instance->view_dispatcher, NfcMagicAppViewByteInput);
 }
 

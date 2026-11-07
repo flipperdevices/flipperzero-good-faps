@@ -59,6 +59,7 @@ struct Gen4Poller {
     Gen4Config config;
     Gen4ShadowMode shadow_mode;
     Gen4DirectWriteBlock0Mode direct_write_block_0_mode;
+    Gen4PollerError error;
 
     uint8_t uid[GEN4_UID_MAX_LEN];
     uint8_t uid_len;
@@ -77,7 +78,6 @@ struct Gen4Poller {
     uint8_t version[8];
     uint8_t signature[GEN4_SIGNATURE_SIZE];
     uint8_t wipe_type;
-    bool has_ul_auth;
 
     uint8_t cmd_step;
 
@@ -152,20 +152,6 @@ Gen4PollerError
 
 Gen4PollerError
     gen4_poller_set_max_rw_block(Gen4Poller* instance, Gen4Password password, uint8_t max_block);
-
-Gen4PollerError gen4_poller_read_memory(
-    Gen4Poller* instance,
-    Gen4Password password,
-    uint8_t block_num,
-    uint8_t* data,
-    uint8_t data_len);
-
-Gen4PollerError gen4_poller_mfu_read_block(Gen4Poller* instance, uint8_t block_num, uint8_t* data);
-
-Gen4PollerError
-    gen4_poller_mfu_write_block(Gen4Poller* instance, uint8_t block_num, const uint8_t* data);
-
-Gen4PollerError gen4_poller_mfu_auth_pwd(Gen4Poller* instance, const uint8_t* password);
 
 #ifdef __cplusplus
 }

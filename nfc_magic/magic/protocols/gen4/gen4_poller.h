@@ -15,7 +15,6 @@ extern "C" {
 #define GEN4_CMD_GET_CFG      (0xC6)
 #define GEN4_CMD_GET_REVISION (0xCC)
 #define GEN4_CMD_WRITE        (0xCD)
-#define GEN4_CMD_READ         (0xCE)
 #define GEN4_CMD_SET_CFG      (0xF0)
 #define GEN4_CMD_FUSE_CFG     (0xF1)
 #define GEN4_CMD_SET_PWD      (0xFE)
@@ -24,6 +23,8 @@ typedef enum {
     Gen4PollerErrorNone,
     Gen4PollerErrorTimeout,
     Gen4PollerErrorProtocol,
+    Gen4PollerErrorWrongProtocol,
+    Gen4PollerErrorInvalidParams,
 } Gen4PollerError;
 
 typedef enum {
@@ -72,10 +73,15 @@ typedef struct {
     Gen4Password password;
 } Gen4PollerEventDataRequestNewPassword;
 
+typedef struct {
+    Gen4PollerError error;
+} Gen4PollerEventDataFail;
+
 typedef union {
     Gen4PollerEventDataRequestMode request_mode;
     Gen4PollerEventDataRequestDataToWrite request_data;
     Gen4PollerEventDataRequestNewPassword request_password;
+    Gen4PollerEventDataFail fail;
 } Gen4PollerEventData;
 
 typedef struct {

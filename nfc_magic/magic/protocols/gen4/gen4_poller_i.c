@@ -15,7 +15,6 @@
 #define GEN4_CMD_GET_CFG          (0xC6)
 #define GEN4_CMD_GET_REVISION     (0xCC)
 #define GEN4_CMD_WRITE            (0xCD)
-#define GEN4_CMD_READ             (0xCE)
 #define GEN4_CMD_SET_DW_BLOCK_0   (0xCF)
 #define GEN4_CMD_SET_CFG          (0xF0)
 #define GEN4_CMD_FUSE_CFG         (0xF1)
@@ -35,16 +34,16 @@ static Gen4PollerError gen4_poller_process_error(Iso14443_3aError error) {
     return ret;
 }
 
-Gen4PollerError
-    gen4_poller_set_shadow_mode(Gen4Poller* instance, Gen4Password password, Gen4ShadowMode mode) {
+static Gen4PollerError
+    gen4_poller_send_cmd(Gen4Poller* instance, Gen4Password password, uint8_t cmd, uint8_t param) {
     Gen4PollerError ret = Gen4PollerErrorNone;
     bit_buffer_reset(instance->tx_buffer);
 
     do {
         bit_buffer_append_byte(instance->tx_buffer, GEN4_CMD_PREFIX);
         bit_buffer_append_bytes(instance->tx_buffer, password.bytes, GEN4_PASSWORD_LEN);
-        bit_buffer_append_byte(instance->tx_buffer, GEN4_CMD_SET_SHD_MODE);
-        bit_buffer_append_byte(instance->tx_buffer, mode);
+        bit_buffer_append_byte(instance->tx_buffer, cmd);
+        bit_buffer_append_byte(instance->tx_buffer, param);
 
         Iso14443_3aError error = iso14443_3a_poller_send_standard_frame(
             instance->iso3_poller, instance->tx_buffer, instance->rx_buffer, GEN4_POLLER_MAX_FWT);
@@ -55,16 +54,19 @@ Gen4PollerError
         }
 
         size_t response = bit_buffer_get_size_bytes(instance->rx_buffer);
-
-        FURI_LOG_D(TAG, "Card response: 0x%02X, Shadow mode set: 0x%02X", response, mode);
-
         if(response != GEN4_RESPONSE_SUCCESS) {
             ret = Gen4PollerErrorProtocol;
             break;
         }
-
     } while(false);
 
+    return ret;
+}
+
+Gen4PollerError
+    gen4_poller_set_shadow_mode(Gen4Poller* instance, Gen4Password password, Gen4ShadowMode mode) {
+    Gen4PollerError ret = gen4_poller_send_cmd(instance, password, GEN4_CMD_SET_SHD_MODE, mode);
+    FURI_LOG_D(TAG, "Shadow mode set: 0x%02X, error: %d", mode, ret);
     return ret;
 }
 
@@ -72,34 +74,8 @@ Gen4PollerError gen4_poller_set_direct_write_block_0_mode(
     Gen4Poller* instance,
     Gen4Password password,
     Gen4DirectWriteBlock0Mode mode) {
-    Gen4PollerError ret = Gen4PollerErrorNone;
-    bit_buffer_reset(instance->tx_buffer);
-
-    do {
-        bit_buffer_append_byte(instance->tx_buffer, GEN4_CMD_PREFIX);
-        bit_buffer_append_bytes(instance->tx_buffer, password.bytes, GEN4_PASSWORD_LEN);
-        bit_buffer_append_byte(instance->tx_buffer, GEN4_CMD_SET_DW_BLOCK_0);
-        bit_buffer_append_byte(instance->tx_buffer, mode);
-
-        Iso14443_3aError error = iso14443_3a_poller_send_standard_frame(
-            instance->iso3_poller, instance->tx_buffer, instance->rx_buffer, GEN4_POLLER_MAX_FWT);
-
-        if(error != Iso14443_3aErrorNone) {
-            ret = gen4_poller_process_error(error);
-            break;
-        }
-        size_t response = bit_buffer_get_size_bytes(instance->rx_buffer);
-
-        FURI_LOG_D(
-            TAG, "Card response: 0x%02X, Direct write to block 0 mode set: 0x%02X", response, mode);
-
-        if(response != GEN4_RESPONSE_SUCCESS) {
-            ret = Gen4PollerErrorProtocol;
-            break;
-        }
-
-    } while(false);
-
+    Gen4PollerError ret = gen4_poller_send_cmd(instance, password, GEN4_CMD_SET_DW_BLOCK_0, mode);
+    FURI_LOG_D(TAG, "Direct write to block 0 mode set: 0x%02X, error: %d", mode, ret);
     return ret;
 }
 
@@ -322,219 +298,24 @@ Gen4PollerError gen4_poller_set_ul_protocol(
     Gen4Poller* instance,
     Gen4Password password,
     Gen4Protocol protocol) {
-    Gen4PollerError ret = Gen4PollerErrorNone;
-    bit_buffer_reset(instance->tx_buffer);
-
-    do {
-        bit_buffer_append_byte(instance->tx_buffer, GEN4_CMD_PREFIX);
-        bit_buffer_append_bytes(instance->tx_buffer, password.bytes, GEN4_PASSWORD_LEN);
-        bit_buffer_append_byte(instance->tx_buffer, GEN4_CMD_SET_UL_PROTOCOL);
-        bit_buffer_append_byte(instance->tx_buffer, protocol);
-
-        Iso14443_3aError error = iso14443_3a_poller_send_standard_frame(
-            instance->iso3_poller, instance->tx_buffer, instance->rx_buffer, GEN4_POLLER_MAX_FWT);
-
-        if(error != Iso14443_3aErrorNone) {
-            ret = gen4_poller_process_error(error);
-            break;
-        }
-
-        size_t response = bit_buffer_get_size_bytes(instance->rx_buffer);
-
-        FURI_LOG_D(TAG, "Card response: 0x%02X, UL protocol set: 0x%02X", response, protocol);
-
-        if(response != GEN4_RESPONSE_SUCCESS) {
-            ret = Gen4PollerErrorProtocol;
-            break;
-        }
-
-    } while(false);
-
+    Gen4PollerError ret =
+        gen4_poller_send_cmd(instance, password, GEN4_CMD_SET_UL_PROTOCOL, protocol);
+    FURI_LOG_D(TAG, "UL protocol set: 0x%02X, error: %d", protocol, ret);
     return ret;
 }
 
 Gen4PollerError
     gen4_poller_set_ul_mode(Gen4Poller* instance, Gen4Password password, Gen4UltralightMode mode) {
-    Gen4PollerError ret = Gen4PollerErrorNone;
-    bit_buffer_reset(instance->tx_buffer);
-
-    do {
-        bit_buffer_append_byte(instance->tx_buffer, GEN4_CMD_PREFIX);
-        bit_buffer_append_bytes(instance->tx_buffer, password.bytes, GEN4_PASSWORD_LEN);
-        bit_buffer_append_byte(instance->tx_buffer, GEN4_CMD_SET_UL_MODE);
-        bit_buffer_append_byte(instance->tx_buffer, mode);
-
-        Iso14443_3aError error = iso14443_3a_poller_send_standard_frame(
-            instance->iso3_poller, instance->tx_buffer, instance->rx_buffer, GEN4_POLLER_MAX_FWT);
-
-        if(error != Iso14443_3aErrorNone) {
-            ret = gen4_poller_process_error(error);
-            break;
-        }
-
-        size_t response = bit_buffer_get_size_bytes(instance->rx_buffer);
-
-        FURI_LOG_D(TAG, "Card response: 0x%02X, UL mode set: 0x%02X", response, mode);
-
-        if(response != GEN4_RESPONSE_SUCCESS) {
-            ret = Gen4PollerErrorProtocol;
-            break;
-        }
-
-    } while(false);
-
+    Gen4PollerError ret = gen4_poller_send_cmd(instance, password, GEN4_CMD_SET_UL_MODE, mode);
+    FURI_LOG_D(TAG, "UL mode set: 0x%02X, error: %d", mode, ret);
     return ret;
 }
 
 Gen4PollerError
     gen4_poller_set_max_rw_block(Gen4Poller* instance, Gen4Password password, uint8_t max_block) {
-    Gen4PollerError ret = Gen4PollerErrorNone;
-    bit_buffer_reset(instance->tx_buffer);
-
-    do {
-        bit_buffer_append_byte(instance->tx_buffer, GEN4_CMD_PREFIX);
-        bit_buffer_append_bytes(instance->tx_buffer, password.bytes, GEN4_PASSWORD_LEN);
-        bit_buffer_append_byte(instance->tx_buffer, GEN4_CMD_SET_MAX_RW_BLOCK);
-        bit_buffer_append_byte(instance->tx_buffer, max_block);
-
-        Iso14443_3aError error = iso14443_3a_poller_send_standard_frame(
-            instance->iso3_poller, instance->tx_buffer, instance->rx_buffer, GEN4_POLLER_MAX_FWT);
-
-        if(error != Iso14443_3aErrorNone) {
-            ret = gen4_poller_process_error(error);
-            break;
-        }
-
-        size_t response = bit_buffer_get_size_bytes(instance->rx_buffer);
-
-        FURI_LOG_D(TAG, "Card response: 0x%02X, Max R/W block set: 0x%02X", response, max_block);
-
-        if(response != GEN4_RESPONSE_SUCCESS) {
-            ret = Gen4PollerErrorProtocol;
-            break;
-        }
-
-    } while(false);
-
-    return ret;
-}
-
-Gen4PollerError gen4_poller_read_memory(
-    Gen4Poller* instance,
-    Gen4Password password,
-    uint8_t block_num,
-    uint8_t* data,
-    uint8_t data_len) {
-    Gen4PollerError ret = Gen4PollerErrorNone;
-    bit_buffer_reset(instance->tx_buffer);
-
-    do {
-        bit_buffer_append_byte(instance->tx_buffer, GEN4_CMD_PREFIX);
-        bit_buffer_append_bytes(instance->tx_buffer, password.bytes, GEN4_PASSWORD_LEN);
-        bit_buffer_append_byte(instance->tx_buffer, GEN4_CMD_READ);
-        bit_buffer_append_byte(instance->tx_buffer, block_num);
-
-        Iso14443_3aError error = iso14443_3a_poller_send_standard_frame(
-            instance->iso3_poller, instance->tx_buffer, instance->rx_buffer, GEN4_POLLER_MAX_FWT);
-
-        if(error != Iso14443_3aErrorNone) {
-            ret = gen4_poller_process_error(error);
-            break;
-        }
-
-        size_t rx_bytes = bit_buffer_get_size_bytes(instance->rx_buffer);
-        if(rx_bytes < data_len) {
-            ret = Gen4PollerErrorProtocol;
-            break;
-        }
-        bit_buffer_write_bytes(instance->rx_buffer, data, data_len);
-    } while(false);
-
-    return ret;
-}
-
-Gen4PollerError
-    gen4_poller_mfu_read_block(Gen4Poller* instance, uint8_t block_num, uint8_t* data) {
-    Gen4PollerError ret = Gen4PollerErrorNone;
-    bit_buffer_reset(instance->tx_buffer);
-
-    do {
-        bit_buffer_append_byte(instance->tx_buffer, 0x30);
-        bit_buffer_append_byte(instance->tx_buffer, block_num);
-
-        Iso14443_3aError error = iso14443_3a_poller_send_standard_frame(
-            instance->iso3_poller, instance->tx_buffer, instance->rx_buffer, GEN4_POLLER_MAX_FWT);
-
-        if(error != Iso14443_3aErrorNone) {
-            ret = gen4_poller_process_error(error);
-            break;
-        }
-
-        size_t rx_bytes = bit_buffer_get_size_bytes(instance->rx_buffer);
-        if(rx_bytes < 16) {
-            ret = Gen4PollerErrorProtocol;
-            break;
-        }
-        bit_buffer_write_bytes(instance->rx_buffer, data, 16);
-    } while(false);
-
-    return ret;
-}
-
-Gen4PollerError
-    gen4_poller_mfu_write_block(Gen4Poller* instance, uint8_t block_num, const uint8_t* data) {
-    Gen4PollerError ret = Gen4PollerErrorNone;
-    bit_buffer_reset(instance->tx_buffer);
-
-    do {
-        bit_buffer_append_byte(instance->tx_buffer, 0xA2);
-        bit_buffer_append_byte(instance->tx_buffer, block_num);
-        bit_buffer_append_bytes(instance->tx_buffer, data, 4);
-
-        Iso14443_3aError error = iso14443_3a_poller_send_standard_frame(
-            instance->iso3_poller, instance->tx_buffer, instance->rx_buffer, GEN4_POLLER_MAX_FWT);
-
-        if(error != Iso14443_3aErrorNone) {
-            ret = gen4_poller_process_error(error);
-            break;
-        }
-
-        size_t response = bit_buffer_get_size_bytes(instance->rx_buffer);
-
-        FURI_LOG_D(TAG, "MFU write block %d response: 0x%02X", block_num, response);
-
-        if(response != 0x0A) {
-            ret = Gen4PollerErrorProtocol;
-            break;
-        }
-
-    } while(false);
-
-    return ret;
-}
-
-Gen4PollerError gen4_poller_mfu_auth_pwd(Gen4Poller* instance, const uint8_t* password) {
-    Gen4PollerError ret = Gen4PollerErrorNone;
-    bit_buffer_reset(instance->tx_buffer);
-
-    do {
-        bit_buffer_append_byte(instance->tx_buffer, 0x1B);
-        bit_buffer_append_bytes(instance->tx_buffer, password, 4);
-
-        Iso14443_3aError error = iso14443_3a_poller_send_standard_frame(
-            instance->iso3_poller, instance->tx_buffer, instance->rx_buffer, GEN4_POLLER_MAX_FWT);
-
-        if(error != Iso14443_3aErrorNone) {
-            ret = gen4_poller_process_error(error);
-            break;
-        }
-
-        size_t rx_bytes = bit_buffer_get_size_bytes(instance->rx_buffer);
-
-        FURI_LOG_D(TAG, "MFU PWD AUTH response, %d bytes", rx_bytes);
-
-    } while(false);
-
+    Gen4PollerError ret =
+        gen4_poller_send_cmd(instance, password, GEN4_CMD_SET_MAX_RW_BLOCK, max_block);
+    FURI_LOG_D(TAG, "Max R/W block set: 0x%02X, error: %d", max_block, ret);
     return ret;
 }
 

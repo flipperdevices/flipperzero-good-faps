@@ -39,12 +39,14 @@ bool nfc_magic_scene_gen4_select_wipe_on_event(void* context, SceneManagerEvent 
 
     if(event.type == SceneManagerEventTypeCustom) {
         if(event.event == SubmenuIndexWipeMFC) {
-            instance->byte_input_store[0] = 0x00;
-            scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4FullWipe);
+            instance->gen4_op = Gen4OpFullWipe;
+            instance->gen4_op_param = 0;
+            scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4RunOp);
             consumed = true;
         } else if(event.event == SubmenuIndexWipeUL) {
-            instance->byte_input_store[0] = 0x01;
-            scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4FullWipe);
+            instance->gen4_op = Gen4OpFullWipe;
+            instance->gen4_op_param = 1;
+            scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4RunOp);
             consumed = true;
         }
         scene_manager_set_scene_state(

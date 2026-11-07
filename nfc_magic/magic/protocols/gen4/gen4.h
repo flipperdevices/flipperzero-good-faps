@@ -12,7 +12,6 @@
 #define GEN4_CRC_LEN        (2)
 #define GEN4_UID_MAX_LEN    (10)
 #define GEN4_SIGNATURE_SIZE (32)
-#define GEN4_VERSION_SIZE   (8)
 
 typedef enum {
     Gen4ProtocolMfClassic = 0x00,
@@ -109,5 +108,6 @@ const char* gen4_get_configuration_name(const Gen4Config* config);
 
 void gen4_calc_mfc_block0(const uint8_t* uid, uint8_t uid_len, uint8_t* block0);
 void gen4_calc_mfu_bcc(const uint8_t* uid, uint8_t* bcc0, uint8_t* bcc1);
-bool gen4_hex_str_to_bytes(const char* hex_str, uint8_t* bytes, uint8_t len);
-void gen4_bytes_to_hex_str(const uint8_t* bytes, uint8_t len, char* hex_str);
+
+const char*
+    gen4_atqa_sak_get_invalid_reason(uint8_t atqa0, uint8_t atqa1, uint8_t sak, uint8_t ats_len);

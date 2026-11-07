@@ -24,6 +24,7 @@ NfcCommand nfc_mafic_scene_gen4_get_info_poller_callback(Gen4PollerEvent event, 
             instance->view_dispatcher, NfcMagicCustomEventWorkerSuccess);
         command = NfcCommandStop;
     } else if(event.type == Gen4PollerEventTypeFail) {
+        instance->gen4_last_error = event.data->fail.error;
         view_dispatcher_send_custom_event(
             instance->view_dispatcher, NfcMagicCustomEventWorkerFail);
         command = NfcCommandStop;

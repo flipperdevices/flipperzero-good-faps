@@ -53,20 +53,24 @@ bool nfc_magic_scene_gen4_select_ul_mode_on_event(void* context, SceneManagerEve
 
     if(event.type == SceneManagerEventTypeCustom) {
         if(event.event == SubmenuIndexULEV1) {
-            instance->byte_input_store[0] = 0x00;
-            scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4SetULMode);
+            instance->gen4_op = Gen4OpSetULMode;
+            instance->gen4_op_param = Gen4UltralightModeUL_EV1;
+            scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4RunOp);
             consumed = true;
         } else if(event.event == SubmenuIndexNTAG) {
-            instance->byte_input_store[0] = 0x01;
-            scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4SetULMode);
+            instance->gen4_op = Gen4OpSetULMode;
+            instance->gen4_op_param = Gen4UltralightModeNTAG;
+            scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4RunOp);
             consumed = true;
         } else if(event.event == SubmenuIndexULC) {
-            instance->byte_input_store[0] = 0x02;
-            scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4SetULMode);
+            instance->gen4_op = Gen4OpSetULMode;
+            instance->gen4_op_param = Gen4UltralightModeUL_C;
+            scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4RunOp);
             consumed = true;
         } else if(event.event == SubmenuIndexUL) {
-            instance->byte_input_store[0] = 0x03;
-            scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4SetULMode);
+            instance->gen4_op = Gen4OpSetULMode;
+            instance->gen4_op_param = Gen4UltralightModeUL;
+            scene_manager_next_scene(instance->scene_manager, NfcMagicSceneGen4RunOp);
             consumed = true;
         }
         scene_manager_set_scene_state(

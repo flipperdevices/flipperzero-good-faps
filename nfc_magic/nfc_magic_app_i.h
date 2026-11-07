@@ -54,7 +54,36 @@
 #define NFC_MAGIC_APP_FOLDER                ANY_PATH("nfc")
 #define NFC_MAGIC_APP_EXTENSION             ".nfc"
 #define NFC_MAGIC_APP_FILENAME_PREFIX       "NFC"
-#define NFC_MAGIC_APP_BYTE_INPUT_STORE_SIZE (32)
+#define NFC_MAGIC_APP_BYTE_INPUT_STORE_SIZE (GEN4_PASSWORD_LEN)
+
+enum Gen4HexInputMode {
+    Gen4HexInputModeUID,
+    Gen4HexInputModeATQASAK,
+    Gen4HexInputModeATS,
+    Gen4HexInputModeNTAGPwd,
+    Gen4HexInputModePACK,
+    Gen4HexInputModeOTP,
+    Gen4HexInputModeVersion,
+    Gen4HexInputModeSignature,
+    Gen4HexInputModeMaxRWBlock,
+};
+
+typedef enum {
+    Gen4OpSetType,
+    Gen4OpWriteUID,
+    Gen4OpSetATQASAK,
+    Gen4OpSetATS,
+    Gen4OpSetProtocol,
+    Gen4OpSetULMode,
+    Gen4OpSetMaxRWBlock,
+    Gen4OpWriteNTAGPwd,
+    Gen4OpWritePACK,
+    Gen4OpWriteOTP,
+    Gen4OpWriteVersion,
+    Gen4OpWriteSignature,
+    Gen4OpFullWipe,
+    Gen4OpCount,
+} Gen4Op;
 
 enum NfcMagicAppCustomEvent {
     // Reserve first 100 events for button types and indexes, starting from 0
@@ -130,7 +159,11 @@ struct NfcMagicApp {
 
     FuriString* text_box_store;
     uint8_t byte_input_store[NFC_MAGIC_APP_BYTE_INPUT_STORE_SIZE];
+    uint8_t gen4_byte_input_store[GEN4_SIGNATURE_SIZE];
     uint8_t gen4_input_count;
+    Gen4Op gen4_op;
+    uint8_t gen4_op_param;
+    Gen4PollerError gen4_last_error;
 
     // Common Views
     Submenu* submenu;

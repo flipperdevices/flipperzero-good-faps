@@ -1,9 +1,5 @@
 #include "../nfc_magic_app_i.h"
 
-enum {
-    Gen4HexInputModeUID = 0,
-};
-
 enum SubmenuIndex {
     SubmenuIndexUID4,
     SubmenuIndexUID7,

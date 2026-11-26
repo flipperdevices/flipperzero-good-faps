@@ -118,3 +118,38 @@ const char* gen4_get_configuration_name(const Gen4Config* config) {
         break;
     };
 }
+
+void gen4_calc_mfc_block0(const uint8_t* uid, uint8_t uid_len, uint8_t* block0) {
+    block0[0] = uid[0];
+    block0[1] = uid[1];
+    block0[2] = uid[2];
+    block0[3] = uid[3];
+    uint8_t bcc = uid[0] ^ uid[1] ^ uid[2] ^ uid[3];
+    for(uint8_t i = 4; i < uid_len; i++) {
+        block0[i] = uid[i];
+        bcc ^= uid[i];
+    }
+    block0[uid_len] = bcc;
+}
+
+void gen4_calc_mfu_bcc(const uint8_t* uid, uint8_t* bcc0, uint8_t* bcc1) {
+    uint8_t bcc0_val = uid[0] ^ uid[1] ^ uid[2] ^ 0x88;
+    uint8_t bcc1_val = uid[3] ^ uid[4] ^ uid[5] ^ uid[6];
+    *bcc0 = bcc0_val;
+    *bcc1 = bcc1_val;
+}
+
+const char*
+    gen4_atqa_sak_get_invalid_reason(uint8_t atqa0, uint8_t atqa1, uint8_t sak, uint8_t ats_len) {
+    UNUSED(atqa0);
+
+    if(sak == 0x04) {
+        return "SAK 04 means an extra cascade level is required";
+    } else if((sak == 0x20 || sak == 0x28) && ats_len == 0) {
+        return "SAK 20 or 28 requires ATS to be turned on";
+    } else if(atqa1 == 0x40) {
+        return "ATQA of [00 40] will cause the card to not answer";
+    }
+
+    return NULL;
+}

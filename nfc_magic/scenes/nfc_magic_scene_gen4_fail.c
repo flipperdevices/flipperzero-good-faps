@@ -1,5 +1,20 @@
 #include "../nfc_magic_app_i.h"
 
+static const char* nfc_magic_scene_gen4_fail_get_message(Gen4PollerError error) {
+    switch(error) {
+    case Gen4PollerErrorWrongProtocol:
+        return "Card is not in the\nrequired protocol.\nNothing was written.";
+    case Gen4PollerErrorInvalidParams:
+        return "Refused to apply.\nCard was not modified.";
+    case Gen4PollerErrorTimeout:
+        return "Card lost or not\nresponding. Card may\nbe partially written.";
+    case Gen4PollerErrorProtocol:
+        return "Write failed. Card\nmay be partially\nwritten.";
+    default:
+        return "No response. Maybe\nnot Gen4 card?";
+    }
+}
+
 void nfc_magic_scene_gen4_fail_widget_callback(GuiButtonType result, InputType type, void* context) {
     NfcMagicApp* instance = context;
     if(type == InputTypeShort) {
@@ -17,7 +32,13 @@ void nfc_magic_scene_gen4_fail_on_enter(void* context) {
     widget_add_string_element(
         widget, 7, 4, AlignLeft, AlignTop, FontPrimary, "Something gone wrong!");
     widget_add_string_multiline_element(
-        widget, 7, 17, AlignLeft, AlignTop, FontSecondary, "No response. Maybe\nnot Gen4 card?");
+        widget,
+        7,
+        17,
+        AlignLeft,
+        AlignTop,
+        FontSecondary,
+        nfc_magic_scene_gen4_fail_get_message(instance->gen4_last_error));
 
     widget_add_button_element(
         widget, GuiButtonTypeLeft, "Back", nfc_magic_scene_gen4_fail_widget_callback, instance);

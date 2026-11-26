@@ -149,8 +149,6 @@ static bool ws_protocol_lacrosse_tx_check_crc(WSProtocolDecoderLaCrosse_TX* inst
  */
 static bool ws_protocol_lacrosse_tx_remote_controller(WSBlockGeneric* instance) {
     uint8_t msg_type = (instance->data >> 32) & 0x0F;
-    // msg_type comes from the air and is only covered by a 4-bit checksum,
-    // so unknown values must be rejected rather than treated as fatal.
     if(msg_type != LACROSSE_TX_MSG_TYPE_TEMP && msg_type != LACROSSE_TX_MSG_TYPE_HUM) {
         return false;
     }
